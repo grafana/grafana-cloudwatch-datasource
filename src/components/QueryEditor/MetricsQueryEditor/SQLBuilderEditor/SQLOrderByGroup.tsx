@@ -15,7 +15,7 @@ interface SQLBuilderSelectRowProps {
   onQueryChange: (query: CloudWatchMetricsQuery) => void;
 }
 
-const orderByDirections: SelectableValue<string[]> = [
+const orderByDirections: Array<SelectableValue<string>> = [
   { label: ASC, value: ASC },
   { label: DESC, value: DESC },
 ];

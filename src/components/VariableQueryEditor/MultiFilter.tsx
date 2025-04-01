@@ -37,7 +37,7 @@ const filterConditionsToMultiFilters = (filters: MultiFilterCondition[]) => {
 export const MultiFilter = ({ filters, onChange, keyPlaceholder, datasource }: Props) => {
   const [items, setItems] = useState<MultiFilterCondition[]>([]);
   useEffect(() => setItems(filters ? multiFiltersToFilterConditions(filters) : []), [filters]);
-  const onFiltersChange = (newItems: Partial<MultiFilterCondition[]>) => {
+  const onFiltersChange = (newItems: Array<Partial<MultiFilterCondition>>) => {
     setItems(newItems);
 
     // The onChange event should only be triggered in the case there is a complete dimension object.

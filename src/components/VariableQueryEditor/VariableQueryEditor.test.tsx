@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
@@ -7,7 +7,6 @@ import { GetDimensionKeysRequest } from '../../resources/types';
 import { VariableQueryType } from '../../types';
 
 import { VariableQueryEditor, Props } from './VariableQueryEditor';
-import { act } from 'react';
 
 const defaultQuery = {
   queryType: VariableQueryType.Regions,

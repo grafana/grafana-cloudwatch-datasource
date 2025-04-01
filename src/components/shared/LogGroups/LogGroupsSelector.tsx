@@ -13,8 +13,8 @@ import Search from './Search';
 
 type CrossAccountLogsQueryProps = {
   selectedLogGroups?: LogGroup[];
-  accountOptions?: SelectableValue<string[]>;
-  fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<ResourceResponse<LogGroupResponse[]>>;
+  accountOptions?: Array<SelectableValue<string>>;
+  fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<Array<ResourceResponse<LogGroupResponse>>>;
   variables?: string[];
   onChange: (selectedLogGroups: LogGroup[]) => void;
   onBeforeOpen?: () => void;

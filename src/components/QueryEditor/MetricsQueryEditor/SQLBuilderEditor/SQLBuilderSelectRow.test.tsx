@@ -1,12 +1,11 @@
-import { render, screen } from '@testing-library/react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { act, render, screen } from '@testing-library/react';
 
 import { setupMockedDataSource } from '../../../../__mocks__/CloudWatchDataSource';
 import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../../../expressions';
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../../../types';
 
 import SQLBuilderSelectRow from './SQLBuilderSelectRow';
-import { act } from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 const { datasource } = setupMockedDataSource();
 

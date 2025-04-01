@@ -54,7 +54,7 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
     [baseOptions, groupBysFromQuery, isMonitoringAccount]
   );
 
-  const onChange = (newItems: Partial<QueryEditorGroupByExpression[]>) => {
+  const onChange = (newItems: Array<Partial<QueryEditorGroupByExpression>>) => {
     // As new (empty object) items come in, with need to make sure they have the correct type
     const cleaned = newItems.map(
       (v): QueryEditorGroupByExpression => ({
@@ -84,7 +84,7 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   return <EditorList items={items} onChange={onChange} renderItem={makeRenderItem(options)} />;
 };
 
-function makeRenderItem(options: SelectableValue<string[]>) {
+function makeRenderItem(options: Array<SelectableValue<string>>) {
   function renderItem(
     item: Partial<QueryEditorGroupByExpression>,
     onChange: (item: QueryEditorGroupByExpression) => void,
@@ -97,7 +97,7 @@ function makeRenderItem(options: SelectableValue<string[]>) {
 }
 
 interface GroupByItemProps {
-  options: SelectableValue<string[]>;
+  options: Array<SelectableValue<string>>;
   item: Partial<QueryEditorGroupByExpression>;
   onChange: (item: QueryEditorGroupByExpression) => void;
   onDelete: () => void;

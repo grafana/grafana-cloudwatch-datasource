@@ -193,7 +193,7 @@ export function setNamespace(query: CloudWatchMetricsQuery, namespace: string | 
 
 export function setSchemaLabels(
   query: CloudWatchMetricsQuery,
-  schemaLabels: SelectableValue<string[]> | SelectableValue<string>
+  schemaLabels: Array<SelectableValue<string>> | SelectableValue<string>
 ): CloudWatchMetricsQuery {
   const sql = query.sql ?? {};
   schemaLabels = Array.isArray(schemaLabels) ? schemaLabels.map((l) => l.value) : [schemaLabels.value];

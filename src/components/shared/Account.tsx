@@ -6,7 +6,7 @@ import { Select } from '@grafana/ui';
 
 export interface Props {
   onChange: (accountId?: string) => void;
-  accountOptions: SelectableValue<string[]>;
+  accountOptions: Array<SelectableValue<string>>;
   accountId?: string;
 }
 

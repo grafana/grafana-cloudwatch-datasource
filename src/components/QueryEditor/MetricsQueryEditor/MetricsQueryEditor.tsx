@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, JSX, useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -29,7 +29,7 @@ export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatch
   extraHeaderElementRight?: React.Dispatch<JSX.Element | undefined>;
 }
 
-const metricEditorModes: SelectableValue<MetricQueryType[]> = [
+const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
   { label: 'Metric Search', value: MetricQueryType.Search },
   { label: 'Metric Insights', value: MetricQueryType.Insights },
 ];

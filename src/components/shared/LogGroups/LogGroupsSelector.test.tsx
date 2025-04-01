@@ -38,7 +38,7 @@ const defaultProps = {
           arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
         },
       },
-    ] as ResourceResponse<LogGroupResponse[]>),
+    ] as Array<ResourceResponse<LogGroupResponse>>),
   onChange: jest.fn(),
 };
 
@@ -283,7 +283,7 @@ describe('LogGroupsSelector', () => {
       />
     );
     await userEvent.click(screen.getByText('Select log groups'));
-    await userEvent.click(screen.getByRole('button', { name: 'Clear value' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'select-clear-value' }));
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
       {

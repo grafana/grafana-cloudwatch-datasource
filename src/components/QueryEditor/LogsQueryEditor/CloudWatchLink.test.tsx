@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import { LoadingState } from '@grafana/data';
 
@@ -8,7 +8,6 @@ import { validLogsQuery } from '../../../__mocks__/queries';
 import { CloudWatchLogsQuery } from '../../../types';
 
 import { CloudWatchLink } from './CloudWatchLink';
-import { act } from 'react';
 
 describe('CloudWatchLink', () => {
   it('generates a link with log group names', async () => {

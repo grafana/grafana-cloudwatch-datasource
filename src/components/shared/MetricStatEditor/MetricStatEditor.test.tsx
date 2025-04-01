@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
@@ -9,7 +9,6 @@ import { validMetricSearchBuilderQuery } from '../../../__mocks__/queries';
 import { MetricStat } from '../../../types';
 
 import { MetricStatEditor } from './MetricStatEditor';
-import { act } from 'react';
 
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const ds = setupMockedDataSource({

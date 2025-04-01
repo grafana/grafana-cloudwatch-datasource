@@ -60,7 +60,7 @@ export const MetricStatEditor = ({
     if (!metricName) {
       return metricStat;
     }
-    await datasource.resources.getMetrics({ namespace, region }).then((result: SelectableValue<string[]>) => {
+    await datasource.resources.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }

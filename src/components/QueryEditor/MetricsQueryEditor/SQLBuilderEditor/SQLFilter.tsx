@@ -41,7 +41,7 @@ const SQLFilter = ({ query, onQueryChange, datasource }: SQLFilterProps) => {
   const filtersFromQuery = useMemo(() => getFlattenedFilters(query.sql ?? {}), [query.sql]);
   const [filters, setFilters] = useState<QueryEditorOperatorExpression[]>(filtersFromQuery);
 
-  const onChange = (newItems: Partial<QueryEditorOperatorExpression[]>) => {
+  const onChange = (newItems: Array<Partial<QueryEditorOperatorExpression>>) => {
     // As new (empty object) items come in, with need to make sure they have the correct type
     const cleaned = newItems.map(
       (v): QueryEditorOperatorExpression => ({
@@ -129,7 +129,7 @@ const FilterItem = (props: FilterItemProps) => {
         dimensionKey: filter.property.name,
         ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
       })
-      .then((result: SelectableValue<string[]>) => {
+      .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);
       });
   };

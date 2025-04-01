@@ -34,7 +34,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
   saved = true,
 }) => {
   const [loadingLogGroups, setLoadingLogGroups] = useState(false);
-  const [availableLogGroups, setAvailableLogGroups] = useState<SelectableValue<string[]>>([]);
+  const [availableLogGroups, setAvailableLogGroups] = useState<Array<SelectableValue<string>>>([]);
   const logGroupOptions = useMemo(
     () => unionBy(availableLogGroups, selectedLogGroups?.map(toOption), 'value'),
     [availableLogGroups, selectedLogGroups]

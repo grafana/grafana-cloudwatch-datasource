@@ -9,9 +9,9 @@ import { ResourcesAPI } from './resources/ResourcesAPI';
 import { GetMetricsRequest, GetDimensionKeysRequest } from './resources/types';
 import { appendTemplateVariables } from './utils/utils';
 
-export const useRegions = (datasource: CloudWatchDatasource): [SelectableValue<string[]>, boolean] => {
+export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {
   const [regionsIsLoading, setRegionsIsLoading] = useState<boolean>(false);
-  const [regions, setRegions] = useState<SelectableValue<string[]>>([{ label: 'default', value: 'default' }]);
+  const [regions, setRegions] = useState<Array<SelectableValue<string>>>([{ label: 'default', value: 'default' }]);
 
   useEffect(() => {
     setRegionsIsLoading(true);
@@ -23,7 +23,7 @@ export const useRegions = (datasource: CloudWatchDatasource): [SelectableValue<s
 
     datasource.resources
       .getRegions()
-      .then((regions: SelectableValue<string[]>) => setRegions([...regions, variableOptionGroup]))
+      .then((regions: Array<SelectableValue<string>>) => setRegions([...regions, variableOptionGroup]))
       .finally(() => setRegionsIsLoading(false));
   }, [datasource]);
 
@@ -31,7 +31,7 @@ export const useRegions = (datasource: CloudWatchDatasource): [SelectableValue<s
 };
 
 export const useNamespaces = (datasource: CloudWatchDatasource) => {
-  const [namespaces, setNamespaces] = useState<SelectableValue<string[]>>([]);
+  const [namespaces, setNamespaces] = useState<Array<SelectableValue<string>>>([]);
   useEffect(() => {
     datasource.resources.getNamespaces().then((namespaces) => {
       setNamespaces(appendTemplateVariables(datasource, namespaces));
@@ -42,7 +42,7 @@ export const useNamespaces = (datasource: CloudWatchDatasource) => {
 };
 
 export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace, accountId }: GetMetricsRequest) => {
-  const [metrics, setMetrics] = useState<SelectableValue<string[]>>([]);
+  const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
 
   // need to ensure dependency array below recieves the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
@@ -56,7 +56,7 @@ export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace
     accountId = datasource.templateSrv.replace(accountId, {});
   }
   useEffect(() => {
-    datasource.resources.getMetrics({ namespace, region, accountId }).then((result: SelectableValue<string[]>) => {
+    datasource.resources.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
       setMetrics(appendTemplateVariables(datasource, result));
     });
   }, [datasource, region, namespace, accountId]);
@@ -68,7 +68,7 @@ export const useDimensionKeys = (
   datasource: CloudWatchDatasource,
   { region, namespace, metricName, dimensionFilters, accountId }: GetDimensionKeysRequest
 ) => {
-  const [dimensionKeys, setDimensionKeys] = useState<SelectableValue<string[]>>([]);
+  const [dimensionKeys, setDimensionKeys] = useState<Array<SelectableValue<string>>>([]);
 
   // need to ensure dependency array below revieves the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
@@ -94,7 +94,7 @@ export const useDimensionKeys = (
   useDeepCompareEffect(() => {
     datasource.resources
       .getDimensionKeys({ namespace, region, metricName, accountId, dimensionFilters }, false)
-      .then((result: SelectableValue<string[]>) => {
+      .then((result: Array<SelectableValue<string>>) => {
         setDimensionKeys(appendTemplateVariables(datasource, result));
       });
   }, [datasource, namespace, region, metricName, accountId, dimensionFilters]);
@@ -159,7 +159,7 @@ export const useAccountOptions = (
       return [];
     }
 
-    const options: SelectableValue<string[]> = accounts.map((a) => ({
+    const options: Array<SelectableValue<string>> = accounts.map((a) => ({
       label: a.label,
       value: a.id,
       description: a.id,

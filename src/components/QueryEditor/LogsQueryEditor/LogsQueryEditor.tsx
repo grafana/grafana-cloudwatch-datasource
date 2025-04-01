@@ -16,7 +16,7 @@ type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
   extraHeaderElementLeft?: React.Dispatch<JSX.Element | undefined>;
 };
 
-const logsQueryLanguageOptions: SelectableValue<LogsQueryLanguage[]> = [
+const logsQueryLanguageOptions: Array<SelectableValue<LogsQueryLanguage>> = [
   { label: 'Logs Insights QL', value: LogsQueryLanguage.CWLI },
   { label: 'OpenSearch SQL', value: LogsQueryLanguage.SQL },
   { label: 'OpenSearch PPL', value: LogsQueryLanguage.PPL },

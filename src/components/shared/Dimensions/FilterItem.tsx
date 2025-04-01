@@ -58,7 +58,7 @@ export const FilterItem = ({ filter, metricStat, datasource, disableExpressions,
         metricName,
         accountId,
       })
-      .then((result: SelectableValue<string[]>) => {
+      .then((result: Array<SelectableValue<string>>) => {
         if (result.length && !disableExpressions && !result.some((o) => o.value === wildcardOption.value)) {
           result.unshift(wildcardOption);
         }

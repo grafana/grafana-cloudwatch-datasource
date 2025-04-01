@@ -80,7 +80,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const sanitizeQuery = async (query: VariableQuery) => {
     let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
-      await datasource.resources.getMetrics({ namespace, region }).then((result: SelectableValue<string[]>) => {
+      await datasource.resources.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
         }
@@ -89,7 +89,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     if (dimensionKey) {
       await datasource.resources
         .getDimensionKeys({ namespace, region })
-        .then((result: SelectableValue<string[]>) => {
+        .then((result: Array<SelectableValue<string>>) => {
           if (!result.find((key) => key.value === dimensionKey)) {
             dimensionKey = '';
             dimensionFilters = {};
