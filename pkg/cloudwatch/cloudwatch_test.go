@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"testing"
 	"time"
 
@@ -18,10 +19,6 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -91,10 +88,10 @@ func TestNewInstanceSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewInstanceSettings(httpclient.NewProvider())
-			model, err := f(tt.settingCtx, tt.settings)
+			instance, err := NewDatasource(tt.settingCtx, tt.settings)
+			ds := instance.(DataSource)
 			tt.Err(t, err)
-			assert.Equal(t, tt.expectedDS.Settings.GrafanaSettings, model.(DataSource).Settings.GrafanaSettings)
+			assert.Equal(t, tt.expectedDS.Settings.GrafanaSettings, ds.Settings.GrafanaSettings)
 			datasourceComparer := cmp.Comparer(func(d1 DataSource, d2 DataSource) bool {
 				return d1.Settings.Profile == d2.Settings.Profile &&
 					d1.Settings.Region == d2.Settings.Region &&
@@ -106,8 +103,8 @@ func TestNewInstanceSettings(t *testing.T) {
 					d1.Settings.AccessKey == d2.Settings.AccessKey &&
 					d1.Settings.SecretKey == d2.Settings.SecretKey
 			})
-			if !cmp.Equal(model.(DataSource), tt.expectedDS, datasourceComparer) {
-				t.Errorf("Unexpected result. Expecting\n%v \nGot:\n%v", model, tt.expectedDS)
+			if !cmp.Equal(instance.(DataSource), tt.expectedDS, datasourceComparer) {
+				t.Errorf("Unexpected result. Expecting\n%v \nGot:\n%v", instance, tt.expectedDS)
 			}
 		})
 	}
@@ -131,13 +128,13 @@ func Test_CheckHealth(t *testing.T) {
 	NewLogsAPI = func(aws.Config) models.CloudWatchLogsAPIProvider {
 		return client
 	}
-	im := defaultTestInstanceManager()
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		executor := newExecutor(im, log.NewNullLogger())
-
-		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Region = "us-east-1"
+		})
+		resp, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}})
 
 		assert.NoError(t, err)
@@ -148,14 +145,15 @@ func Test_CheckHealth(t *testing.T) {
 	})
 
 	t.Run("successfully queries metrics, fails during logs query", func(t *testing.T) {
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Region = "us-east-1"
+		})
 		client = fakeCheckHealthClient{
 			describeLogGroupsFunction: func(context.Context, *cloudwatchlogs.DescribeLogGroupsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 				return nil, fmt.Errorf("some logs query error")
-			}}
-
-		executor := newExecutor(im, log.NewNullLogger())
-
-		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+			},
+		}
+		resp, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 		})
 
@@ -167,14 +165,15 @@ func Test_CheckHealth(t *testing.T) {
 	})
 
 	t.Run("successfully queries logs, fails during metrics query", func(t *testing.T) {
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Region = "us-east-1"
+			ds.Settings.GrafanaSettings.ListMetricsPageLimit = 1
+		})
 		client = fakeCheckHealthClient{
 			listMetricsFunction: func(context.Context, *cloudwatch.ListMetricsInput, ...func(*cloudwatch.Options)) (*cloudwatch.ListMetricsOutput, error) {
 				return nil, fmt.Errorf("some list metrics error")
 			}}
-
-		executor := newExecutor(im, log.NewNullLogger())
-
-		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+		resp, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 		})
 
@@ -187,11 +186,11 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		im := testInstanceManagerWithSettings(models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-1"}}, true)
-
-		executor := newExecutor(im, log.NewNullLogger())
-
-		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.AWSConfigProvider = awsauth.NewFakeConfigProvider(true)
+			ds.Settings.Region = "us-east-1"
+		})
+		resp, err := ds.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 		})
 
@@ -215,20 +214,12 @@ func TestGetAWSConfig_passes_authSettings(t *testing.T) {
 		ListMetricsPageLimit:      50,
 		SecureSocksDSProxyEnabled: true,
 	}
-	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{
-			Settings: models.CloudWatchSettings{
-				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-					Region: "us-east-1",
-				},
-				GrafanaSettings: expectedSettings,
-			},
-		}, nil
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.Settings.Region = "us-east-1"
+		ds.Settings.GrafanaSettings = expectedSettings
 	})
-	executor := newExecutor(im, log.NewNullLogger())
 
-	_, err := executor.getAWSConfig(context.Background(),
-		backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, "us-east-1")
+	_, err := ds.getAWSConfig(context.Background(), "us-east-1")
 	require.NoError(t, err)
 }
 
@@ -253,8 +244,6 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		return &logsApi
 	}
 
-	im := defaultTestInstanceManager()
-
 	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}
 		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
@@ -271,8 +260,9 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 			},
 		}
 
-		executor := newExecutor(im, log.NewNullLogger())
-		err := executor.CallResource(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
+		ds := newTestDatasource()
+
+		err := ds.CallResource(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
 		assert.NoError(t, err)
 
 		assert.JSONEq(t, `[
