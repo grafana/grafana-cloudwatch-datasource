@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "CloudWatch",
   "id": "cloudwatch",
@@ -8,6 +9,7 @@
   "alerting": true,
   "annotations": true,
   "backend": true,
+  "executable": "gpx_grafana_cloudwatch_datasource",
   "includes": [
     { "type": "dashboard", "name": "EC2", "path": "dashboards/ec2.json" },
     { "type": "dashboard", "name": "EBS", "path": "dashboards/EBS.json" },
@@ -32,8 +34,10 @@
       "large": "img/amazon-web-services.png"
     },
     "links": [
-      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
+      { "name": "Raise issue", "url": "https://github.com/grafana/grafana-cloudwatch-datasource/issues/new" },
       { "name": "Documentation", "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/" }
-    ]
+    ],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
   }
 }
