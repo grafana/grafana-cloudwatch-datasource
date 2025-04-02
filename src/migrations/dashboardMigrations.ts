@@ -1,3 +1,5 @@
+/* eslint-disable deprecation/deprecation */
+
 // Functions in this file are called from the app/features/dashboard/state/DashboardMigrator.
 // Migrations applied by the DashboardMigrator are performed before the plugin is loaded.
 // DashboardMigrator migrations are tied to a certain minimum version of a dashboard which means they will only be ran once.

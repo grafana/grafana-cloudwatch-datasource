@@ -1,13 +1,6 @@
 import { lastValueFrom, of } from 'rxjs';
 
-import {
-  DataQueryRequest,
-  FieldType,
-  LogLevel,
-  LogRowContextQueryDirection,
-  LogRowModel,
-  MutableDataFrame,
-} from '@grafana/data';
+import { DataQueryRequest, FieldType, LogLevel, LogRowContextQueryDirection, LogRowModel } from '@grafana/data';
 
 import { regionVariable } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
@@ -28,14 +21,15 @@ describe('CloudWatchLogsQueryRunner', () => {
       const row: LogRowModel = {
         entryFieldIndex: 0,
         rowIndex: 0,
-        dataFrame: new MutableDataFrame({
+        dataFrame: {
           refId: 'B',
+          length: 3,
           fields: [
-            { name: 'ts', type: FieldType.time, values: [1] },
-            { name: LOG_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['foo'], labels: {} },
-            { name: LOGSTREAM_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['bar'], labels: {} },
+            { name: 'ts', type: FieldType.time, values: [1], config: {} },
+            { name: LOG_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['foo'], labels: {}, config: {} },
+            { name: LOGSTREAM_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['bar'], labels: {}, config: {} },
           ],
-        }),
+        },
         entry: '4',
         labels: {},
         hasAnsi: false,

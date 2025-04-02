@@ -80,6 +80,7 @@ export class CloudWatchDatasource
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
     this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
+    // eslint-disable-next-line deprecation/deprecation
     this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
 
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
@@ -200,6 +201,7 @@ export class CloudWatchDatasource
 
   getDefaultQuery(_: CoreApp): Partial<CloudWatchQuery> {
     return {
+      // eslint-disable-next-line deprecation/deprecation
       ...getDefaultLogsQuery(this.instanceSettings.jsonData.logGroups, this.instanceSettings.jsonData.defaultLogGroups),
       ...DEFAULT_METRICS_QUERY,
     };

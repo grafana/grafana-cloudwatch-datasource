@@ -1,6 +1,6 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
-import { DataFrame, DataSourceRef } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { DataFrame } from '@grafana/data';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 import * as raw from './dataquery.gen';
 

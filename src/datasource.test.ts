@@ -439,6 +439,7 @@ describe('datasource', () => {
           jsonData: { ...CloudWatchSettings.jsonData, defaultLogGroups: ['testLogGroup'] },
         },
       });
+      // eslint-disable-next-line deprecation/deprecation
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).logGroupNames).toEqual([
         'testLogGroup',
       ]);
