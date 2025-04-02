@@ -1,21 +1,23 @@
-name: Bundle Stats
+# name: Bundle Stats
 
-on:
-  pull_request:
-    branches:
-      - main
+# on:
+#   pull_request:
+#     branches:
+#       - main
 
-permissions:
-  contents: write
-  pull-requests: write
-  actions: read
+# permissions:
+#   contents: write
+#   pull-requests: write
+#   actions: read
 
-jobs:
-  compare:
-    runs-on: ubuntu-latest
+# jobs:
+#   compare:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - uses: grafana/plugin-actions/bundle-size@main
+#       - uses: grafana/plugin-actions/bundle-size@main
+#         with:
+#             node-version: '22'
