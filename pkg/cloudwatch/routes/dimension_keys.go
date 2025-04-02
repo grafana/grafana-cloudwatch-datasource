@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
 func DimensionKeysHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {

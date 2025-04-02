@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 )
 
 func respondWithError(rw http.ResponseWriter, httpError *models.HttpError) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
 )
 
 type MetricsClient struct {

@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
 )
 
 func Test_Namespaces_Route(t *testing.T) {

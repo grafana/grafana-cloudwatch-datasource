@@ -7,10 +7,10 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/features"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type responseWrapper struct {

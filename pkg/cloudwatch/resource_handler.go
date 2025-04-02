@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/routes"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
