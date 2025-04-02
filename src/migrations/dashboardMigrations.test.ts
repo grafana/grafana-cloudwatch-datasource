@@ -1,4 +1,4 @@
-import { AnnotationQuery, DataQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 
 import { CloudWatchMetricsQuery, LegacyAnnotationQuery, MetricEditorMode, MetricQueryType } from '../types';
 
@@ -7,6 +7,7 @@ import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from './dashboardMigrations';
+import { DataQuery } from '@grafana/schema';
 
 describe('dashboardMigrations', () => {
   describe('migrateMultipleStatsMetricsQuery', () => {

@@ -2,7 +2,7 @@ import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import { useCallback, useRef } from 'react';
 
 import { CodeEditor, Monaco } from '@grafana/ui';
-import { CodeEditorProps } from '@grafana/ui/internal';
+import { CodeEditorProps } from './types';
 
 import { CloudWatchDatasource } from '../../../../datasource';
 import language from '../../../../language/cloudwatch-ppl/definition';
@@ -42,8 +42,8 @@ interface LogsCodeEditorProps {
 export const PPLQueryEditor = (props: LogsCodeEditorProps) => {
   const { query, datasource, onChange } = props;
 
-  const monacoRef = useRef<Monaco>();
-  const disposalRef = useRef<monacoType.IDisposable>();
+  const monacoRef = useRef<Monaco>(undefined);
+  const disposalRef = useRef<monacoType.IDisposable>(undefined);
 
   const onFocus = useCallback(async () => {
     disposalRef.current = await reRegisterCompletionProvider(

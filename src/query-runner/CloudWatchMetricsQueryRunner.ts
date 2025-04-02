@@ -91,6 +91,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression' | 'expression'
   > {
     return {
+      // eslint-disable-next-line deprecation/deprecation
       alias: this.replaceVariableAndDisplayWarningIfMulti(query.alias, scopedVars),
       metricName: this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars),
       namespace: this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars),

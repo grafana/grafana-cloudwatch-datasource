@@ -1,6 +1,5 @@
 import { DataQueryRequest, DataQueryResponse, dateMath } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { CloudWatchQuery } from '../types';
 
@@ -8,8 +7,8 @@ import { addDataLinksToLogsResponse } from './datalinks';
 
 describe('addDataLinksToLogsResponse', () => {
   const time = {
-    from: dateMath.parse('2016-12-31 15:00:00Z', false)!,
-    to: dateMath.parse('2016-12-31 16:00:00Z', false)!,
+    from: dateMath.toDateTime('2016-12-31 15:00:00Z', { roundUp: false })!,
+    to: dateMath.toDateTime('2016-12-31 16:00:00Z', { roundUp: false })!,
   };
   it('should add data links to response from log group names', async () => {
     const mockResponse: DataQueryResponse = {
@@ -49,7 +48,7 @@ describe('addDataLinksToLogsResponse', () => {
           name: 'Xray',
         };
       },
-    } as DatasourceSrv);
+    } as DataSourceSrv);
 
     await addDataLinksToLogsResponse(
       mockResponse,

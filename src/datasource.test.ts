@@ -25,6 +25,13 @@ import {
 } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
+jest.mock('./utils/templateVariableUtils', () => {
+  return {
+    __esModule: true, // getting 'cannot redefine getVariableName' otherwise
+    ...jest.requireActual('./utils/templateVariableUtils')
+  };
+});
+
 describe('datasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -439,6 +446,7 @@ describe('datasource', () => {
           jsonData: { ...CloudWatchSettings.jsonData, defaultLogGroups: ['testLogGroup'] },
         },
       });
+      // eslint-disable-next-line deprecation/deprecation
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).logGroupNames).toEqual([
         'testLogGroup',
       ]);

@@ -15,8 +15,8 @@ export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Clou
 export const QueryEditor = (props: Props) => {
   const { query, onChange, data } = props;
   const [dataIsStale, setDataIsStale] = useState(false);
-  const [extraHeaderElementLeft, setExtraHeaderElementLeft] = useState<JSX.Element>();
-  const [extraHeaderElementRight, setExtraHeaderElementRight] = useState<JSX.Element>();
+  const [extraHeaderElementLeft, setExtraHeaderElementLeft] = useState<React.JSX.Element>();
+  const [extraHeaderElementRight, setExtraHeaderElementRight] = useState<React.JSX.Element>();
 
   useEffect(() => {
     setDataIsStale(false);

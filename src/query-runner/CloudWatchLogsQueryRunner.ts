@@ -101,6 +101,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       // need to support legacy format variables too
       const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
         this.templateSrv,
+        // eslint-disable-next-line deprecation/deprecation
         target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
         options.scopedVars,
         'text'
@@ -432,6 +433,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   }
 
   private filterQuery(query: CloudWatchLogsQuery) {
+    // eslint-disable-next-line deprecation/deprecation
     const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
     const hasMissingLogGroups = !query.logGroups?.length;
     const hasMissingQueryString = !query.expression?.length;

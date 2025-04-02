@@ -25,8 +25,8 @@ import { SQLCodeEditor } from './SQLCodeEditor';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
-  extraHeaderElementLeft?: React.Dispatch<JSX.Element | undefined>;
-  extraHeaderElementRight?: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementLeft?: React.Dispatch<React.JSX.Element | undefined>;
+  extraHeaderElementRight?: React.Dispatch<React.JSX.Element | undefined>;
 }
 
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [

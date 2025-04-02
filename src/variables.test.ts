@@ -109,13 +109,13 @@ describe('variables', () => {
 
     it('should not run if dimension key not set', async () => {
       const result = await variables.execute({ ...query, dimensionKey: '' });
-      expect(getDimensionValues).not.toBeCalled();
+      expect(getDimensionValues).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
     it('should not run if metric name not set', async () => {
       const result = await variables.execute({ ...query, metricName: '' });
-      expect(getDimensionValues).not.toBeCalled();
+      expect(getDimensionValues).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
     it('should run if values are set', async () => {
@@ -140,7 +140,7 @@ describe('variables', () => {
 
     it('should not run if instance id not set', async () => {
       const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.EBSVolumeIDs });
-      expect(getEbsVolumeIds).not.toBeCalled();
+      expect(getEbsVolumeIds).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
@@ -169,7 +169,7 @@ describe('variables', () => {
 
     it('should not run if instance id not set', async () => {
       const result = await variables.execute({ ...query, attributeName: '' });
-      expect(getEc2InstanceAttribute).not.toBeCalled();
+      expect(getEc2InstanceAttribute).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
@@ -194,7 +194,7 @@ describe('variables', () => {
 
     it('should not run if instance id not set', async () => {
       const result = await variables.execute({ ...query, resourceType: '' });
-      expect(getResourceARNs).not.toBeCalled();
+      expect(getResourceARNs).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 

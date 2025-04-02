@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-// eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
 import selectEvent from 'react-select-event';
 
@@ -84,7 +83,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toBeCalledTimes(1);
+    expect(fetchLogGroups).toHaveBeenCalledTimes(1);
     expect(screen.getAllByRole('checkbox').length).toBe(2);
   });
 
@@ -99,7 +98,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toBeCalledTimes(1);
+    expect(fetchLogGroups).toHaveBeenCalledTimes(1);
     expect(screen.queryAllByRole('checkbox').length).toBe(0);
     expect(screen.getByText('No log groups found')).toBeInTheDocument();
   });
@@ -111,7 +110,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('log group search'), 'something');
     await waitFor(() => screen.getByDisplayValue('something'));
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', logGroupPattern: 'something' });
+    expect(fetchLogGroups).toHaveBeenCalledWith({ accountId: 'all', logGroupPattern: 'something' });
   });
 
   it('calls fetchLogGroups with an account when selected', async () => {
@@ -132,7 +131,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     firstCall.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toBeCalledTimes(1);
+    expect(fetchLogGroups).toHaveBeenCalledTimes(1);
     expect(screen.getAllByRole('checkbox').length).toBe(2);
     await selectEvent.select(screen.getByLabelText('Account Selection'), 'Account Name 123', {
       container: document.body,
@@ -140,7 +139,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     secondCall.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'account-id123', logGroupPattern: '' });
+    expect(fetchLogGroups).toHaveBeenCalledWith({ accountId: 'account-id123', logGroupPattern: '' });
   });
 
   it('shows a log group as checked after the user checks it', async () => {
@@ -284,7 +283,7 @@ describe('LogGroupsSelector', () => {
       />
     );
     await userEvent.click(screen.getByText('Select log groups'));
-    await userEvent.click(screen.getByRole('button', { name: 'Clear value' }));
+    await userEvent.click(screen.getByLabelText('select-clear-value'));
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
       {

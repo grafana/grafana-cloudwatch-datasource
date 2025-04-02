@@ -46,7 +46,7 @@ export interface MetricStat {
   /**
    * @deprecated use statistic
    */
-  statistics?: Array<string>;
+  statistics?: string[];
 }
 
 export const defaultMetricStat: Partial<MetricStat> = {
@@ -56,7 +56,7 @@ export const defaultMetricStat: Partial<MetricStat> = {
 /**
  * A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
  */
-export type Dimensions = Record<string, (string | Array<string>)>;
+export type Dimensions = Record<string, string | string[]>;
 
 /**
  * Shape of a CloudWatch Metrics query
@@ -101,7 +101,7 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   sqlExpression?: string;
 }
 
-export type CloudWatchQueryMode = ('Metrics' | 'Logs' | 'Annotations');
+export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
   Insights = 1,
@@ -117,7 +117,7 @@ export interface SQLExpression {
   /**
    * FROM part of the SQL expression
    */
-  from?: (QueryEditorPropertyExpression | QueryEditorFunctionExpression);
+  from?: QueryEditorPropertyExpression | QueryEditorFunctionExpression;
   /**
    * GROUP BY part of the SQL expression
    */
@@ -146,7 +146,7 @@ export interface SQLExpression {
 
 export interface QueryEditorFunctionExpression {
   name?: string;
-  parameters?: Array<QueryEditorFunctionParameterExpression>;
+  parameters?: QueryEditorFunctionParameterExpression[];
   type: QueryEditorExpressionType.Function;
 }
 
@@ -193,12 +193,12 @@ export interface QueryEditorOperatorExpression {
  */
 export interface QueryEditorOperator {
   name?: string;
-  value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
+  value?: QueryEditorOperatorType | QueryEditorOperatorType[];
 }
 
-export type QueryEditorOperatorValueType = (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
+export type QueryEditorOperatorValueType = QueryEditorOperatorType | QueryEditorOperatorType[];
 
-export type QueryEditorOperatorType = (string | boolean | number);
+export type QueryEditorOperatorType = string | boolean | number;
 
 export interface QueryEditorProperty {
   name?: string;
@@ -210,11 +210,17 @@ export enum QueryEditorPropertyType {
 }
 
 export interface QueryEditorArrayExpression {
-  expressions: (Array<QueryEditorExpression> | Array<QueryEditorArrayExpression>);
-  type: (QueryEditorExpressionType.And | QueryEditorExpressionType.Or);
+  expressions: QueryEditorExpression[] | QueryEditorArrayExpression[];
+  type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or;
 }
 
-export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
+export type QueryEditorExpression =
+  | QueryEditorArrayExpression
+  | QueryEditorPropertyExpression
+  | QueryEditorGroupByExpression
+  | QueryEditorFunctionExpression
+  | QueryEditorFunctionParameterExpression
+  | QueryEditorOperatorExpression;
 
 export enum LogsQueryLanguage {
   CWLI = 'CWLI',
@@ -234,11 +240,11 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
   /**
    * @deprecated use logGroups
    */
-  logGroupNames?: Array<string>;
+  logGroupNames?: string[];
   /**
    * Log groups to query
    */
-  logGroups?: Array<LogGroup>;
+  logGroups?: LogGroup[];
   /**
    * Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
    */
@@ -254,7 +260,7 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
   /**
    * Fields to group the results by, this field is automatically populated whenever the query is updated
    */
-  statsGroups?: Array<string>;
+  statsGroups?: string[];
 }
 
 export const defaultCloudWatchLogsQuery: Partial<CloudWatchLogsQuery> = {

@@ -6,10 +6,8 @@ import {
   dataFrameToJSON,
   DataSourceInstanceSettings,
   DataSourceJsonData,
-  DataSourceRef,
   ScopedVars,
   DataSourceApi,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   TestDataSourceResponse,
@@ -19,6 +17,7 @@ import { GetDataSourceListFilters, setDataSourceSrv, toDataQueryResponse } from 
 import { CloudWatchLogsQueryStatus } from '../types';
 
 import { meta, setupMockedDataSource } from './CloudWatchDataSource';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 export function setupForLogs() {
   function envelope(frame: DataFrame) {

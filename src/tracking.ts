@@ -86,6 +86,7 @@ export const onDashboardLoadedHandler = ({
       }
 
       if (isCloudWatchLogsQuery(query)) {
+        // eslint-disable-next-line deprecation/deprecation
         query.logGroupNames?.length && logsQueries.push(query);
       } else if (isCloudWatchMetricsQuery(query)) {
         const migratedQuery = migrateMetricQuery(query);

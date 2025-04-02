@@ -9,8 +9,8 @@ import { useIsMonitoringAccount, useRegions } from '../../hooks';
 import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
-  extraHeaderElementLeft?: JSX.Element;
-  extraHeaderElementRight?: JSX.Element;
+  extraHeaderElementLeft?: React.JSX.Element;
+  extraHeaderElementRight?: React.JSX.Element;
   dataIsStale: boolean;
 }
 

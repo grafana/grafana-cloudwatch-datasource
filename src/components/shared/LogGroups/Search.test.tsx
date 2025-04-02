@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-// eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
 
 import Search from './Search';
@@ -35,7 +34,7 @@ describe('Search', () => {
     const searchFn = jest.fn();
     render(<Search {...defaultProps} searchFn={searchFn} />);
     await userEvent.type(await screen.findByLabelText('log group search'), 'something');
-    expect(searchFn).toBeCalledWith('s');
+    expect(searchFn).toHaveBeenCalledWith('s');
     expect(searchFn).toHaveBeenLastCalledWith('something');
   });
 });
