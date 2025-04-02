@@ -13,7 +13,7 @@ import { CloudWatchLogsQueryField } from './LogsQueryField';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   query: CloudWatchLogsQuery;
-  extraHeaderElementLeft?: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementLeft?: React.Dispatch<React.JSX.Element | undefined>;
 };
 
 const logsQueryLanguageOptions: Array<SelectableValue<LogsQueryLanguage>> = [

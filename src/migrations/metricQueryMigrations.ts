@@ -25,6 +25,7 @@ export function migrateAliasPatterns(query: CloudWatchMetricsQuery): CloudWatchM
     if (!query.hasOwnProperty('label')) {
       const regex = /{{\s*(.+?)\s*}}/g;
       newQuery.label =
+        // eslint-disable-next-line deprecation/deprecation
         query.alias?.replace(regex, (_, value) => {
           if (aliasPatterns.hasOwnProperty(value)) {
             return `\${${aliasPatterns[value]}}`;

@@ -20,8 +20,8 @@ interface SQLCodeEditorProps {
 export const SQLQueryEditor = (props: SQLCodeEditorProps) => {
   const { query, datasource, onChange } = props;
 
-  const monacoRef = useRef<Monaco>();
-  const disposalRef = useRef<monacoType.IDisposable>();
+  const monacoRef = useRef<Monaco>(undefined);
+  const disposalRef = useRef<monacoType.IDisposable>(undefined);
 
   const onFocus = useCallback(async () => {
     disposalRef.current = await reRegisterCompletionProvider(
