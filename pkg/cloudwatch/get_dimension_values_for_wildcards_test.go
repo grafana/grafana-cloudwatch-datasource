@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func noSkip(ctx context.Context, q *models.CloudWatchQuery) bool { return false }
+func noSkip(context.Context, *models.CloudWatchQuery) bool { return false }
 
 func TestGetDimensionValuesForWildcards(t *testing.T) {
 	executor := &DataSource{im: defaultTestInstanceManager(), logger: log.NewNullLogger()}

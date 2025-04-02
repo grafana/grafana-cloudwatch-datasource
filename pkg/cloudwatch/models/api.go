@@ -27,7 +27,6 @@ type RequestContext struct {
 	Logger                 log.Logger
 }
 
-// Services
 type ListMetricsProvider interface {
 	GetDimensionKeysByDimensionFilter(ctx context.Context, r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error)
 	GetDimensionValuesByDimensionFilter(ctx context.Context, r resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error)
@@ -47,12 +46,10 @@ type RegionsAPIProvider interface {
 	GetRegions(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error)
 }
 
-// Clients
 type MetricsClientProvider interface {
 	ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error)
 }
 
-// APIs - instead of using the API defined in the services within the aws-sdk-go directly, specify a subset of the API with methods that are actually used in a service or a client
 type CloudWatchMetricsAPIProvider interface {
 	ListMetrics(ctx context.Context, in *cloudwatch.ListMetricsInput, optFns ...func(*cloudwatch.Options)) error
 }

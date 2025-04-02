@@ -15,7 +15,7 @@ const (
 	defaultRegion = "default"
 )
 
-func RegionsHandler(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func RegionsHandler(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, _ url.Values) ([]byte, *models.HttpError) {
 	service, err := newRegionsService(ctx, reqCtxFactory, defaultRegion)
 	if err != nil {
 		if errors.Is(err, models.ErrMissingRegion) {

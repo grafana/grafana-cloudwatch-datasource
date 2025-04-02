@@ -13,7 +13,7 @@ type ExternalIdResponse struct {
 	ExternalId string `json:"externalId"`
 }
 
-func ExternalIdHandler(ctx context.Context, reqCtxBeforeAuth models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func ExternalIdHandler(ctx context.Context, reqCtxBeforeAuth models.RequestContextFactoryFunc, _ url.Values) ([]byte, *models.HttpError) {
 	reqCtx, err := reqCtxBeforeAuth(ctx, "")
 	if err != nil {
 		return nil, models.NewHttpError("error in ExternalIdHandler", http.StatusInternalServerError, err)
