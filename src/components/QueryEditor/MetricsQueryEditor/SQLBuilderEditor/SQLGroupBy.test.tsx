@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
@@ -69,7 +69,9 @@ describe('Cloudwatch SQLGroupBy', () => {
     render(<SQLGroupBy {...baseProps} query={query} />);
     const addButton = screen.getByRole('button', { name: 'Add' });
     await userEvent.click(addButton);
-    selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    act(() => {
+      selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    });
     expect(screen.getByText('Account ID')).toBeInTheDocument();
   });
 
@@ -101,7 +103,10 @@ describe('Cloudwatch SQLGroupBy', () => {
 
     expect(screen.getByText('Choose')).toBeInTheDocument();
 
-    selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    act(() => {
+      selectEvent.openMenu(screen.getByLabelText(/Group by/));
+    });
+
     expect(screen.getByText('Template Variables')).toBeInTheDocument();
   });
 

@@ -6,13 +6,18 @@ import './module';
 import { CloudWatchDashboardLoadedEvent } from './__mocks__/dashboardOnLoadedEvent';
 import { CloudWatchQuery } from './types';
 
+// problem with jest hoisting mock() functions and mockHandler being used before being defined
+// getting around it by using var
+// eslint-disable-next-line no-var
+var mockHandler: (e: DashboardLoadedEvent<CloudWatchQuery>) => {};
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
     getAppEvents: () => ({
       subscribe: jest.fn((e, h) => {
-        handler = h;
+        mockHandler = h;
       }),
     }),
   };
@@ -22,7 +27,7 @@ const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQ
 describe('onDashboardLoadedHandler', () => {
   it('should report a `grafana_ds_cloudwatch_dashboard_loaded` interaction ', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
-    handler(CloudWatchDashboardLoadedEvent);
+    mockHandler(CloudWatchDashboardLoadedEvent);
     expect(reportInteraction).toHaveBeenCalledWith('grafana_ds_cloudwatch_dashboard_loaded', {
       dashboard_id: 'dashboard123',
       grafana_version: 'v9.0.0',
