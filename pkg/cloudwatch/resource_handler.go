@@ -8,7 +8,6 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/routes"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
@@ -32,18 +31,17 @@ func (ds *DataSource) newResourceMux() *http.ServeMux {
 	return mux
 }
 
-type handleFn func(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error)
+type handleFn func(ctx context.Context, parameters url.Values) ([]suggestData, error)
 
 func handleResourceReq(handleFunc handleFn, logger log.Logger) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		pluginContext := backend.PluginConfigFromContext(ctx)
 		err := req.ParseForm()
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger.FromContext(ctx))
 			return
 		}
-		data, err := handleFunc(ctx, pluginContext, req.URL.Query())
+		data, err := handleFunc(ctx, req.URL.Query())
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger.FromContext(ctx))
 			return

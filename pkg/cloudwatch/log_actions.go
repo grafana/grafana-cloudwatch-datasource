@@ -57,7 +57,7 @@ func (ds *DataSource) executeLogActions(ctx context.Context, req *backend.QueryD
 
 		query := query
 		eg.Go(func() error {
-			dataframe, err := ds.executeLogAction(ectx, logsQuery, query, req.PluginContext)
+			dataframe, err := ds.executeLogAction(ectx, logsQuery, query)
 			if err != nil {
 				resultChan <- backend.Responses{
 					query.RefID: backend.ErrorResponseWithErrorSource(err),
@@ -94,18 +94,13 @@ func (ds *DataSource) executeLogActions(ctx context.Context, req *backend.QueryD
 	return resp, nil
 }
 
-func (ds *DataSource) executeLogAction(ctx context.Context, logsQuery models.LogsQuery, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
-	instance, err := ds.getInstance(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	region := instance.Settings.Region
+func (ds *DataSource) executeLogAction(ctx context.Context, logsQuery models.LogsQuery, query backend.DataQuery) (*data.Frame, error) {
+	region := ds.Settings.Region
 	if logsQuery.Region != "" {
 		region = logsQuery.Region
 	}
 
-	logsClient, err := ds.getCWLogsClient(ctx, pluginCtx, region)
+	logsClient, err := ds.getCWLogsClient(ctx, region)
 	if err != nil {
 		return nil, err
 	}

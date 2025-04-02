@@ -9,15 +9,14 @@ import (
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 const (
 	defaultRegion = "default"
 )
 
-func RegionsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
-	service, err := newRegionsService(ctx, pluginCtx, reqCtxFactory, defaultRegion)
+func RegionsHandler(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+	service, err := newRegionsService(ctx, reqCtxFactory, defaultRegion)
 	if err != nil {
 		if errors.Is(err, models.ErrMissingRegion) {
 			return nil, models.NewHttpError("Error in Regions Handler when connecting to aws without a default region selection", http.StatusBadRequest, err)
@@ -38,8 +37,8 @@ func RegionsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtx
 	return regionsResponse, nil
 }
 
-var newRegionsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.RegionsAPIProvider, error) {
-	reqCtx, err := reqCtxFactory(ctx, pluginCtx, region)
+var newRegionsService = func(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.RegionsAPIProvider, error) {
+	reqCtx, err := reqCtxFactory(ctx, region)
 	if err != nil {
 		return nil, err
 	}

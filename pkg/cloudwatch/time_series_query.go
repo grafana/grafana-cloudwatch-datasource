@@ -26,12 +26,6 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 		return nil, backend.DownstreamError(fmt.Errorf("request contains no queries"))
 	}
 
-	instance, err := ds.getInstance(ctx, req.PluginContext)
-	if err != nil {
-		resp.Responses[req.Queries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
-		return resp, nil
-	}
-
 	timeBatches := utils.BatchDataQueriesByTimeRange(req.Queries)
 	requestQueriesByTimeAndRegion := make(map[string][]*models.CloudWatchQuery)
 	for i, timeBatch := range timeBatches {
@@ -40,7 +34,7 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 		if !startTime.Before(endTime) {
 			return nil, backend.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"))
 		}
-		requestQueries, err := models.ParseMetricDataQueries(timeBatch, startTime, endTime, instance.Settings.Region, ds.logger.FromContext(ctx),
+		requestQueries, err := models.ParseMetricDataQueries(timeBatch, startTime, endTime, ds.Settings.Region, ds.logger.FromContext(ctx),
 			features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
 		if err != nil {
 			return nil, err
@@ -87,7 +81,7 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 					}
 				}()
 
-				client, err := ds.getCWClient(ctx, req.PluginContext, region)
+				client, err := ds.getCWClient(ctx, region)
 				if err != nil {
 					return err
 				}
@@ -102,7 +96,7 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 					return err
 				}
 
-				requestQueries, err = ds.getDimensionValuesForWildcards(ctx, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit, shouldSkipFetchingWildcards)
+				requestQueries, err = ds.getDimensionValuesForWildcards(ctx, region, client, requestQueries, ds.tagValueCache, ds.Settings.GrafanaSettings.ListMetricsPageLimit, shouldSkipFetchingWildcards)
 				if err != nil {
 					return err
 				}

@@ -11,11 +11,10 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func NamespacesHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, _ url.Values) ([]byte, *models.HttpError) {
-	reqCtx, err := reqCtxFactory(ctx, pluginCtx, "default")
+func NamespacesHandler(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, _ url.Values) ([]byte, *models.HttpError) {
+	reqCtx, err := reqCtxFactory(ctx, "default")
 	if err != nil {
 		return nil, models.NewHttpError("error in NamespacesHandler", http.StatusInternalServerError, err)
 	}
