@@ -1,10 +1,8 @@
-import { toEmitValuesWith } from './toEmitValuesWith';
 import { Observable } from 'rxjs';
 
 type ObservableType<T> = T extends Observable<infer V> ? V : never;
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace jest {
     interface Matchers<R, T = {}> {
       toEmitValues<E = ObservableType<T>>(expected: E[]): Promise<CustomMatcherResult>;
@@ -17,7 +15,3 @@ declare global {
     }
   }
 }
-
-export const matchers = {
-  toEmitValuesWith,
-};

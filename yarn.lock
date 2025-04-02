@@ -2002,6 +2002,14 @@
   resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.9.tgz#d4597dbd4618264c414d7429363e3f50acb66ea2"
   integrity sha512-xzLEyKB50yqCUPUJkIsrVvoWNfFUbIZI+RspLWt8u+tIW/BetMBZtgV2LY/2o+tYH8dRvQ+eoPf3NdhQCcLE2w==
 
+"@types/slate@^0.47.16":
+  version "0.47.16"
+  resolved "https://registry.yarnpkg.com/@types/slate/-/slate-0.47.16.tgz#34d37ae54f9c7ccbd992650d26de5fe2a032c52f"
+  integrity sha512-J1HJUl7jF8F/pmQA9Tae2RG6PV54fwU+nNEQ0C/ZlAV9RzXOrIRzLd40R6lKqsAgDSJE8VtVFKqa6tYZWINcAA==
+  dependencies:
+    "@types/react" "*"
+    immutable "^3.8.2"
+
 "@types/stack-utils@^2.0.0":
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.3.tgz#6209321eb2c1712a7e7466422b8cb1fc0d9dd5d8"
@@ -4672,6 +4680,11 @@ immutable@5.0.3:
   version "5.0.3"
   resolved "https://registry.yarnpkg.com/immutable/-/immutable-5.0.3.tgz#aa037e2313ea7b5d400cd9298fa14e404c933db1"
   integrity sha512-P8IdPQHq3lA1xVeBRi5VPqUm5HDgKnx0Ru51wZz5mjxHr5n3RWhjIpOFU7ybkUxfB+5IToy+OLaHYDBIWsv+uw==
+
+immutable@^3.8.2:
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+  integrity sha512-15gZoQ38eYjEjxkorfbcgBKBL6R7T459OuK+CpcWt7O3KF4uPCx2tD0uFETlUDIyo+1789crbMhTvQBSR5yBMg==
 
 immutable@^4.0.0, immutable@^4.3.6:
   version "4.3.7"
