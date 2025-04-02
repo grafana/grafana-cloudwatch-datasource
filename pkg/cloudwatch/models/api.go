@@ -10,13 +10,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/oam"
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
-type RequestContextFactoryFunc func(ctx context.Context, pluginCtx backend.PluginContext, region string) (reqCtx RequestContext, err error)
+type RequestContextFactoryFunc func(ctx context.Context, region string) (reqCtx RequestContext, err error)
 
-type RouteHandlerFunc func(ctx context.Context, pluginCtx backend.PluginContext, reqContextFactory RequestContextFactoryFunc, parameters url.Values) ([]byte, *HttpError)
+type RouteHandlerFunc func(ctx context.Context, reqContextFactory RequestContextFactoryFunc, parameters url.Values) ([]byte, *HttpError)
 
 type RequestContext struct {
 	MetricsClientProvider  MetricsClientProvider

@@ -8,16 +8,15 @@ import (
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func LogGroupFieldsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func LogGroupFieldsHandler(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	request, err := resources.ParseLogGroupFieldsRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in LogGroupFieldsHandler", http.StatusBadRequest, err)
 	}
 
-	service, err := newLogGroupsService(ctx, pluginCtx, reqCtxFactory, request.Region)
+	service, err := newLogGroupsService(ctx, reqCtxFactory, request.Region)
 	if err != nil {
 		return nil, models.NewHttpError("newLogGroupsService error", http.StatusInternalServerError, err)
 	}

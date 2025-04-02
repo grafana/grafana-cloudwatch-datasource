@@ -10,16 +10,15 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func LogGroupsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func LogGroupsHandler(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	request, err := resources.ParseLogGroupsRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("cannot set both log group name prefix and pattern", http.StatusBadRequest, err)
 	}
 
-	service, err := newLogGroupsService(ctx, pluginCtx, reqCtxFactory, request.Region)
+	service, err := newLogGroupsService(ctx, reqCtxFactory, request.Region)
 	if err != nil {
 		return nil, models.NewHttpError("newLogGroupsService error", http.StatusInternalServerError, err)
 	}
@@ -40,8 +39,8 @@ func LogGroupsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqC
 // newLogGroupsService is a describe log groups service factory.
 //
 // Stubbable by tests.
-var newLogGroupsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-	reqCtx, err := reqCtxFactory(ctx, pluginCtx, region)
+var newLogGroupsService = func(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+	reqCtx, err := reqCtxFactory(ctx, region)
 	if err != nil {
 		return nil, err
 	}

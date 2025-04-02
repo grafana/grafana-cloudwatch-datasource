@@ -23,7 +23,7 @@ type annotationEvent struct {
 	Text  string
 }
 
-func (ds *DataSource) executeAnnotationQuery(ctx context.Context, pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
+func (ds *DataSource) executeAnnotationQuery(ctx context.Context, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	statistic := ""
 
@@ -52,7 +52,7 @@ func (ds *DataSource) executeAnnotationQuery(ctx context.Context, pluginCtx back
 	actionPrefix := model.ActionPrefix
 	alarmNamePrefix := model.AlarmNamePrefix
 
-	cli, err := ds.getCWClient(ctx, pluginCtx, model.Region)
+	cli, err := ds.getCWClient(ctx, model.Region)
 	if err != nil {
 		result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(fmt.Errorf("%v: %w", "failed to get client", err))
 		return result, nil

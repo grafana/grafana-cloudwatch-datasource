@@ -9,16 +9,15 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func MetricsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func MetricsHandler(ctx context.Context, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	metricsRequest, err := resources.GetMetricsRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusBadRequest, err)
 	}
 
-	service, err := newListMetricsService(ctx, pluginCtx, reqCtxFactory, metricsRequest.Region)
+	service, err := newListMetricsService(ctx, reqCtxFactory, metricsRequest.Region)
 	if err != nil {
 		return nil, models.NewHttpError("error in MetricsHandler", http.StatusInternalServerError, err)
 	}
