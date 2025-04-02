@@ -18,7 +18,7 @@ type AccountsService struct {
 	models.OAMAPIProvider
 }
 
-func NewAccountsService(oamClient models.OAMAPIProvider) models.AccountsProvider {
+var NewAccountsService = func(oamClient models.OAMAPIProvider) models.AccountsProvider {
 	return &AccountsService{oamClient}
 }
 

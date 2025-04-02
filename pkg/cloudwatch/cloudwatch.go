@@ -55,6 +55,7 @@ type DataSource struct {
 	logger          log.Logger
 	tagValueCache   *cache.Cache
 	resourceHandler backend.CallResourceHandler
+	requestContext  models.RequestContext
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
