@@ -19,7 +19,7 @@ import (
 // matches a dynamic label
 var dynamicLabel = regexp.MustCompile(`\$\{.+\}`)
 
-func (e *cloudWatchExecutor) parseResponse(ctx context.Context, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
+func (ds *DataSource) parseResponse(ctx context.Context, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
 	queries []*models.CloudWatchQuery) ([]*responseWrapper, error) {
 	aggregatedResponse := aggregateResponse(metricDataOutputs)
 	queriesById := map[string]*models.CloudWatchQuery{}

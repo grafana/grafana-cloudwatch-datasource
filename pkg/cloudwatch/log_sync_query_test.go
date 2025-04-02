@@ -103,7 +103,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		}
 		origExecuteSyncLogQuery := executeSyncLogQuery
 		var syncCalled bool
-		executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		executeSyncLogQuery = func(ctx context.Context, e *DataSource, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			syncCalled = true
 			return nil, nil
 		}
@@ -143,7 +143,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 	t.Run("when query mode is 'Logs' and does not include type or subtype", func(t *testing.T) {
 		origExecuteSyncLogQuery := executeSyncLogQuery
 		syncCalled := false
-		executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		executeSyncLogQuery = func(ctx context.Context, e *DataSource, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			syncCalled = true
 			return nil, nil
 		}

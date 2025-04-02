@@ -17,7 +17,7 @@ import (
 
 const initialAlertPollPeriod = time.Second
 
-var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+var executeSyncLogQuery = func(ctx context.Context, e *DataSource, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
@@ -86,9 +86,9 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) syncQuery(ctx context.Context, logsClient models.CWLogsClient,
 	queryContext backend.DataQuery, logsQuery models.LogsQuery, logsTimeout time.Duration) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
+	startQueryOutput, err := ds.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient models.CW
 
 	attemptCount := 1
 	for range ticker.C {
-		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
+		res, err := ds.executeGetQueryResults(ctx, logsClient, requestParams)
 		if err != nil {
 			return nil, err
 		}

@@ -12,22 +12,22 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
-func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
+func (ds *DataSource) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds, e.logger))
-	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute, e.logger))
-	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns, e.logger))
-	mux.HandleFunc("/log-groups", routes.ResourceRequestMiddleware(routes.LogGroupsHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/metrics", routes.ResourceRequestMiddleware(routes.MetricsHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/dimension-values", routes.ResourceRequestMiddleware(routes.DimensionValuesHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/dimension-keys", routes.ResourceRequestMiddleware(routes.DimensionKeysHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/accounts", routes.ResourceRequestMiddleware(routes.AccountsHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/namespaces", routes.ResourceRequestMiddleware(routes.NamespacesHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/log-group-fields", routes.ResourceRequestMiddleware(routes.LogGroupFieldsHandler, e.logger, e.getRequestContext))
-	mux.HandleFunc("/external-id", routes.ResourceRequestMiddleware(routes.ExternalIdHandler, e.logger, e.getRequestContextOnlySettings))
-	mux.HandleFunc("/regions", routes.ResourceRequestMiddleware(routes.RegionsHandler, e.logger, e.getRequestContext))
+	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(ds.handleGetEbsVolumeIds, ds.logger))
+	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(ds.handleGetEc2InstanceAttribute, ds.logger))
+	mux.HandleFunc("/resource-arns", handleResourceReq(ds.handleGetResourceArns, ds.logger))
+	mux.HandleFunc("/log-groups", routes.ResourceRequestMiddleware(routes.LogGroupsHandler, ds.logger, ds.getRequestContext))
+	mux.HandleFunc("/metrics", routes.ResourceRequestMiddleware(routes.MetricsHandler, ds.logger, ds.getRequestContext))
+	mux.HandleFunc("/dimension-values", routes.ResourceRequestMiddleware(routes.DimensionValuesHandler, ds.logger, ds.getRequestContext))
+	mux.HandleFunc("/dimension-keys", routes.ResourceRequestMiddleware(routes.DimensionKeysHandler, ds.logger, ds.getRequestContext))
+	mux.HandleFunc("/accounts", routes.ResourceRequestMiddleware(routes.AccountsHandler, ds.logger, ds.getRequestContext))
+	mux.HandleFunc("/namespaces", routes.ResourceRequestMiddleware(routes.NamespacesHandler, ds.logger, ds.getRequestContext))
+	mux.HandleFunc("/log-group-fields", routes.ResourceRequestMiddleware(routes.LogGroupFieldsHandler, ds.logger, ds.getRequestContext))
+	mux.HandleFunc("/external-id", routes.ResourceRequestMiddleware(routes.ExternalIdHandler, ds.logger, ds.getRequestContextOnlySettings))
+	mux.HandleFunc("/regions", routes.ResourceRequestMiddleware(routes.RegionsHandler, ds.logger, ds.getRequestContext))
 	// remove this once AWS's Cross Account Observability is supported in GovCloud
-	mux.HandleFunc("/legacy-log-groups", handleResourceReq(e.handleGetLogGroups, e.logger))
+	mux.HandleFunc("/legacy-log-groups", handleResourceReq(ds.handleGetLogGroups, ds.logger))
 
 	return mux
 }

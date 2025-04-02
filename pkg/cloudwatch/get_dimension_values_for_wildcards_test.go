@@ -18,7 +18,7 @@ import (
 func noSkip(ctx context.Context, q *models.CloudWatchQuery) bool { return false }
 
 func TestGetDimensionValuesForWildcards(t *testing.T) {
-	executor := &cloudWatchExecutor{im: defaultTestInstanceManager(), logger: log.NewNullLogger()}
+	executor := &DataSource{im: defaultTestInstanceManager(), logger: log.NewNullLogger()}
 	ctx := context.Background()
 
 	t.Run("Tag value cache", func(t *testing.T) {
