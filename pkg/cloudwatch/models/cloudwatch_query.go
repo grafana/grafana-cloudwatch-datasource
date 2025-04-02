@@ -206,19 +206,19 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 	if err != nil {
 		return "", err
 	}
-	url, err := url.Parse(fmt.Sprintf(`https://%s/cloudwatch/deeplink.js`, endpoint))
+	consoleURL, err := url.Parse(fmt.Sprintf(`https://%s/cloudwatch/deeplink.js`, endpoint))
 	if err != nil {
 		return "", fmt.Errorf("unable to parse CloudWatch console deep link")
 	}
 
-	fragment := url.Query()
+	fragment := consoleURL.Query()
 	fragment.Set("graph", string(linkProps))
 
-	query := url.Query()
+	query := consoleURL.Query()
 	query.Set("region", q.Region)
-	url.RawQuery = query.Encode()
+	consoleURL.RawQuery = query.Encode()
 
-	return fmt.Sprintf(`%s#metricsV2:%s`, url.String(), fragment.Encode()), nil
+	return fmt.Sprintf(`%s#metricsV2:%s`, consoleURL.String(), fragment.Encode()), nil
 }
 
 const timeSeriesQuery = "timeSeriesQuery"

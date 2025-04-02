@@ -105,22 +105,22 @@ func (ds *DataSource) executeLogAction(ctx context.Context, logsQuery models.Log
 		return nil, err
 	}
 
-	var data *data.Frame = nil
+	var frame *data.Frame
 	switch logsQuery.Subtype {
 	case "StartQuery":
-		data, err = ds.handleStartQuery(ctx, logsClient, logsQuery, query.TimeRange, query.RefID)
+		frame, err = ds.handleStartQuery(ctx, logsClient, logsQuery, query.TimeRange, query.RefID)
 	case "StopQuery":
-		data, err = ds.handleStopQuery(ctx, logsClient, logsQuery)
+		frame, err = ds.handleStopQuery(ctx, logsClient, logsQuery)
 	case "GetQueryResults":
-		data, err = ds.handleGetQueryResults(ctx, logsClient, logsQuery, query.RefID)
+		frame, err = ds.handleGetQueryResults(ctx, logsClient, logsQuery, query.RefID)
 	case "GetLogEvents":
-		data, err = ds.handleGetLogEvents(ctx, logsClient, logsQuery)
+		frame, err = ds.handleGetLogEvents(ctx, logsClient, logsQuery)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", logsQuery.Subtype, err)
 	}
 
-	return data, nil
+	return frame, nil
 }
 
 func (ds *DataSource) handleGetLogEvents(ctx context.Context, logsClient models.CWLogsClient,
@@ -130,10 +130,10 @@ func (ds *DataSource) handleGetLogEvents(ctx context.Context, logsClient models.
 		limit = *logsQuery.Limit
 	}
 	if logsQuery.LogGroupName == "" {
-		return nil, backend.DownstreamError(fmt.Errorf("Error: Parameter 'logGroupName' is required"))
+		return nil, backend.DownstreamError(fmt.Errorf("parameter 'logGroupName' is required"))
 	}
 	if logsQuery.LogStreamName == "" {
-		return nil, backend.DownstreamError(fmt.Errorf("Error: Parameter 'logStreamName' is required"))
+		return nil, backend.DownstreamError(fmt.Errorf("parameter 'logStreamName' is required"))
 	}
 
 	queryRequest := &cloudwatchlogs.GetLogEventsInput{
