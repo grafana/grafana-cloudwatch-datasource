@@ -47,7 +47,7 @@ describe('Account', () => {
     render(<Account {...props} onChange={onChange} />);
     expect(screen.getByLabelText('Account Selection')).toBeInTheDocument();
     await selectEvent.select(screen.getByLabelText('Account Selection'), 'test-account3', { container: document.body });
-    expect(onChange).toBeCalledWith('999999999999');
+    expect(onChange).toHaveBeenCalledWith('999999999999');
   });
 
   it("should default to 'all' if there is no selection", () => {

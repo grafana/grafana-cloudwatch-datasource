@@ -353,7 +353,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-1');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-2');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'eu-north-1');
-          expect(memoizedDebounceSpy).toBeCalledTimes(3);
+          expect(memoizedDebounceSpy).toHaveBeenCalledTimes(3);
         });
       });
     });

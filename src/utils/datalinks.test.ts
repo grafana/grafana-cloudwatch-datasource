@@ -8,8 +8,8 @@ import { addDataLinksToLogsResponse } from './datalinks';
 
 describe('addDataLinksToLogsResponse', () => {
   const time = {
-    from: dateMath.parse('2016-12-31 15:00:00Z', false)!,
-    to: dateMath.parse('2016-12-31 16:00:00Z', false)!,
+    from: dateMath.toDateTime('2016-12-31 15:00:00Z', { roundUp: false })!,
+    to: dateMath.toDateTime('2016-12-31 16:00:00Z', { roundUp: false })!,
   };
   it('should add data links to response from log group names', async () => {
     const mockResponse: DataQueryResponse = {
