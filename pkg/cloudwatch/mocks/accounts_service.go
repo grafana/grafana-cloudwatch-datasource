@@ -3,7 +3,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
 	"github.com/stretchr/testify/mock"
 )
 
