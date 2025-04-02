@@ -42,7 +42,7 @@ func (e *AWSError) Error() string {
 	return fmt.Sprintf("CloudWatch error: %s: %s", e.Code, e.Message)
 }
 
-func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (ds *DataSource) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	resultChan := make(chan backend.Responses, len(req.Queries))
@@ -57,7 +57,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 
 		query := query
 		eg.Go(func() error {
-			dataframe, err := e.executeLogAction(ectx, logsQuery, query, req.PluginContext)
+			dataframe, err := ds.executeLogAction(ectx, logsQuery, query, req.PluginContext)
 			if err != nil {
 				resultChan <- backend.Responses{
 					query.RefID: backend.ErrorResponseWithErrorSource(err),
@@ -94,8 +94,8 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logsQuery models.LogsQuery, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
-	instance, err := e.getInstance(ctx, pluginCtx)
+func (ds *DataSource) executeLogAction(ctx context.Context, logsQuery models.LogsQuery, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
+	instance, err := ds.getInstance(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logsQuery mod
 		region = logsQuery.Region
 	}
 
-	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
+	logsClient, err := ds.getCWLogsClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +113,13 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logsQuery mod
 	var data *data.Frame = nil
 	switch logsQuery.Subtype {
 	case "StartQuery":
-		data, err = e.handleStartQuery(ctx, logsClient, logsQuery, query.TimeRange, query.RefID)
+		data, err = ds.handleStartQuery(ctx, logsClient, logsQuery, query.TimeRange, query.RefID)
 	case "StopQuery":
-		data, err = e.handleStopQuery(ctx, logsClient, logsQuery)
+		data, err = ds.handleStopQuery(ctx, logsClient, logsQuery)
 	case "GetQueryResults":
-		data, err = e.handleGetQueryResults(ctx, logsClient, logsQuery, query.RefID)
+		data, err = ds.handleGetQueryResults(ctx, logsClient, logsQuery, query.RefID)
 	case "GetLogEvents":
-		data, err = e.handleGetLogEvents(ctx, logsClient, logsQuery)
+		data, err = ds.handleGetLogEvents(ctx, logsClient, logsQuery)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", logsQuery.Subtype, err)
@@ -128,7 +128,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logsQuery mod
 	return data, nil
 }
 
-func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) handleGetLogEvents(ctx context.Context, logsClient models.CWLogsClient,
 	logsQuery models.LogsQuery) (*data.Frame, error) {
 	limit := defaultEventLimit
 	if logsQuery.Limit != nil && *logsQuery.Limit > 0 {
@@ -181,7 +181,7 @@ func (e *cloudWatchExecutor) handleGetLogEvents(ctx context.Context, logsClient 
 	return data.NewFrame("logEvents", timestampField, messageField), nil
 }
 
-func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.CWLogsClient,
 	logsQuery models.LogsQuery, timeRange backend.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
 	startTime := timeRange.From
 	endTime := timeRange.To
@@ -239,22 +239,22 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient m
 		startQueryInput.QueryLanguage = cloudwatchlogstypes.QueryLanguage(*logsQuery.QueryLanguage)
 	}
 
-	e.logger.FromContext(ctx).Debug("Calling startquery with context with input", "input", startQueryInput)
+	ds.logger.FromContext(ctx).Debug("Calling startquery with context with input", "input", startQueryInput)
 	resp, err := logsClient.StartQuery(ctx, startQueryInput)
 	if err != nil {
 		if errors.Is(err, &cloudwatchlogstypes.LimitExceededException{}) {
-			e.logger.FromContext(ctx).Debug("ExecuteStartQuery limit exceeded", "err", err)
+			ds.logger.FromContext(ctx).Debug("ExecuteStartQuery limit exceeded", "err", err)
 		} else if errors.Is(err, &cloudwatchlogstypes.ThrottlingException{}) {
-			e.logger.FromContext(ctx).Debug("ExecuteStartQuery rate exceeded", "err", err)
+			ds.logger.FromContext(ctx).Debug("ExecuteStartQuery rate exceeded", "err", err)
 		}
 		err = backend.DownstreamError(err)
 	}
 	return resp, err
 }
 
-func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) handleStartQuery(ctx context.Context, logsClient models.CWLogsClient,
 	logsQuery models.LogsQuery, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
-	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, logsQuery, timeRange)
+	startQueryResponse, err := ds.executeStartQuery(ctx, logsClient, logsQuery, timeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient mo
 	return dataFrame, nil
 }
 
-func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) executeStopQuery(ctx context.Context, logsClient models.CWLogsClient,
 	logsQuery models.LogsQuery) (*cloudwatchlogs.StopQueryOutput, error) {
 	queryInput := &cloudwatchlogs.StopQueryInput{
 		QueryId: aws.String(logsQuery.QueryId),
@@ -298,9 +298,9 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient mo
 	return response, err
 }
 
-func (e *cloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) handleStopQuery(ctx context.Context, logsClient models.CWLogsClient,
 	logsQuery models.LogsQuery) (*data.Frame, error) {
-	response, err := e.executeStopQuery(ctx, logsClient, logsQuery)
+	response, err := ds.executeStopQuery(ctx, logsClient, logsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +309,7 @@ func (e *cloudWatchExecutor) handleStopQuery(ctx context.Context, logsClient mod
 	return dataFrame, nil
 }
 
-func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) executeGetQueryResults(ctx context.Context, logsClient models.CWLogsClient,
 	logsQuery models.LogsQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	queryInput := &cloudwatchlogs.GetQueryResultsInput{
 		QueryId: aws.String(logsQuery.QueryId),
@@ -326,9 +326,9 @@ func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 	return getQueryResultsResponse, err
 }
 
-func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient models.CWLogsClient,
+func (ds *DataSource) handleGetQueryResults(ctx context.Context, logsClient models.CWLogsClient,
 	logsQuery models.LogsQuery, refID string) (*data.Frame, error) {
-	getQueryResultsOutput, err := e.executeGetQueryResults(ctx, logsClient, logsQuery)
+	getQueryResultsOutput, err := ds.executeGetQueryResults(ctx, logsClient, logsQuery)
 	if err != nil {
 		return nil, err
 	}

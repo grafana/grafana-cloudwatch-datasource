@@ -15,7 +15,7 @@ import (
 
 const keySeparator = "|&|"
 
-func (e *cloudWatchExecutor) buildMetricDataQuery(ctx context.Context, query *models.CloudWatchQuery) (cloudwatchtypes.MetricDataQuery, error) {
+func (ds *DataSource) buildMetricDataQuery(ctx context.Context, query *models.CloudWatchQuery) (cloudwatchtypes.MetricDataQuery, error) {
 	mdq := cloudwatchtypes.MetricDataQuery{
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
