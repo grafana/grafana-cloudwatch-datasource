@@ -55,7 +55,6 @@ type DataSource struct {
 	logger          log.Logger
 	tagValueCache   *cache.Cache
 	resourceHandler backend.CallResourceHandler
-	requestContext  models.RequestContext
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
@@ -121,44 +120,6 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 		p = append(p, "uname", pCtx.User.Login)
 	}
 	return log.WithContextualAttributes(ctx, p)
-}
-
-func (ds *DataSource) getRequestContext(ctx context.Context, region string) (models.RequestContext, error) {
-	if region == defaultRegion {
-		region = ds.Settings.Region
-	}
-
-	cfg, err := ds.newAWSConfig(ctx, defaultRegion)
-	if err != nil {
-		return models.RequestContext{}, err
-	}
-	ec2client := NewEC2API(cfg)
-
-	cfg, err = ds.newAWSConfig(ctx, region)
-	if err != nil {
-		return models.RequestContext{}, err
-	}
-
-	return models.RequestContext{
-		OAMAPIProvider:        NewOAMAPI(cfg),
-		MetricsClientProvider: clients.NewMetricsClient(NewCWClient(cfg), ds.Settings.GrafanaSettings.ListMetricsPageLimit),
-		LogsAPIProvider:       NewLogsAPI(cfg),
-		EC2APIProvider:        ec2client,
-		Settings:              ds.Settings,
-		Logger:                ds.logger.FromContext(ctx),
-	}, nil
-}
-
-// getRequestContextOnlySettings is useful for resource endpoints that are called before auth has been configured such as external-id that need access to settings but nothing else
-func (ds *DataSource) getRequestContextOnlySettings(ctx context.Context, _ string) (models.RequestContext, error) {
-	return models.RequestContext{
-		OAMAPIProvider:        nil,
-		MetricsClientProvider: nil,
-		LogsAPIProvider:       nil,
-		EC2APIProvider:        nil,
-		Settings:              ds.Settings,
-		Logger:                ds.logger.FromContext(ctx),
-	}, nil
 }
 
 func (ds *DataSource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
