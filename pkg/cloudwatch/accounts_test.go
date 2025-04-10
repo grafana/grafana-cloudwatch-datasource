@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"fmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/patrickmn/go-cache"
@@ -16,15 +15,9 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/assert"
 )
 
-type mockConfigProvider struct{}
-
-func (mcp mockConfigProvider) GetConfig(ctx context.Context, authSettings awsauth.Settings) (aws.Config, error) {
-	return aws.Config{}, nil
-}
 func newTestDatasource(opts ...func(*DataSource)) *DataSource {
 	ds := &DataSource{
 		AWSConfigProvider: awsauth.NewFakeConfigProvider(false),
