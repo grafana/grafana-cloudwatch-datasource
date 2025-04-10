@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,8 +16,6 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
 )
-
-var logger = log.NewNullLogger()
 
 func Test_DimensionKeys_Route(t *testing.T) {
 	origNewListMetricsService := services.NewListMetricsService
