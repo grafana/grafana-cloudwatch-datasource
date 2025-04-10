@@ -39,5 +39,8 @@
     ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=11.6.x"
   }
 }
