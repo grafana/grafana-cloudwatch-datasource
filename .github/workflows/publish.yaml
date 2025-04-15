@@ -28,3 +28,5 @@ jobs:
       branch: ${{ github.event.inputs.branch }}
       environment: ${{ github.event.inputs.environment }}
       docs-only: ${{ fromJSON(github.event.inputs.docs-only) }}
+      node-version: '22'
+      golangci-lint-version: '2.0.2'
