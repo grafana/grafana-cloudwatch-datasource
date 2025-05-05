@@ -157,6 +157,7 @@ export class CloudWatchDatasource
       ),
       ...(isCloudWatchMetricsQuery(query) &&
         this.metricsQueryRunner.interpolateMetricsQueryVariables(query, scopedVars)),
+      ...(isCloudWatchLogsQuery(query) && this.logsQueryRunner.interpolateLogsQueryVariables(query, scopedVars)),
     }));
   }
 
