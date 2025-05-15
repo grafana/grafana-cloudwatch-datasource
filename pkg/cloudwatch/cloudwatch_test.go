@@ -31,7 +31,7 @@ func TestNewInstanceSettings(t *testing.T) {
 		name       string
 		settings   backend.DataSourceInstanceSettings
 		settingCtx context.Context
-		expectedDS DataSource
+		expectedDS *DataSource
 		Err        require.ErrorAssertionFunc
 	}{
 		{
@@ -59,7 +59,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				awsds.ListMetricsPageLimitKeyName:        "50",
 				proxy.PluginSecureSocksProxyEnabled:      "true",
 			})),
-			expectedDS: DataSource{
+			expectedDS: &DataSource{
 				Settings: models.CloudWatchSettings{
 					AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 						Profile:       "foo",
@@ -89,10 +89,10 @@ func TestNewInstanceSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			instance, err := NewDatasource(tt.settingCtx, tt.settings)
-			ds := instance.(DataSource)
+			ds := instance.(*DataSource)
 			tt.Err(t, err)
 			assert.Equal(t, tt.expectedDS.Settings.GrafanaSettings, ds.Settings.GrafanaSettings)
-			datasourceComparer := cmp.Comparer(func(d1 DataSource, d2 DataSource) bool {
+			datasourceComparer := cmp.Comparer(func(d1 *DataSource, d2 *DataSource) bool {
 				return d1.Settings.Profile == d2.Settings.Profile &&
 					d1.Settings.Region == d2.Settings.Region &&
 					d1.Settings.AuthType == d2.Settings.AuthType &&
@@ -103,7 +103,7 @@ func TestNewInstanceSettings(t *testing.T) {
 					d1.Settings.AccessKey == d2.Settings.AccessKey &&
 					d1.Settings.SecretKey == d2.Settings.SecretKey
 			})
-			if !cmp.Equal(instance.(DataSource), tt.expectedDS, datasourceComparer) {
+			if !cmp.Equal(instance.(*DataSource), tt.expectedDS, datasourceComparer) {
 				t.Errorf("Unexpected result. Expecting\n%v \nGot:\n%v", instance, tt.expectedDS)
 			}
 		})
