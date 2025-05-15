@@ -25,6 +25,13 @@ import {
 } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
+jest.mock('./utils/templateVariableUtils', () => {
+  return {
+    __esModule: true, // getting 'cannot redefine getVariableName' otherwise
+    ...jest.requireActual('./utils/templateVariableUtils')
+  };
+});
+
 describe('datasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
