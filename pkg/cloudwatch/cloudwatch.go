@@ -95,7 +95,7 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		return nil, err
 	}
 
-	ds := DataSource{
+	ds := &DataSource{
 		Settings: instanceSettings,
 		// this is used to build a custom dialer when secure socks proxy is enabled
 		ProxyOpts:         opts.ProxyOptions,
