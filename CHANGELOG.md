@@ -1,5 +1,8 @@
 # Changelog
 
+## 12.0.3
+- Externalization: bump grafana-aws-sdk for assume role fix, bump plugin-sdk-go for good measure [#21](https://github.com/grafana/grafana-cloudwatch-datasource/pull/21)
+- 
 ## 12.0.2
 
 - Externalization: Fix runtime jsx configuration in [#18](https://github.com/grafana/grafana-cloudwatch-datasource/pull/18)
