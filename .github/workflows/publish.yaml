@@ -1,6 +1,5 @@
 name: Plugins - CD
 run-name: Deploy ${{ inputs.branch }} to ${{ inputs.environment }} by @${{ github.actor }}
-permissions: {}
 
 on:
   workflow_dispatch:
@@ -21,16 +20,20 @@ on:
         default: false
         type: boolean
 
+permissions: {}
+
 jobs:
   cd:
     name: CD
     permissions:
-      contents: read
+      contents: write
       id-token: write
-    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@main
+      attestations: write
+    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@main # zizmor: ignore[unpinned-uses]
     with:
       branch: ${{ github.event.inputs.branch }}
       environment: ${{ github.event.inputs.environment }}
       docs-only: ${{ fromJSON(github.event.inputs.docs-only) }}
+      scopes: universal
       node-version: '22'
       golangci-lint-version: '2.0.2'
