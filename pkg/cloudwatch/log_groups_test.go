@@ -186,6 +186,7 @@ func TestLogGroupsRoute(t *testing.T) {
 		})
 	})
 
+
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)

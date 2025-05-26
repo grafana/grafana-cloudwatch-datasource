@@ -26,3 +26,11 @@ updates:
       all-node-dependencies:
         patterns:
           - '*'
+  - package-ecosystem: 'gomod'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    groups:
+      all-go-dependencies:
+        patterns:
+          - '*'
