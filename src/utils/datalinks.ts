@@ -74,7 +74,7 @@ function createAwsConsoleLink(
   const arns = (target.logGroups ?? [])
     .filter((group) => group?.arn)
     .map((group) => (group.arn ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
-  // eslint-disable-next-line deprecation/deprecation
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   const logGroupNames = target.logGroupNames ?? [];
   const sources = arns?.length ? arns : logGroupNames;
   const interpolatedExpression = target.expression ? replace(target.expression) : '';

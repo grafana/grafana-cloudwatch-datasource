@@ -34,7 +34,7 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       <LogGroupsFieldWrapper
         region={query.region}
         datasource={datasource}
-        // eslint-disable-next-line deprecation/deprecation
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         legacyLogGroupNames={query.logGroupNames}
         logGroups={query.logGroups}
         onChange={(logGroups) => {
