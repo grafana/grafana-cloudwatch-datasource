@@ -23,7 +23,7 @@ export function CloudWatchLink({ panelData, query, datasource }: Props) {
       const arns = (query.logGroups ?? [])
         .filter((group) => group?.arn)
         .map((group) => (group.arn ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
-      // eslint-disable-next-line deprecation/deprecation
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const logGroupNames = query.logGroupNames;
       let sources = arns?.length ? arns : logGroupNames;
 

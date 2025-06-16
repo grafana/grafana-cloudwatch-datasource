@@ -52,7 +52,7 @@ describe('metricQueryMigrations', () => {
         const testQuery = { ...baseQuery, alias };
         const result = migrateAliasPatterns(testQuery);
         expect(result.label).toBe(label);
-        // eslint-disable-next-line deprecation/deprecation
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         expect(result.alias).toBe(alias);
       });
     });
@@ -70,7 +70,7 @@ describe('metricQueryMigrations', () => {
         const testQuery = { ...baseQuery, alias, label };
         const result = migrateAliasPatterns(testQuery);
         expect(result.label).toBe(label);
-        // eslint-disable-next-line deprecation/deprecation
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         expect(result.alias).toBe(alias);
       });
     });

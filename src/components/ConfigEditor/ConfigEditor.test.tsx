@@ -199,7 +199,7 @@ describe('Render', () => {
   it('should show arn role field', async () => {
     setup({
       jsonData: {
-        authType: AwsAuthType.ARN,
+        authType: AwsAuthType.Default,
       },
     });
     await waitFor(async () => expect(screen.getByText('Assume Role ARN')).toBeInTheDocument());
@@ -213,6 +213,7 @@ describe('Render', () => {
   it('should show a deprecation warning if `arn` auth type is used', async () => {
     setup({
       jsonData: {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         authType: AwsAuthType.ARN,
       },
     });
