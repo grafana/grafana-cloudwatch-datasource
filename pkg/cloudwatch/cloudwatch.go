@@ -68,7 +68,7 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 		CredentialsProfile: ds.Settings.Profile,
 		LegacyAuthType:     ds.Settings.AuthType,
 		AssumeRoleARN:      ds.Settings.AssumeRoleARN,
-		ExternalID:         ds.Settings.GrafanaSettings.ExternalID,
+		ExternalID:         ds.Settings.ExternalID,
 		Endpoint:           ds.Settings.Endpoint,
 		Region:             region,
 		AccessKey:          ds.Settings.AccessKey,
