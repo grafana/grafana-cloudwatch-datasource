@@ -453,6 +453,7 @@ describe('datasource', () => {
           jsonData: { ...CloudWatchSettings.jsonData, defaultLogGroups: ['testLogGroup'] },
         },
       });
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).logGroupNames).toEqual([
         'testLogGroup',
       ]);
@@ -474,6 +475,7 @@ describe('datasource', () => {
       const { datasource } = setupMockedDataSource({
         customInstanceSettings: {
           ...CloudWatchSettings,
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
           jsonData: { ...CloudWatchSettings.jsonData, logGroups: defaultLogGroups },
         },
       });

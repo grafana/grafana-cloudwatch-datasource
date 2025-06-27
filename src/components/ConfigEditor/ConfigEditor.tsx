@@ -37,7 +37,7 @@ from environment variables or IAM roles';
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
-  // eslint-disable-next-line deprecation/deprecation
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   const { defaultLogGroups, logsTimeout, defaultRegion, logGroups } = options.jsonData;
   const datasource = useDatasource(props);
   const logsTimeoutError = useTimoutValidation(logsTimeout);

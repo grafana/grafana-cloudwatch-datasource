@@ -105,7 +105,7 @@ const LogsCheatSheet = (props: Props) => {
       queryMode: 'Logs',
       region: props.query.region,
       id: props.query.refId ?? 'A',
-      // eslint-disable-next-line deprecation/deprecation
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       logGroupNames: 'logGroupNames' in props.query ? props.query.logGroupNames : [],
       logGroups: 'logGroups' in props.query ? props.query.logGroups : [],
     });
