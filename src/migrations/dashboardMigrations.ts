@@ -1,4 +1,4 @@
-/* eslint-disable deprecation/deprecation */
+/* eslint-disable @typescript-eslint/no-deprecated */
 
 // Functions in this file are called from the app/features/dashboard/state/DashboardMigrator.
 // Migrations applied by the DashboardMigrator are performed before the plugin is loaded.

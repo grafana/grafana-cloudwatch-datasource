@@ -117,7 +117,6 @@ function makeDatasource(): CloudWatchDatasource {
         return Promise.resolve([{ value: { name: 'field1' } }, { value: { name: '@message' } }]);
       },
     },
-    /* eslint-disable @typescript-eslint/no-explicit-any */
   } as any;
 }
 
@@ -134,7 +133,6 @@ function getProvideCompletionItems(query: string): Promise<TypeaheadOutput> {
   return provider.provideCompletionItems(
     {
       value,
-      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any,
     { logGroups: [{ name: 'logGroup1', arn: 'logGroup1' }], region: 'custom' }
   );
@@ -149,14 +147,12 @@ class ValueMock {
       start: {
         offset: cursorOffset,
       },
-      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any;
 
     this.data = {
       get() {
         return tokens;
       },
-      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any;
   }
 }
@@ -166,11 +162,9 @@ class ValueMock {
  * @param tokens
  */
 function addTokenMetadata(tokens: Array<string | Token>): Token[] {
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   let prev = undefined as any;
   let offset = 0;
   return tokens.reduce((acc, token) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     let newToken: any;
     if (typeof token === 'string') {
       newToken = {

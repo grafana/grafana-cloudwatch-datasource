@@ -4,21 +4,21 @@ go 1.24.1
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.44.1
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.47.1
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.211.0
-	github.com/aws/aws-sdk-go-v2/service/oam v1.17.2
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.1
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.0
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.50.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.222.0
+	github.com/aws/aws-sdk-go-v2/service/oam v1.18.0
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.3
 	github.com/aws/smithy-go v1.22.3
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/grafana-aws-sdk v0.38.3
+	github.com/grafana/grafana-aws-sdk v0.38.4
 	github.com/grafana/grafana-plugin-sdk-go v0.277.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.22.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/sync v0.13.0
+	golang.org/x/sync v0.14.0
 )
 
 require (
