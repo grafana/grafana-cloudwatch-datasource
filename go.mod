@@ -2,6 +2,8 @@ module github.com/grafana/grafana-cloudwatch-datasource
 
 go 1.24.4
 
+toolchain go1.24.5
+
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3
@@ -13,7 +15,7 @@ require (
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/grafana-aws-sdk v1.0.2
+	github.com/grafana/grafana-aws-sdk v1.0.3
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.22.0
@@ -127,7 +129,8 @@ require (
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/genproto v0.0.0-20210630183607-d20f26d13c79 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250519155744-55703ea1f237 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250519155744-55703ea1f237 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
