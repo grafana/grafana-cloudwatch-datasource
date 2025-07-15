@@ -1,5 +1,8 @@
 # Changelog
 
+## 12.0.5
+- Fix PDC transport issue & bump grafana-aws-sdk in [#37](https://github.com/grafana/grafana-cloudwatch-datasource/pull/34)
+
 ## 12.0.4
 - Fix externalID handling by @njvrzm in [#34](https://github.com/grafana/grafana-cloudwatch-datasource/pull/34)
 - Add missing regions to constants by @idastambuk in [#31](https://github.com/grafana/grafana-cloudwatch-datasource/pull/31)
