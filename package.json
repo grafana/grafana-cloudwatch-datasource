@@ -30,7 +30,7 @@
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/common-tags": "^1.8.4",
-    "@types/jest": "^29.5.0",
+    "@types/jest": "^30.0.0",
     "@types/jsurl": "^0.1.2",
     "@types/node": "^22.15.35",
     "@types/prismjs": "^1.26.5",
