@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
@@ -25,8 +26,8 @@ import { SQLCodeEditor } from './SQLCodeEditor';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
-  extraHeaderElementLeft?: React.Dispatch<React.JSX.Element | undefined>;
-  extraHeaderElementRight?: React.Dispatch<React.JSX.Element | undefined>;
+  extraHeaderElementLeft?: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementRight?: React.Dispatch<JSX.Element | undefined>;
 }
 
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
@@ -58,6 +59,17 @@ export const MetricsQueryEditor = (props: Props) => {
     },
     [setShowConfirm, onChange, codeEditorIsDirty, query]
   );
+
+  const updateAccounIdOnMount = () => {
+    if (config.featureToggles.cloudWatchCrossAccountQuerying && query.accountId) {
+      datasource.resources.isMonitoringAccount(query.region).then((isMonitoring) => {
+        if (!isMonitoring && query.accountId) {
+          onChange({ ...query, accountId: undefined });
+        }
+      });
+    }
+  };
+  useEffect(updateAccounIdOnMount, [datasource, onChange, query]);
 
   useEffect(() => {
     extraHeaderElementLeft?.(
