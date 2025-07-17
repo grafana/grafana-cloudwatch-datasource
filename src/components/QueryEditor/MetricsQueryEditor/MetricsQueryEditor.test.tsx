@@ -5,11 +5,11 @@ import { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data';
 import * as ui from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
-import { setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
-import { initialVariableModelState } from '../../../mocks/CloudWatchVariables';
 import { CloudWatchJsonData, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../../types';
 
 import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
+import { initialVariableModelState } from '__mocks__/CloudWatchVariables';
+import { setupMockedTemplateService } from '__mocks__/CloudWatchDataSource';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual<typeof ui>('@grafana/ui'),
