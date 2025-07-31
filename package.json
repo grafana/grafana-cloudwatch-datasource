@@ -2,12 +2,12 @@
   "name": "grafana-cloudwatch-datasource",
   "version": "12.0.5",
   "scripts": {
-    "build": "webpack -c ./webpack.config.ts --env production",
-    "dev": "webpack -w -c ./webpack.config.ts --env development",
+    "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
+    "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint --cache .",
+    "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx .",
     "lint:fix": "yarn run lint --fix && prettier --write --list-different .",
     "e2e": "playwright test",
     "server": "docker compose up --build",
@@ -67,7 +67,8 @@
     "webpack-cli": "^6.0.1",
     "webpack-livereload-plugin": "^3.0.2",
     "webpack-subresource-integrity": "^5.1.0",
-    "webpack-virtual-modules": "^0.6.2"
+    "webpack-virtual-modules": "^0.6.2",
+    "@types/testing-library__jest-dom": "5.14.8"
   },
   "engines": {
     "node": ">=22"
@@ -79,8 +80,8 @@
     "@grafana/plugin-ui": "^0.10.7",
     "@grafana/runtime": "^12.1.0",
     "@grafana/scenes": "^6.13.0",
-    "@grafana/schema": "^12.0.1",
-    "@grafana/ui": "^12.0.1",
+    "@grafana/schema": "^12.1.0",
+    "@grafana/ui": "^12.1.0",
     "common-tags": "^1.8.2",
     "jsurl": "^0.1.5",
     "react": "18.3.1",
