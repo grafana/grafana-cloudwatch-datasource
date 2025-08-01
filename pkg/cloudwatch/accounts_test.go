@@ -2,13 +2,15 @@ package cloudwatch
 
 import (
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/patrickmn/go-cache"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/patrickmn/go-cache"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/mocks"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
@@ -23,6 +25,9 @@ func newTestDatasource(opts ...func(*DataSource)) *DataSource {
 		AWSConfigProvider: awsauth.NewFakeConfigProvider(false),
 		logger:            log.NewNullLogger(),
 		tagValueCache:     cache.New(0, 0),
+		Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-1"},
+		},
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 	for _, opt := range opts {
