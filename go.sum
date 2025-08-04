@@ -119,6 +119,8 @@ github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6k
 github.com/grafana/dataplane/sdata v0.0.9/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/grafana-aws-sdk v1.0.4 h1:D14UAehsOqpjliHmHzveRQ1p43KCsMzdmb7GovWj+SY=
 github.com/grafana/grafana-aws-sdk v1.0.4/go.mod h1:hO7q7yWV+t6dmiyJjMa3IbuYnYkBua+G/IAlOPVIYKE=
+github.com/grafana/grafana-aws-sdk v1.1.0 h1:G0fvwbQmHw14c5RXPd7Gnw9ZQcgzl139LtMDoe0KhmE=
+github.com/grafana/grafana-aws-sdk v1.1.0/go.mod h1:7e+47EdHynteYWGoT5Ere9KeOXQObsk8F0vkOLQ1tz8=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0 h1:5/rIYparLi02pofdaag8wnjspMMVNCi8cZhC4cdC3Ho=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0/go.mod h1:+8NXT/XUJ/89GV6FxGQ366NZ3nU+cAXDMd0OUESF9H4=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
@@ -127,6 +129,7 @@ github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKt
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
 github.com/grafana/sqlds/v4 v4.2.3 h1:9ibD1c5O5u9fifEkBSig+jAc41TUEz+M+bWQqDsofP4=
 github.com/grafana/sqlds/v4 v4.2.3/go.mod h1:bv+XHabfUF4xkgg4y+nYFCK8rpMHZsMaQk56qNaJcAM=
+github.com/grafana/sqlds/v4 v4.2.4/go.mod h1:BQRjUG8rOqrBI4NAaeoWrIMuoNgfi8bdhCJ+5cgEfLU=
 github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 h1:QGLs/O40yoNK9vmy4rhUGBVyMf1lISBGtXRpsu/Qu/o=
 github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0/go.mod h1:hM2alZsMUni80N33RBe6J0e423LB+odMj7d3EMP9l20=
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 h1:sGm2vDRFUrQJO/Veii4h4zG2vvqG6uWNkBHSTqXOZk0=
