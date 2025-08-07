@@ -12,9 +12,9 @@ on:
         required: true
         type: choice
         options:
-          - "dev"
-          - "ops"
-          - "prod"
+          - 'dev'
+          - 'ops'
+          - 'prod'
       docs-only:
         description: Only publish docs, do not publish the plugin
         default: false
@@ -35,5 +35,4 @@ jobs:
       environment: ${{ github.event.inputs.environment }}
       docs-only: ${{ fromJSON(github.event.inputs.docs-only) }}
       scopes: universal
-      node-version: '22'
       golangci-lint-version: '2.0.2'
