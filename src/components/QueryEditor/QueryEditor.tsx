@@ -9,11 +9,13 @@ import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
 import LogsQueryEditor from './LogsQueryEditor/LogsQueryEditor';
 import { MetricsQueryEditor } from './MetricsQueryEditor/MetricsQueryEditor';
 import QueryHeader from './QueryHeader';
+import useMigratedQuery from 'migrations/useMigratedQuery';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
 export const QueryEditor = (props: Props) => {
   const { query, onChange, data } = props;
+  const migratedQuery = useMigratedQuery(query, props.onChange);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [extraHeaderElementLeft, setExtraHeaderElementLeft] = useState<React.JSX.Element>();
   const [extraHeaderElementRight, setExtraHeaderElementRight] = useState<React.JSX.Element>();
@@ -39,20 +41,20 @@ export const QueryEditor = (props: Props) => {
         dataIsStale={dataIsStale}
       />
 
-      {isCloudWatchMetricsQuery(query) && (
+      {isCloudWatchMetricsQuery(migratedQuery) && (
         <MetricsQueryEditor
           {...props}
-          query={query}
+          query={migratedQuery}
           onRunQuery={() => {}}
           onChange={onChangeInternal}
           extraHeaderElementLeft={setExtraHeaderElementLeft}
           extraHeaderElementRight={setExtraHeaderElementRight}
         />
       )}
-      {isCloudWatchLogsQuery(query) && (
+      {isCloudWatchLogsQuery(migratedQuery) && (
         <LogsQueryEditor
           {...props}
-          query={query}
+          query={migratedQuery}
           onChange={onChangeInternal}
           extraHeaderElementLeft={setExtraHeaderElementLeft}
         />
