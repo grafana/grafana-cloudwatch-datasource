@@ -29,11 +29,10 @@ jobs:
       contents: write
       id-token: write
       attestations: write
-    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@7382ed7fae0b050b058f5183fd160fd50e1e5b9d
+    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@main
     with:
       branch: ${{ github.event.inputs.branch }}
       environment: ${{ github.event.inputs.environment }}
       docs-only: ${{ fromJSON(github.event.inputs.docs-only) }}
       scopes: universal
-      node-version: '22'
       golangci-lint-version: '2.0.2'
