@@ -378,7 +378,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		}
 	}
 
-	if q.Region == defaultRegion {
+	if q.Region == defaultRegion || q.Region == "" {
 		q.Region = defaultRegionValue
 	}
 
