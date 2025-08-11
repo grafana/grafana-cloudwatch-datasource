@@ -255,7 +255,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      t('should append -metrics to the request id', async () => {
+      it('should append -metrics to the request id', async () => {
         const queries: CloudWatchMetricsQuery[] = [
           {
             id: '',
