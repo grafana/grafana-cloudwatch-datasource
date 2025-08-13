@@ -7,7 +7,7 @@ toolchain go1.24.5
 require (
 	github.com/aws/aws-sdk-go-v2 v1.37.2
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.4
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.53.1
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.54.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.237.0
 	github.com/aws/aws-sdk-go-v2/service/oam v1.19.0
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.7
@@ -26,7 +26,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/apache/arrow-go/v18 v18.3.0 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.29.17 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect
