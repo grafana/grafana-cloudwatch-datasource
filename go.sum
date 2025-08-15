@@ -35,8 +35,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0 h1:6+lZi2J
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0/go.mod h1:eb3gfbVIxIoGgJsi9pGne19dhCBpK6opTYpQqAmdy44=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.0 h1:eRhU3Sh8dGbaniI6B+I48XJMrTPRkK4DKo+vqIxziOU=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.0/go.mod h1:paNLV18DZ6FnWE/bd06RIKPDIFpjuvCkGKWTG/GDBeM=
-github.com/aws/aws-sdk-go-v2/service/oam v1.19.0 h1:o2jAN4Wz8EhuLqUg2h/MBfHuHLnPQoLfQAspnfZZqQI=
-github.com/aws/aws-sdk-go-v2/service/oam v1.19.0/go.mod h1:9CnYbu+5xGd4rGd6cvVUahUt5etzVdbbsUh77cH6mvo=
+github.com/aws/aws-sdk-go-v2/service/oam v1.19.1 h1:Qy3Z3Iec62/ZQxeOtNMfGkW+0O+h4m1jlfpMG2v7Jqc=
+github.com/aws/aws-sdk-go-v2/service/oam v1.19.1/go.mod h1:SELnx5vYtclgFgk0qAUuW8gPd9QaGGvn9J0gLLAN/qI=
 github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.27.1 h1:dGw/U6NbhnWoW2gw+75/AZvnYjFuxYRtzUpxALoRhLc=
 github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.27.1/go.mod h1:ZNIISn1QONFDUbTmkIK53IBTrGn1TbsrBH5pG/BCwew=
 github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 h1:AIRJ3lfb2w/1/8wOOSqYb9fUKGwQbtysJ2H1MofRUPg=
