@@ -1,5 +1,24 @@
 # Changelog
 
+## 12.1.2
+
+- CloudWatch: Fix logs query requestId to prevent setting undefined-logs as a requestId in [#131](https://github.com/grafana/grafana-cloudwatch-datasource/pull/131)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/oam from 1.19.1 to 1.20.0 in [#127](https://github.com/grafana/grafana-cloudwatch-datasource/pull/127)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/ec2 from 1.237.0 to 1.239.0 in [#125](https://github.com/grafana/grafana-cloudwatch-datasource/pull/125)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs from 1.54.0 to 1.54.1 in [#123](https://github.com/grafana/grafana-cloudwatch-datasource/pull/123)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/oam from 1.19.0 to 1.19.1 in [#124](https://github.com/grafana/grafana-cloudwatch-datasource/pull/124)
+- Chore: bump github.com/prometheus/client_golang from 1.22.0 to 1.23.0 in [#122](https://github.com/grafana/grafana-cloudwatch-datasource/pull/122)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi from 1.26.7 to 1.27.1 in [#121](https://github.com/grafana/grafana-cloudwatch-datasource/pull/121)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/cloudwatch from 1.45.4 to 1.46.1 in [#120](https://github.com/grafana/grafana-cloudwatch-datasource/pull/120)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs from 1.53.1 to 1.54.0 in [#118](https://github.com/grafana/grafana-cloudwatch-datasource/pull/118)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/ec2 from 1.235.0 to 1.237.0 in [#116](https://github.com/grafana/grafana-cloudwatch-datasource/pull/116)
+- Chore: bump github.com/aws/aws-sdk-go-v2 from 1.37.0 to 1.37.2 in [#119](https://github.com/grafana/grafana-cloudwatch-datasource/pull/119)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/oam from 1.18.4 to 1.19.0 in [#115](https://github.com/grafana/grafana-cloudwatch-datasource/pull/115)
+- Append query type to the request id in [#112](https://github.com/grafana/grafana-cloudwatch-datasource/pull/112)
+- Dependencies: Update grafana/aws-sdk-go with sts enpoint bugfix in [#96](https://github.com/grafana/grafana-cloudwatch-datasource/pull/96)
+- Chore: bump @grafana/plugin-e2e from 2.1.7 to 2.1.8 in [#110](https://github.com/grafana/grafana-cloudwatch-datasource/pull/110)
+- Chore: bump @playwright/test from 1.54.1 to 1.54.2 in [#109](https://github.com/grafana/grafana-cloudwatch-datasource/pull/109)
+
 ## 12.1.1
 
 - Chore: bump jest-environment-jsdom from 30.0.4 to 30.0.5 by @dependabot[bot] in https://github.com/grafana/grafana-cloudwatch-datasource/pull/89
