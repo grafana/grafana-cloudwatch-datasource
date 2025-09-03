@@ -1,5 +1,20 @@
 # Changelog
 
+## 12.1.3
+
+- Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.278.0 to 0.279.0 in [#149](https://github.com/grafana/grafana-cloudwatch-datasource/pull/149)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/oam from 1.21.0 to 1.21.2 in [#147](https://github.com/grafana/grafana-cloudwatch-datasource/pull/147)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi from 1.29.0 to 1.29.2 in [#148](https://github.com/grafana/grafana-cloudwatch-datasource/pull/148)
+- Chore: bump github.com/grafana/grafana-aws-sdk from 1.1.0 to 1.1.1 in [#146](https://github.com/grafana/grafana-cloudwatch-datasource/pull/146)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs from 1.54.1 to 1.56.0 in [#143](https://github.com/grafana/grafana-cloudwatch-datasource/pull/143)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/oam from 1.20.0 to 1.21.0 in [#139](https://github.com/grafana/grafana-cloudwatch-datasource/pull/139)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi from 1.27.1 to 1.29.0 in [#141](https://github.com/grafana/grafana-cloudwatch-datasource/pull/141)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/ec2 from 1.239.0 to 1.243.0 in [#142](https://github.com/grafana/grafana-cloudwatch-datasource/pull/142)
+- Chore: bump github.com/aws/aws-sdk-go-v2/service/cloudwatch from 1.46.1 to 1.48.0 in [#138](https://github.com/grafana/grafana-cloudwatch-datasource/pull/138)
+- Chore: bump webpack from 5.100.2 to 5.101.0 in [#134](https://github.com/grafana/grafana-cloudwatch-datasource/pull/134)
+- Chore: bump @types/node from 22.16.5 to 22.17.0 in [#135](https://github.com/grafana/grafana-cloudwatch-datasource/pull/135)
+- Chore: bump @eslint/js from 9.31.0 to 9.32.0 in [#114](https://github.com/grafana/grafana-cloudwatch-datasource/pull/114)
+
 ## 12.1.2
 
 - CloudWatch: Fix logs query requestId to prevent setting undefined-logs as a requestId in [#131](https://github.com/grafana/grafana-cloudwatch-datasource/pull/131)
