@@ -2,6 +2,7 @@
 
 ## 12.1.3
 
+- Add clusterId to dimension list for AWS/ElastiCache namespace [#151](https://github.com/grafana/grafana-cloudwatch-datasource/pull/151)
 - Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.278.0 to 0.279.0 in [#149](https://github.com/grafana/grafana-cloudwatch-datasource/pull/149)
 - Chore: bump github.com/aws/aws-sdk-go-v2/service/oam from 1.21.0 to 1.21.2 in [#147](https://github.com/grafana/grafana-cloudwatch-datasource/pull/147)
 - Chore: bump github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi from 1.29.0 to 1.29.2 in [#148](https://github.com/grafana/grafana-cloudwatch-datasource/pull/148)
