@@ -17,7 +17,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.279.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.23.0
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.16.0
 )
 
