@@ -86,7 +86,7 @@ To disable this feature in open source Grafana or Grafana Enterprise, refer to [
 ### Use an external ID
 
 {{< admonition type="note" >}}
-You cannot use an external ID for the Grafana Assume Role authentication provider.
+You cannot specify your own external ID for the Grafana Assume Role authentication provider - it's chosen for you by Grafana, as described in the [AWS Documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_common-scenarios_third-party.html).
 {{< /admonition >}}
 
 To assume a role in another account using a trust relationship created with an external ID, specify the external ID in the **External ID** field.
