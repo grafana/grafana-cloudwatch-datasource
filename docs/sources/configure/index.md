@@ -22,44 +22,44 @@ weight: 100
 refs:
   logs:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
+      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
+      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/latest/explore/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/latest/explore/
   provisioning-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+      destination: /docs/grafana/latest/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+      destination: /docs/grafana/latest/administration/provisioning/#data-sources
   configure-grafana-aws:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws
+      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws
+      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
   alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+      destination: /docs/grafana/latest/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
   build-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/latest/dashboards/build-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/latest/dashboards/build-dashboards/
   data-source-management:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+      destination: /docs/grafana/latest/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+      destination: /docs/grafana/latest/administration/data-source-management/
   cloudwatch-aws-authentication:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
+      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
   private-data-source-connect:
     - pattern: /docs/grafana/
       destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/

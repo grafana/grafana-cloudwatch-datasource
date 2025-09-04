@@ -2,7 +2,6 @@
 aliases:
   - ../../data-sources/aws-cloudwatch/query-editor/
   - ../cloudwatch/
-  - ./
 description: Guide for using the Amazon CloudWatch data source's query editor
 keywords:
   - grafana
@@ -21,27 +20,27 @@ weight: 200
 refs:
   query-transform-data:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/latest/explore/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/latest/explore/
   query-transform-data-navigate-the-query-tab:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
+      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#navigate-the-query-tab
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
+      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#navigate-the-query-tab
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/latest/explore/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/latest/explore/
   alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+      destination: /docs/grafana/latest/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
 ---
@@ -323,4 +322,4 @@ After you have configured it, you'll see a **Monitoring account** badge in the q
 
 ## Query caching
 
-When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.
+When you enable [query and resource caching](/docs/grafana/latest/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.

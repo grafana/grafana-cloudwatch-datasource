@@ -20,19 +20,19 @@ weight: 300
 refs:
   variable-syntax:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
+      destination: /docs/grafana/latest/dashboards/variables/variable-syntax/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
+      destination: /docs/grafana/latest/dashboards/variables/variable-syntax/
   add-template-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+      destination: /docs/grafana/latest/dashboards/variables/add-template-variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+      destination: /docs/grafana/latest/dashboards/variables/add-template-variables/
   variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana/latest/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana/latest/dashboards/variables/
 ---
 
 # CloudWatch template variables
