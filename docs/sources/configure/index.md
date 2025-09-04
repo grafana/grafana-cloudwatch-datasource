@@ -3,6 +3,8 @@ aliases:
   - ../data-sources/aws-cloudwatch/
   - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
   - ../data-sources/aws-cloudwatch/provision-cloudwatch/
+  - /docs/grafana/latest/datasources/provision-cloudwatch/
+  - /docs/grafana/latest/datasources/preconfig-cloudwatch-dashboards/
   - cloudwatch/
   - preconfig-cloudwatch-dashboards/
   - provision-cloudwatch/

@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../data-sources/aws-cloudwatch/query-editor/
+  - /docs/grafana/latest/datasources/aws-cloudwatch/query-editor/
   - ../cloudwatch/
 description: Guide for using the Amazon CloudWatch data source's query editor
 keywords:

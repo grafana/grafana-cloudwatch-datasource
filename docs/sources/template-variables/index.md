@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../data-sources/aws-cloudwatch/template-variables/
+  - /docs/grafana/latest/datasources/aws-cloudwatch/template-variables/
   - template-queries-cloudwatch/
 description: Guide on using template variables in CloudWatch queries
 keywords:
