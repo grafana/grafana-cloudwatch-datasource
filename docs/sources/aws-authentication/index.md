@@ -1,9 +1,10 @@
 ---
 aliases:
-  - ../../data-sources/aws-cloudwatch/aws-authentication/
-  - ../../data-sources/elasticsearch/aws-authentication/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
-  - ../cloudwatch/
+  - ../../../data-sources/aws-cloudwatch/aws-authentication/
+  - ../../../datasources/aws-cloudwatch/aws-authentication/
+  - ../../../data-sources/elasticsearch/aws-authentication/
+  - ../../../datasources/elasticsearch/aws-authentication/
+  - ../../cloudwatch/
 description: Guide to configuring AWS authentication in Grafana
 keywords:
   - grafana
@@ -19,15 +20,11 @@ title: Configure AWS authentication
 weight: 400
 refs:
   configure-grafana-assume-role-enabled:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#assume_role_enabled
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#assume_role_enabled
+    - pattern: /docs/plugins/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#assume_role_enabled
   configure-grafana-allowed-auth-providers:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#allowed_auth_providers
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#allowed_auth_providers
+    - pattern: /docs/plugins/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allowed_auth_providers
 ---
 
 # Configure AWS authentication

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../data-sources/aws-cloudwatch/query-editor/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/query-editor/
-  - ../cloudwatch/
+  - ../../../data-sources/aws-cloudwatch/query-editor/
+  - ../../../datasources/aws-cloudwatch/query-editor/
+  - ../../cloudwatch/
 description: Guide for using the Amazon CloudWatch data source's query editor
 keywords:
   - grafana
@@ -21,29 +21,19 @@ weight: 200
 refs:
   query-transform-data:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   query-transform-data-navigate-the-query-tab:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#navigate-the-query-tab
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#navigate-the-query-tab
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
 ---
 
 # Amazon CloudWatch query editor

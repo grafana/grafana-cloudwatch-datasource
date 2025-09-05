@@ -1,11 +1,12 @@
 ---
 aliases:
-  - ../data-sources/aws-cloudwatch/
-  - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
-  - ../data-sources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/preconfig-cloudwatch-dashboards/
-  - cloudwatch/
+  - ../../data-sources/aws-cloudwatch/
+  - ../../datasources/aws-cloudwatch/
+  - ../../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../../datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../../data-sources/aws-cloudwatch/provision-cloudwatch/
+  - ../../datasources/aws-cloudwatch/provision-cloudwatch/
+  - cloudwatch/ // what to do witht these 3
   - preconfig-cloudwatch-dashboards/
   - provision-cloudwatch/
 description: This document provides configuration instructions for the CloudWatch data source.
@@ -24,53 +25,33 @@ weight: 100
 refs:
   logs:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   provisioning-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/administration/provisioning/#data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   configure-grafana-aws:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws
   alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
   build-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
   data-source-management:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/administration/data-source-management/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   cloudwatch-aws-authentication:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
   private-data-source-connect:
     - pattern: /docs/grafana/
       destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
   configure-pdc:
     - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-    - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
 ---
 

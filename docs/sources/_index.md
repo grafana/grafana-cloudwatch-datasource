@@ -1,11 +1,12 @@
 ---
 aliases:
-  - ../data-sources/aws-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/
-  - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
-  - /docs/grafana/latest/datasources/preconfig-cloudwatch-dashboards/
-  - ../data-sources/aws-cloudwatch/provision-cloudwatch/
-  - cloudwatch/
+  - ../../data-sources/aws-cloudwatch/
+  - ../../datasources/aws-cloudwatch/
+  - ../../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../../datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../../data-sources/aws-cloudwatch/provision-cloudwatch/
+  - ../../datasources/aws-cloudwatch/provision-cloudwatch/
+  - cloudwatch/ // not sure what to do with these three
   - preconfig-cloudwatch-dashboards/
   - provision-cloudwatch/
 description: Guide for using Amazon CloudWatch in Grafana
@@ -23,90 +24,56 @@ title: Amazon CloudWatch data source
 weight: 200
 refs:
   logs:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
+    - pattern: /docs/plugins/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   provisioning-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/administration/provisioning/#data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   configure-grafana-aws:
     - pattern: /docs/grafana/
       destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
   alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
   build-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
   data-source-management:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/administration/data-source-management/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   configure-cloudwatch:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/configure/
+    - pattern: /docs/plugins/
+      destination: /docs/plugins/cloudwatch/latest/configure/
   cloudwatch-query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/query-editor/
+    - pattern: /docs/plugins/
+      destination: /docs/plugins/cloudwatch/latest/query-editor/
   cloudwatch-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/template-variables/
+    - pattern: /docs/plugins/
+      destination: /docs/plugins/cloudwatch/latest/template-variables/
   cloudwatch-aws-authentication:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
+    - pattern: /docs/plugins/
+      destination: /docs/plugins/cloudwatch/latest/aws-authentication/
   query-caching:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/administration/data-source-management/#query-and-resource-caching
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/administration/data-source-management/#query-and-resource-caching
+    - pattern: /docs/plugins/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
   variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
   annotate-visualizations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
   set-up-grafana-monitoring:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/setup-grafana/set-up-grafana-monitoring/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/setup-grafana/set-up-grafana-monitoring/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
   transformations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
   visualizations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
 ---
 
 # Amazon CloudWatch data source
