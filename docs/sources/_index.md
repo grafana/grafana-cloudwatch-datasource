@@ -22,58 +22,7 @@ labels:
 menuTitle: Amazon CloudWatch
 title: Amazon CloudWatch data source
 weight: 200
-refs:
-  logs:
-    - pattern: /docs/plugins/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  configure-grafana-aws:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  configure-cloudwatch:
-    - pattern: /docs/plugins/
-      destination: /docs/plugins/cloudwatch/latest/configure/
-  cloudwatch-query-editor:
-    - pattern: /docs/plugins/
-      destination: /docs/plugins/cloudwatch/latest/query-editor/
-  cloudwatch-template-variables:
-    - pattern: /docs/plugins/
-      destination: /docs/plugins/cloudwatch/latest/template-variables/
-  cloudwatch-aws-authentication:
-    - pattern: /docs/plugins/
-      destination: /docs/plugins/cloudwatch/latest/aws-authentication/
-  query-caching:
-    - pattern: /docs/plugins/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  set-up-grafana-monitoring:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
-  transformations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-  visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+
 ---
 
 # Amazon CloudWatch data source
@@ -84,10 +33,10 @@ Grafana includes native support for the Amazon CloudWatch plugin, so there's no 
 
 The following documents will help you get started working with the CloudWatch data source:
 
-- [Configure the CloudWatch data source](ref:configure-cloudwatch)
-- [CloudWatch query editor](ref:cloudwatch-query-editor)
-- [Templates and variables](ref:cloudwatch-template-variables)
-- [Configure AWS authentication](ref:cloudwatch-aws-authentication)
+- [Configure the CloudWatch data source](/docs/plugins/cloudwatch/latest/configure/)
+- [CloudWatch query editor](/docs/plugins/cloudwatch/latest/query-editor/)
+- [Templates and variables](/docs/plugins/cloudwatch/latest/template-variables/)
+- [Configure AWS authentication](/docs/plugins/cloudwatch/latest/aws-authentication/)
 
 ## Import pre-configured dashboards
 
@@ -116,12 +65,12 @@ To customize one of these dashboards, Grafana recommends saving it under a diffe
 
 After installing and configuring the Amazon CloudWatch data source, you can:
 
-- Create a wide variety of [visualizations](ref:visualizations)
-- Configure and use [templates and variables](ref:variables)
-- Add [transformations](ref:transformations)
-- Add [annotations](ref:annotate-visualizations)
-- Set up [alerting](ref:alerting)
-- Optimize performance with [query caching](ref:query-caching)
+- Create a wide variety of [visualizations](docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
+- Configure and use [templates and variables](/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
+- Add [transformations](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
+- Add [annotations](/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/)
+- Set up [alerting](/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- Optimize performance with [query caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching)
 
 ## Control pricing
 
