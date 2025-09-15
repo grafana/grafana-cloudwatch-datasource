@@ -37,3 +37,4 @@ jobs:
       scopes: universal
       node-version: '22'
       golangci-lint-version: '2.0.2'
+      github-draft-release: false # publish the github release directly, skipping the draft
