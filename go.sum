@@ -29,12 +29,12 @@ github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.49.3 h1:TC222HSByqrBZpM2hlunX
 github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.49.3/go.mod h1:bNNaZaAX81KIuYDaj5ODgZwA1ybBJzpDeKYoNxEGGqw=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.57.1 h1:EaZZMoyDYiYyS2xd8GrPvqyX7FWskN2C7qJscceONAs=
 github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.57.1/go.mod h1:yfmvd1yoaZOPxwn97mnTnF6Jt/d8sThRqfs2RISPQi0=
-github.com/aws/aws-sdk-go-v2/service/ec2 v1.248.0 h1:HMGUQWPOu0Z6gzc/odJ1T0UJezDwzy3xSy13fOUSTp8=
-github.com/aws/aws-sdk-go-v2/service/ec2 v1.248.0/go.mod h1:Af36mfLJrRHDbhlCkkuut8nnw/5C29WK1b7mCndH12w=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.249.0 h1:1wn3h1PKTKQ9tg7bzfm4x1iqKYsLY2qfmV4SsDmakkI=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.249.0/go.mod h1:SmMqzfS4HVsOD58lwLZ79oxF58f8zVe5YdK3o+/o1Ck=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.1 h1:oegbebPEMA/1Jny7kvwejowCaHz1FWZAQ94WXFNCyTM=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.1/go.mod h1:kemo5Myr9ac0U9JfSjMo9yHLtw+pECEHsFtJ9tqCEI8=
-github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.5 h1:Cx1M/UUgYu9UCQnIMKaOhkVaFvLy1HneD6T4sS/DlKg=
-github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.5/go.mod h1:fTRNLgrTvPpEzGqc9QkeO4hu/3ng+mdtUbL8shUwXz4=
+github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.6 h1:LHS1YAIJXJ4K9zS+1d/xa9JAA9sL2QyXIQCQFQW/X08=
+github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.6/go.mod h1:c9PCiTEuh0wQID5/KqA32J+HAgZxN9tOGXKCiYJjTZI=
 github.com/aws/aws-sdk-go-v2/service/oam v1.22.1 h1:cGcxO6BjTAKdb8a6wezZEUwHh9FQyTMkDEH7NW9XnwI=
 github.com/aws/aws-sdk-go-v2/service/oam v1.22.1/go.mod h1:7FL0wpgqB1DXHmD5sh0Shnq70Ib6Yb3ayh0OHeJO9a4=
 github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.2 h1:mjf0THDU1HniXbvfDrDaEpVezBsIwVi+Z3lQIHVaOv4=
