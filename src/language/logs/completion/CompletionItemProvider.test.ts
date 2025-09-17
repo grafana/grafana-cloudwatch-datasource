@@ -4,12 +4,19 @@ import { CustomVariableModel } from '@grafana/data';
 import { monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../__mocks__/CloudWatchDataSource';
-import { emptyQuery, filterQuery, newCommandQuery, sortQuery } from '../../../__mocks__/cloudwatch-logs-test-data';
+import {
+  diffQuery,
+  diffModifierQuery,
+  emptyQuery,
+  filterQuery,
+  newCommandQuery,
+  sortQuery,
+} from '../../../__mocks__/cloudwatch-logs-test-data';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
 import { LogGroup, LogGroupField } from '../../../types';
 import cloudWatchLogsLanguageDefinition, { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../definition';
-import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, language } from '../language';
+import { DIFF_MODIFIERS, LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, language } from '../language';
 
 import { LogsCompletionItemProvider } from './CompletionItemProvider';
 
@@ -76,6 +83,18 @@ describe('LogsCompletionItemProvider', () => {
       const suggestions = await getSuggestions(sortQuery.query, sortQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(LOGS_FUNCTION_OPERATORS));
+    });
+
+    it('returns diff modifiers after the diff keyword', async () => {
+      const suggestions = await getSuggestions(diffQuery.query, diffQuery.position);
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(DIFF_MODIFIERS));
+    });
+
+    it('returns diff modifiers when partially typed', async () => {
+      const suggestions = await getSuggestions(diffModifierQuery.query, diffModifierQuery.position);
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(DIFF_MODIFIERS));
     });
 
     it('returns `in []` snippet for the `in` keyword', async () => {
