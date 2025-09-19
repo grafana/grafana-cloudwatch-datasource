@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.57.4
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.251.0
 	github.com/aws/aws-sdk-go-v2/service/oam v1.22.3
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.3
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.4
 	github.com/aws/smithy-go v1.23.0
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
