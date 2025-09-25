@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.39.0
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.50.0
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.50.1
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.57.4
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.251.2
 	github.com/aws/aws-sdk-go-v2/service/oam v1.22.3
