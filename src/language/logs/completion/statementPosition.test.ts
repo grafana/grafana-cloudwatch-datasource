@@ -1,3 +1,5 @@
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
 import { monacoTypes } from '@grafana/ui';
 
 import {
@@ -7,27 +9,37 @@ import {
   singleLineFullQuery,
   multiLineFullQuery,
 } from '../../../__mocks__/cloudwatch-logs-test-data';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
 import { StatementPosition } from '../../monarch/types';
-import cloudWatchLogsLanguageDefinition from '../definition';
+import cloudWatchLogsLanguageDefinition, { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../definition';
+import { language } from '../language';
 
 import { getStatementPosition } from './statementPosition';
 import { LogsTokenTypes } from './types';
 
 function generateToken(query: string, position: monacoTypes.IPosition) {
-  const testModel = TextModel(query);
-  return linkedTokenBuilder(
-    MonacoMock,
-    cloudWatchLogsLanguageDefinition,
-    testModel as monacoTypes.editor.ITextModel,
-    position,
-    LogsTokenTypes
-  );
+  const model = monaco.editor.createModel(query, CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID);
+  return linkedTokenBuilder(monaco, cloudWatchLogsLanguageDefinition, model, position, LogsTokenTypes);
 }
 
 describe('getStatementPosition', () => {
+  let tokenizer: monaco.IDisposable;
+
+  beforeAll(() => {
+    monaco.languages.register({ id: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID });
+    tokenizer = monaco.languages.setMonarchTokensProvider(CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID, language);
+  });
+
+  afterEach(() => {
+    for (const m of monaco.editor.getModels()) {
+      m.dispose();
+    }
+  });
+
+  afterAll(() => {
+    tokenizer?.dispose();
+  });
+
   it('should return StatementPosition.NewCommand the current token is null', () => {
     expect(getStatementPosition(null)).toEqual(StatementPosition.NewCommand);
   });

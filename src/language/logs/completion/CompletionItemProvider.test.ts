@@ -1,21 +1,17 @@
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
 import { CustomVariableModel } from '@grafana/data';
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../__mocks__/CloudWatchDataSource';
 import { emptyQuery, filterQuery, newCommandQuery, sortQuery } from '../../../__mocks__/cloudwatch-logs-test-data';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
 import { LogGroup, LogGroupField } from '../../../types';
-import cloudWatchLogsLanguageDefinition from '../definition';
-import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS } from '../language';
+import cloudWatchLogsLanguageDefinition, { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../definition';
+import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, language } from '../language';
 
 import { LogsCompletionItemProvider } from './CompletionItemProvider';
-
-jest.mock('monaco-editor/esm/vs/editor/editor.api', () => ({
-  Token: jest.fn((offset, type, language) => ({ offset, type, language })),
-}));
 
 const getSuggestions = async (
   value: string,
@@ -33,16 +29,30 @@ const getSuggestions = async (
   );
 
   setup.resources.getLogGroupFields = jest.fn().mockResolvedValue(fields);
-  const monaco = MonacoMock as Monaco;
   const provider = setup.getCompletionProvider(monaco, cloudWatchLogsLanguageDefinition);
-  const { suggestions } = await provider.provideCompletionItems(
-    TextModel(value) as monacoTypes.editor.ITextModel,
-    position
-  );
+  const model = monaco.editor.createModel(value, CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID);
+  const { suggestions } = await provider.provideCompletionItems(model, position);
   return suggestions;
 };
 
 describe('LogsCompletionItemProvider', () => {
+  let tokenizer: monaco.IDisposable;
+
+  beforeAll(() => {
+    monaco.languages.register({ id: CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID });
+    tokenizer = monaco.languages.setMonarchTokensProvider(CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID, language);
+  });
+
+  afterEach(() => {
+    for (const m of monaco.editor.getModels()) {
+      m.dispose();
+    }
+  });
+
+  afterAll(() => {
+    tokenizer?.dispose();
+  });
+
   describe('getSuggestions', () => {
     it('returns commands for an empty query', async () => {
       const suggestions = await getSuggestions(emptyQuery.query, emptyQuery.position);

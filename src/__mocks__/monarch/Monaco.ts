@@ -2,7 +2,6 @@ import { monacoTypes } from '@grafana/ui';
 
 import { CLOUDWATCH_LOGS_SQL_LANGUAGE_DEFINITION_ID } from '../../language/cloudwatch-logs-sql/definition';
 import { CLOUDWATCH_PPL_LANGUAGE_DEFINITION_ID } from '../../language/cloudwatch-ppl/language';
-import { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../../language/logs/definition';
 import { Monaco } from '../../language/monarch/types';
 import { commentOnlyQuery as cloudwatchLogsSQLCommentOnlyQuery } from '../cloudwatch-logs-sql-test-data/commentOnlyQuery';
 import { multiLineFullQuery as cloudwatchLogsSQLMultiLineFullQuery } from '../cloudwatch-logs-sql-test-data/multiLineFullQuery';
@@ -11,7 +10,6 @@ import { partialQueryWithFunction as cloudwatchLogsSQLPartialQueryWithFunction }
 import { partialQueryWithSubquery as cloudwatchLogsSQLPartialQueryWithSubquery } from '../cloudwatch-logs-sql-test-data/partialQueryWithSubquery';
 import { singleLineFullQuery as cloudwatchLogsSQLSingleLineFullQuery } from '../cloudwatch-logs-sql-test-data/singleLineFullQuery';
 import { whitespaceQuery as cloudwatchLogsSQLWhitespaceQuery } from '../cloudwatch-logs-sql-test-data/whitespaceQuery';
-import * as CloudwatchLogsTestData from '../cloudwatch-logs-test-data';
 import * as PPLMultilineQueries from '../cloudwatch-ppl-test-data/multilineQueries';
 import { newCommandQuery as PPLNewCommandQuery } from '../cloudwatch-ppl-test-data/newCommandQuery';
 import * as PPLSingleLineQueries from '../cloudwatch-ppl-test-data/singleLineQueries';
@@ -50,19 +48,6 @@ const MonacoMock: Monaco = {
         const TestData = {
           [DynamicLabelTestData.afterLabelValue.query]: DynamicLabelTestData.afterLabelValue.tokens,
           [DynamicLabelTestData.insideLabelValue.query]: DynamicLabelTestData.insideLabelValue.tokens,
-        };
-        return TestData[value];
-      }
-      if (languageId === CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID) {
-        const TestData = {
-          [CloudwatchLogsTestData.emptyQuery.query]: CloudwatchLogsTestData.emptyQuery.tokens,
-          [CloudwatchLogsTestData.whitespaceOnlyQuery.query]: CloudwatchLogsTestData.whitespaceOnlyQuery.tokens,
-          [CloudwatchLogsTestData.commentOnlyQuery.query]: CloudwatchLogsTestData.commentOnlyQuery.tokens,
-          [CloudwatchLogsTestData.singleLineFullQuery.query]: CloudwatchLogsTestData.singleLineFullQuery.tokens,
-          [CloudwatchLogsTestData.multiLineFullQuery.query]: CloudwatchLogsTestData.multiLineFullQuery.tokens,
-          [CloudwatchLogsTestData.filterQuery.query]: CloudwatchLogsTestData.filterQuery.tokens,
-          [CloudwatchLogsTestData.newCommandQuery.query]: CloudwatchLogsTestData.newCommandQuery.tokens,
-          [CloudwatchLogsTestData.sortQuery.query]: CloudwatchLogsTestData.sortQuery.tokens,
         };
         return TestData[value];
       }
