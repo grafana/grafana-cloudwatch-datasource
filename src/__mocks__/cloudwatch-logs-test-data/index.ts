@@ -6,3 +6,5 @@ export { multiLineFullQuery } from './multiLineFullQuery';
 export { filterQuery } from './filterQuery';
 export { newCommandQuery } from './newCommandQuery';
 export { sortQuery } from './sortQuery';
+export { diffQuery } from './diffQuery';
+export { diffModifierQuery } from './diffModifierQuery';
