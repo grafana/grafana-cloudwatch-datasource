@@ -1,12 +1,4 @@
 # List of projects to provide to the make-docs script.
 # Format is PROJECT[:[VERSION][:[REPOSITORY][:[DIRECTORY]]]]
-# The following PROJECTS value mounts content into the grafana-cloudwatch-datasource project, at the "latest" version, which is the default if not explicitly set.
-# This results in the content being served at /docs/grafana-cloudwatch-datasource/latest/.
-# The source of the content is the current repository which is determined by the name of the parent directory of the git root.
-# This overrides the default behavior of assuming the repository directory is the same as the project name.
-PROJECTS := grafana-cloudwatch-datasource::$(notdir $(basename $(shell git rev-parse --show-toplevel)))
-
-# Test the nightly image.
-export DOCS_IMAGE := grafana/docs-base:nightly
-
-export WEBSITE_MOUNTS := true
+PROJECTS := grafana::$(notdir $(basename $(shell git rev-parse --show-toplevel)../grafana)) \
+	arbitrary:$(shell git rev-parse --show-toplevel)/docs/sources:/hugo/content/docs/grafana/latest/datasources/aws-cloudwatch \
