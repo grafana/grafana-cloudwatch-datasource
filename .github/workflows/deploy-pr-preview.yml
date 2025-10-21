@@ -26,11 +26,20 @@ jobs:
       repo: writers-toolkit
       sha: ${{ github.event.pull_request.head.sha }}
       sources: |
-        [{
+        [
+          {
             "index_file": null,
-            "relative_prefix": "/docs/grafana-cloudwatch-datasource/",
+            "relative_prefix": "/docs/grafana/latest/",
+            "repo": grafana",
+            "source_directory": "docs/sources",
+            "website_directory": "content/docs/grafana/latest"
+          },
+          {
+            "index_file": null,
+            "relative_prefix": "/docs/grafana/latest/datasources/aws-cloudwatch/",
             "repo": "grafana-cloudwatch-datasource",
             "source_directory": "docs/sources",
-            "website_directory": "content/docs/grafana-cloudwatch-datasource"
-        }]
+            "website_directory": "content/docs/grafana/latest/datasources/aws-cloudwatch"
+          }
+        ]
       title: ${{ github.event.pull_request.title }}
