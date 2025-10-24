@@ -2,10 +2,6 @@
 
 ## 12.2.0
 
-- Bump transitive dep brace-expansion to 1.1.12 and 2.0.2 in [#245](https://github.com/grafana/grafana-cloudwatch-datasource/pull/245)
-- Chore: bump the npm-patch-dev-dependencies group with 4 updates in [#251](https://github.com/grafana/grafana-cloudwatch-datasource/pull/251)
-- Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#249](https://github.com/grafana/grafana-cloudwatch-datasource/pull/249)
-- Chore: bump @testing-library/jest-dom from 6.6.4 to 6.9.1 in [#232](https://github.com/grafana/grafana-cloudwatch-datasource/pull/232)
 - Logs: Don't add console link to every field in the logs response in [#238](https://github.com/grafana/grafana-cloudwatch-datasource/pull/238)
 - Add issue workflows and templates in [#108](https://github.com/grafana/grafana-cloudwatch-datasource/pull/108)
 - Update dependabot groups in [#186](https://github.com/grafana/grafana-cloudwatch-datasource/pull/186)
@@ -15,7 +11,10 @@
 - Update gitignore for yarn files in [#215](https://github.com/grafana/grafana-cloudwatch-datasource/pull/215)
 - CD: Publish Github release directly, skipping draft in [#179](https://github.com/grafana/grafana-cloudwatch-datasource/pull/179)
 - Use the correct metric name for errors per function panel in the AWS Lambda sample dashboard in [#160](https://github.com/grafana/grafana-cloudwatch-datasource/pull/160)
-
+- Bump transitive dep brace-expansion to 1.1.12 and 2.0.2 in [#245](https://github.com/grafana/grafana-cloudwatch-datasource/pull/245)
+- Chore: bump the npm-patch-dev-dependencies group with 4 updates in [#251](https://github.com/grafana/grafana-cloudwatch-datasource/pull/251)
+- Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#249](https://github.com/grafana/grafana-cloudwatch-datasource/pull/249)
+- Chore: bump @testing-library/jest-dom from 6.6.4 to 6.9.1 in [#232](https://github.com/grafana/grafana-cloudwatch-datasource/pull/232)
 - Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#249](https://github.com/grafana/grafana-cloudwatch-datasource/pull/249)
 - Chore: bump @testing-library/jest-dom from 6.6.4 to 6.9.1 in [#232](https://github.com/grafana/grafana-cloudwatch-datasource/pull/232)
 - Chore: bump github.com/aws/smithy-go from 1.23.0 to 1.23.1 in [#246](https://github.com/grafana/grafana-cloudwatch-datasource/pull/246)
