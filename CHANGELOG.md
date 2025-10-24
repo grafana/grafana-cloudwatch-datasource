@@ -12,6 +12,8 @@
 - CD: Publish Github release directly, skipping draft in [#179](https://github.com/grafana/grafana-cloudwatch-datasource/pull/179)
 - Use the correct metric name for errors per function panel in the AWS Lambda sample dashboard in [#160](https://github.com/grafana/grafana-cloudwatch-datasource/pull/160)
 
+- Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#249](https://github.com/grafana/grafana-cloudwatch-datasource/pull/249)
+- Chore: bump @testing-library/jest-dom from 6.6.4 to 6.9.1 in [#232](https://github.com/grafana/grafana-cloudwatch-datasource/pull/232)
 - Chore: bump github.com/aws/smithy-go from 1.23.0 to 1.23.1 in [#246](https://github.com/grafana/grafana-cloudwatch-datasource/pull/246)
 - Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.280.0 to 0.281.0 in [#236](https://github.com/grafana/grafana-cloudwatch-datasource/pull/236)
 - Chore: bump @types/node from 22.18.9 to 22.18.10 in [#231](https://github.com/grafana/grafana-cloudwatch-datasource/pull/231)
