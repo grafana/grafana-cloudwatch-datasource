@@ -96,6 +96,7 @@ export const PPLQueryEditor = (props: LogsCodeEditorProps) => {
     );
   };
   return (
+    <>
     <CodeEditor
       {...codeEditorCommonProps}
       language={language.id}
@@ -111,5 +112,6 @@ export const PPLQueryEditor = (props: LogsCodeEditorProps) => {
       onEditorDidMount={onEditorMount}
       onEditorWillUnmount={() => disposalRef.current?.dispose()}
     />
+    </>
   );
 };
