@@ -2,6 +2,10 @@
 
 ## 12.2.0
 
+- Bump transitive dep brace-expansion to 1.1.12 and 2.0.2 in [#245](https://github.com/grafana/grafana-cloudwatch-datasource/pull/245)
+- Chore: bump the npm-patch-dev-dependencies group with 4 updates in [#251](https://github.com/grafana/grafana-cloudwatch-datasource/pull/251)
+- Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#249](https://github.com/grafana/grafana-cloudwatch-datasource/pull/249)
+- Chore: bump @testing-library/jest-dom from 6.6.4 to 6.9.1 in [#232](https://github.com/grafana/grafana-cloudwatch-datasource/pull/232)
 - Logs: Don't add console link to every field in the logs response in [#238](https://github.com/grafana/grafana-cloudwatch-datasource/pull/238)
 - Add issue workflows and templates in [#108](https://github.com/grafana/grafana-cloudwatch-datasource/pull/108)
 - Update dependabot groups in [#186](https://github.com/grafana/grafana-cloudwatch-datasource/pull/186)
@@ -66,7 +70,6 @@
 - Chore: bump github.com/aws/aws-sdk-go-v2/service/ec2 from 1.243.0 to 1.245.1 in [#155](https://github.com/grafana/grafana-cloudwatch-datasource/pull/155)
 - Chore: bump github.com/stretchr/testify from 1.10.0 to 1.11.0 in [#153](https://github.com/grafana/grafana-cloudwatch-datasource/pull/153)
 - Chore: bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs from 1.56.0 to 1.56.2 in [#152](https://github.com/grafana/grafana-cloudwatch-datasource/pull/152)
-
 
 ## 12.1.3
 
