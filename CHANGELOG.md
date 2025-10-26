@@ -11,7 +11,12 @@
 - Update gitignore for yarn files in [#215](https://github.com/grafana/grafana-cloudwatch-datasource/pull/215)
 - CD: Publish Github release directly, skipping draft in [#179](https://github.com/grafana/grafana-cloudwatch-datasource/pull/179)
 - Use the correct metric name for errors per function panel in the AWS Lambda sample dashboard in [#160](https://github.com/grafana/grafana-cloudwatch-datasource/pull/160)
-
+- Bump transitive dep brace-expansion to 1.1.12 and 2.0.2 in [#245](https://github.com/grafana/grafana-cloudwatch-datasource/pull/245)
+- Chore: bump the npm-patch-dev-dependencies group with 4 updates in [#251](https://github.com/grafana/grafana-cloudwatch-datasource/pull/251)
+- Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#249](https://github.com/grafana/grafana-cloudwatch-datasource/pull/249)
+- Chore: bump @testing-library/jest-dom from 6.6.4 to 6.9.1 in [#232](https://github.com/grafana/grafana-cloudwatch-datasource/pull/232)
+- Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.0 to 1.3.1 in [#249](https://github.com/grafana/grafana-cloudwatch-datasource/pull/249)
+- Chore: bump @testing-library/jest-dom from 6.6.4 to 6.9.1 in [#232](https://github.com/grafana/grafana-cloudwatch-datasource/pull/232)
 - Chore: bump github.com/aws/smithy-go from 1.23.0 to 1.23.1 in [#246](https://github.com/grafana/grafana-cloudwatch-datasource/pull/246)
 - Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.280.0 to 0.281.0 in [#236](https://github.com/grafana/grafana-cloudwatch-datasource/pull/236)
 - Chore: bump @types/node from 22.18.9 to 22.18.10 in [#231](https://github.com/grafana/grafana-cloudwatch-datasource/pull/231)
@@ -64,7 +69,6 @@
 - Chore: bump github.com/aws/aws-sdk-go-v2/service/ec2 from 1.243.0 to 1.245.1 in [#155](https://github.com/grafana/grafana-cloudwatch-datasource/pull/155)
 - Chore: bump github.com/stretchr/testify from 1.10.0 to 1.11.0 in [#153](https://github.com/grafana/grafana-cloudwatch-datasource/pull/153)
 - Chore: bump github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs from 1.56.0 to 1.56.2 in [#152](https://github.com/grafana/grafana-cloudwatch-datasource/pull/152)
-
 
 ## 12.1.3
 
