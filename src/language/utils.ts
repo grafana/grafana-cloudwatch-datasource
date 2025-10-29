@@ -1,6 +1,6 @@
 import { TemplateSrv } from '@grafana/runtime';
 
-import { LogGroup } from '../dataquery.gen';
+import { LogGroup } from '../dataquery';
 import { ResourcesAPI } from '../resources/ResourcesAPI';
 import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils/templateVariableUtils';
 

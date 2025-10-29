@@ -2,14 +2,15 @@ import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@gra
 import { DataFrame } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 
-import * as raw from './dataquery.gen';
+import * as raw from './dataquery';
 
-export * from './dataquery.gen';
+export * from './dataquery';
 
 export type CloudWatchQuery =
   | raw.CloudWatchMetricsQuery
   | raw.CloudWatchLogsQuery
   | raw.CloudWatchAnnotationQuery
+  | raw.CloudWatchLogsAnomaliesQuery
   | CloudWatchDefaultQuery;
 
 // We want to allow setting defaults for both Logs and Metrics queries
