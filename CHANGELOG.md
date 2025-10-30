@@ -1,5 +1,11 @@
 # Changelog
 
+## 12.3.0
+
+- Feature: Support Log Anomalies queries in [#257](https://github.com/grafana/grafana-cloudwatch-datasource/pull/257)
+- Feature: Add tracking for logs anomalies in [#258](https://github.com/grafana/grafana-cloudwatch-datasource/pull/258)
+- Chore: bump eslint from 9.36.0 to 9.37.0 in [#253](https://github.com/grafana/grafana-cloudwatch-datasource/pull/253)
+
 ## 12.2.0
 
 - Logs: Don't add console link to every field in the logs response in [#238](https://github.com/grafana/grafana-cloudwatch-datasource/pull/238)
