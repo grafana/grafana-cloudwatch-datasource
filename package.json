@@ -78,7 +78,7 @@
     "@grafana/data": "^12.0.2",
     "@grafana/plugin-ui": "^0.10.10",
     "@grafana/runtime": "^12.0.2",
-    "@grafana/scenes": "^6.13.0",
+    "@grafana/scenes": "^6.42.2",
     "@grafana/schema": "^12.0.1",
     "@grafana/ui": "^12.0.1",
     "common-tags": "^1.8.2",
