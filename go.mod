@@ -6,8 +6,8 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.39.4
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.51.4
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.58.5
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.257.2
-	github.com/aws/aws-sdk-go-v2/service/oam v1.22.6
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.258.0
+	github.com/aws/aws-sdk-go-v2/service/oam v1.23.0
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.9
 	github.com/aws/smithy-go v1.23.1
 	github.com/go-stack/stack v1.8.1
