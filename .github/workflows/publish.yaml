@@ -33,7 +33,7 @@ jobs:
       contents: write
       id-token: write
       attestations: write
-    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@ddc6565117d4fd559e0f22c4f9cf1ac76c229e14 # ci-cd-workflows/v3
+    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@09b221c19c8df664e65c7d4be38b440611025f09 # ci-cd-workflows/v3
     with:
       branch: ${{ github.event.inputs.branch }}
       environment: ${{ matrix.environment }}
