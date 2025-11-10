@@ -1,13 +1,4 @@
 ---
-aliases:
-  - ../data-sources/aws-cloudwatch/
-  - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
-  - ../data-sources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/preconfig-cloudwatch-dashboards/
-  - cloudwatch/
-  - preconfig-cloudwatch-dashboards/
-  - provision-cloudwatch/
 description: This document provides configuration instructions for the CloudWatch data source.
 keywords:
   - grafana
@@ -21,62 +12,11 @@ labels:
 menuTitle: Configure
 title: Configure CloudWatch
 weight: 100
-refs:
-  logs:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/visualizations/logs/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/explore/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/administration/provisioning/#data-sources
-  configure-grafana-aws:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/setup-grafana/configure-grafana/#aws
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/dashboards/build-dashboards/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/administration/data-source-management/
-  cloudwatch-aws-authentication:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-  configure-pdc:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
 ---
 
 # Configure the Amazon CloudWatch data source
 
-This document provides instructions for configuring the Amazon CloudWatch data source and explains available configuration options. For general information on adding and managing data sources, refer to [Data source management](ref:data-source-management).
+This document provides instructions for configuring the Amazon CloudWatch data source and explains available configuration options. For general information on adding and managing data sources, refer to [Data source management](https://grafana.com/docs/grafana/latest/administration/data-source-management/).
 
 ## Before you begin
 
@@ -153,20 +93,19 @@ You must use both an access key ID and a secret access key to authenticate.
 | --------------- | ----------------------------------------------------- |
 | **Data source** | Select the X-ray data source from the drop-down menu. |
 
-Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
+Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/logs/) to view the log details section.
 
 To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
 **Private data source connect** - _Only for Grafana Cloud users._
 
-| Setting                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Private data source connect** | Establishes a private, secured connection between a Grafana Cloud stack and data sources within a private network. Use the drop-down to locate the PDC URL. For setup instructions, refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure PDC](ref:configure-pdc). Click **Manage private data source connect** to open your PDC connection page and view your configuration details. |
+| Setting                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Private data source connect** | Establishes a private, secured connection between a Grafana Cloud stack and data sources within a private network. Use the drop-down to locate the PDC URL. For setup instructions, refer to [Private data source connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc). Click **Manage private data source connect** to open your PDC connection page and view your configuration details. |
 
 After configuring your Amazon CloudWatch data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
 {{< figure src="/media/docs/cloudwatch/cloudwatch-config-success-message.png" >}}
-
 
 {{< admonition type="note" >}}
 To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
@@ -326,11 +265,11 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 Cross-account observability lets you retrieve metrics and logs across different accounts in a single region, but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
 {{< /admonition >}}
 
-For more information on configuring authentication, refer to [Configure AWS authentication](ref:cloudwatch-aws-authentication).
+For more information on configuring authentication, refer to [Configure AWS authentication](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/).
 
 ### Configure the data source with grafana.ini
 
-The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` section where you can configure data source options:
+The Grafana [configuration file](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#aws) includes an `AWS` section where you can configure data source options:
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -341,7 +280,7 @@ The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` se
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
-For more information about provisioning and available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
+For more information about provisioning and available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources).
 
 **Using AWS SDK (default)**:
 

@@ -1,8 +1,4 @@
 ---
-aliases:
-  - ../../data-sources/aws-cloudwatch/query-editor/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/query-editor/
-  - ../cloudwatch/
 description: Guide for using the Amazon CloudWatch data source's query editor
 keywords:
   - grafana
@@ -18,37 +14,11 @@ labels:
 menuTitle: Query editor
 title: Amazon CloudWatch query editor
 weight: 200
-refs:
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/explore/
-  query-transform-data-navigate-the-query-tab:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#navigate-the-query-tab
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#navigate-the-query-tab
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/explore/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/latest/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
 ---
 
 # Amazon CloudWatch query editor
 
-Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize, and alert on logs and metrics stored in Amazon CloudWatch. It is located on the [Explore](ref:explore) page. For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
+Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize, and alert on logs and metrics stored in Amazon CloudWatch. It is located on the [Explore](https://grafana.com/docs/grafana/latest/alerting/) page. For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/).
 
 ## Choose a query editing mode
 
@@ -152,7 +122,7 @@ The query returns the average CPU utilization for all EC2 instances in the defau
 
 Auto-scaling events add new instances to the graph without manual instance ID tracking. This feature supports up to 100 metrics.
 
-Click the [**Query inspector**](ref:query-transform-data-navigate-the-query-tab) button and select **Meta Data** to see the search expression that's automatically built to support wildcards.
+Click the [**Query inspector**](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#navigate-the-query-tab) button and select **Meta Data** to see the search expression that's automatically built to support wildcards.
 
 To learn more about search expressions, refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 The search expression is defined by default in such a way that the queried metrics must match the defined dimension names exactly.
@@ -204,7 +174,7 @@ filter @message like /Exception/
 If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
 {{< /admonition >}}
 
-For more information on Grafana alerts, refer to [Alerting](ref:alerting).
+For more information on Grafana alerts, refer to [Alerting](https://grafana.com/docs/grafana/latest/alerting/).
 
 ### Deep-link Grafana panels to the CloudWatch console
 
@@ -304,7 +274,7 @@ WHERE `@message` LIKE '%Exception%'
 ```
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
-When making `stats` queries in [Explore](ref:explore), ensure you are in Metrics Explore mode.
+When making `stats` queries in [Explore](https://grafana.com/docs/grafana/latest/explore/), ensure you are in Metrics Explore mode.
 
 ## Cross-account observability
 
