@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"net/http"
 	"slices"
+	"sync"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
@@ -36,7 +38,7 @@ const (
 	headerFromAlert = "FromAlert"
 
 	defaultRegion = "default"
-	logsQueryMode = "Logs"
+	queryModeLogs = "Logs"
 	// QueryTypes
 	annotationQuery = "annotationQuery"
 	logAction       = "logAction"
@@ -45,7 +47,8 @@ const (
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
-	Type string `json:"type,omitempty"`
+	Type     string             `json:"type,omitempty"`
+	LogsMode dataquery.LogsMode `json:"logsMode,omitempty"`
 }
 
 type DataSource struct {
@@ -53,9 +56,10 @@ type DataSource struct {
 	ProxyOpts         *proxy.Options
 	AWSConfigProvider awsauth.ConfigProvider
 
-	logger          log.Logger
-	tagValueCache   *cache.Cache
-	resourceHandler backend.CallResourceHandler
+	logger                 log.Logger
+	tagValueCache          *cache.Cache
+	resourceHandler        backend.CallResourceHandler
+	monitoringAccountCache sync.Map
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
@@ -147,10 +151,20 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 	if model.QueryMode != "" {
 		queryMode = string(model.QueryMode)
 	}
-	fromPublicDashboard := model.Type == "" && queryMode == logsQueryMode
-	isSyncLogQuery := ((fromAlert || fromExpression) && queryMode == logsQueryMode) || fromPublicDashboard
+
+	fromPublicDashboard := model.Type == ""
+
+	isLogInsightsQuery := queryMode == queryModeLogs && (model.LogsMode == "" || model.LogsMode == dataquery.LogsModeInsights)
+
+	isSyncLogQuery := isLogInsightsQuery && ((fromAlert || fromExpression) || fromPublicDashboard)
+
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, ds, req)
+	}
+
+	isLogsAnomaliesQuery := model.QueryMode == dataquery.CloudWatchQueryModeLogs && model.LogsMode == dataquery.LogsModeAnomalies
+	if isLogsAnomaliesQuery {
+		return executeLogAnomaliesQuery(ctx, ds, req)
 	}
 
 	var result *backend.QueryDataResponse
@@ -260,6 +274,33 @@ func (ds *DataSource) getRGTAClient(ctx context.Context, region string) (resourc
 	}
 
 	return NewRGTAClient(cfg), nil
+}
+
+func (ds *DataSource) isMonitoringAccount(ctx context.Context, region string) (bool, error) {
+	if value, ok := ds.monitoringAccountCache.Load(region); ok {
+		cached := value.(bool)
+		return cached, nil
+	}
+
+	client, err := ds.GetAccountsService(ctx, region)
+	if err != nil {
+		return false, err
+	}
+
+	accounts, err := client.GetAccountsForCurrentUserOrRole(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for _, account := range accounts {
+		if account.Value.IsMonitoringAccount {
+			ds.monitoringAccountCache.Store(region, true)
+			return true, nil
+		}
+	}
+
+	ds.monitoringAccountCache.Store(region, false)
+	return false, nil
 }
 
 var terminatedStates = []cloudwatchlogstypes.QueryStatus{

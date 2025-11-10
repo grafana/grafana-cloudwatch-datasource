@@ -270,8 +270,8 @@ describe('datasource', () => {
       expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'fields templatedField',
         logGroups: [
-          { name: 'templatedGroup-arn-1', arn: 'templatedGroup-arn-1' },
-          { name: 'templatedGroup-arn-2', arn: 'templatedGroup-arn-2' },
+          { name: 'templatedGroup-1', arn: 'templatedGroup-arn-1' },
+          { name: 'templatedGroup-2', arn: 'templatedGroup-arn-2' },
         ],
         logGroupNames: ['/some/group'],
         region: 'templatedRegion',
@@ -313,7 +313,7 @@ describe('datasource', () => {
       });
     });
 
-    it('should add a data link field to log queries', async () => {
+    it('should add links to log insights queries', async () => {
       const { datasource } = setupForLogs();
 
       const observable = datasource.query({
@@ -401,8 +401,9 @@ describe('datasource', () => {
 
       expect(templateService.replace).toHaveBeenNthCalledWith(1, '$regionVar', {});
       expect(templateService.replace).toHaveBeenNthCalledWith(2, '$groups', {}, 'pipe');
-      expect(templateService.replace).toHaveBeenNthCalledWith(3, '$expressionVar', {}, undefined);
-      expect(templateService.replace).toHaveBeenCalledTimes(3);
+      expect(templateService.replace).toHaveBeenNthCalledWith(3, '$groups', {}, 'text');
+      expect(templateService.replace).toHaveBeenNthCalledWith(4, '$expressionVar', {}, undefined);
+      expect(templateService.replace).toHaveBeenCalledTimes(4);
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
@@ -446,7 +447,7 @@ describe('datasource', () => {
       const { datasource } = setupMockedDataSource();
       expect(datasource.getDefaultQuery(CoreApp.PanelEditor).queryMode).toEqual('Metrics');
     });
-    it('should set default log groups in default query', () => {
+    it('should set default log groups in default logs insights query', () => {
       const { datasource } = setupMockedDataSource({
         customInstanceSettings: {
           ...CloudWatchSettings,

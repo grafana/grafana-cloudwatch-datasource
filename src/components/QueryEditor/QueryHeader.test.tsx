@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { validLogsQuery, validMetricSearchBuilderQuery } from '../../__mocks__/queries';
-import { LogsQueryLanguage } from '../../dataquery.gen';
+import { LogsQueryLanguage } from '../../dataquery';
 import { DEFAULT_CWLI_QUERY_STRING } from '../../defaultQueries';
 
 import QueryHeader from './QueryHeader';
