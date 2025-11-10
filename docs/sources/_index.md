@@ -55,11 +55,11 @@ To customize one of these dashboards, Grafana recommends saving it under a diffe
 After installing and configuring the Amazon CloudWatch data source, you can:
 
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/)
-- Configure and use [templates and variables](https://grafana.comhttps://grafana.com/docs/grafana/latest/dashboards/variables/)
-- Add [transformations](https://grafana.comhttps://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/)
-- Add [annotations](https://grafana.comhttps://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/)
-- Set up [alerting](https://grafana.comhttps://grafana.com/docs/grafana/latest/alerting/)
-- Optimize performance with [query caching](https://grafana.comhttps://grafana.com/docs/grafana/latest/administration/data-source-management/#query-and-resource-caching)
+- Configure and use [templates and variables](https://grafana.com/docs/grafana/latest/dashboards/variables/)
+- Add [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/)
+- Add [annotations](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/)
+- Set up [alerting](https://grafana.com/docs/grafana/latest/alerting/)
+- Optimize performance with [query caching](https://grafana.com/docs/grafana/latest/administration/data-source-management/#query-and-resource-caching)
 
 ## Control pricing
 

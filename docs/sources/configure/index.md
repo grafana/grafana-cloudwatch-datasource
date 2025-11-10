@@ -50,7 +50,7 @@ The following are configuration options for the CloudWatch data source.
 Grafana plugin requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
+For authentication options and configuration details, refer to [AWS authentication](/docs/plugins/grafana-cloudwatch-datasource/latest/aws-authentication/).
 
 | Setting            | Description                                                                                                                                                                                                                  |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -87,15 +87,15 @@ You must use both an access key ID and a secret access key to authenticate.
 | **Query timeout result** | Grafana polls Cloudwatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana config file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
 | **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                       |
 
-**X-Ray trace link:**
+**Application Signals trace link:**
 
 | Setting         | Description                                           |
 | --------------- | ----------------------------------------------------- |
-| **Data source** | Select the X-ray data source from the drop-down menu. |
+| **Data source** | Select the Application Signals (previously X-Ray) data source from the drop-down menu. |
 
-Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/logs/) to view the log details section.
+Grafana automatically creates a link to a trace in Application Signals data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an Application Signals data source configured. For details, see the [Application Signals data source docs](/docs/plugins/grafana-x-ray-datasource/). To view the link to Application Signals, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/logs/) to view the log details section.
 
-To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
+To log the `@xrayTraceId`, refer to the [AWS Application Signals documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Monitoring-Sections.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
 **Private data source connect** - _Only for Grafana Cloud users._
 
@@ -114,7 +114,7 @@ To troubleshoot issues while setting up the CloudWatch data source, check the `/
 ### IAM policy examples
 
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
-You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](aws-authentication/).
+You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](/docs/plugins/grafana-cloudwatch-datasource/latest/aws-authentication/).
 
 **Metrics-only permissions:**
 
