@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.261.0
 	github.com/aws/aws-sdk-go-v2/service/oam v1.23.2
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.10
-	github.com/aws/smithy-go v1.23.1
+	github.com/aws/smithy-go v1.23.2
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
