@@ -2,6 +2,7 @@
 
 ## 12.4.0
 
+- chore(deps): update module golang.org/x/crypto to v0.43.0 [security] in [#294](https://github.com/grafana/grafana-cloudwatch-datasource/pull/294)
 - Metrics: Make match exact toggle false by default in [#283](https://github.com/grafana/grafana-cloudwatch-datasource/pull/283)
 - Log anomalies: Update docs, add anomaly command to language support in [#280](https://github.com/grafana/grafana-cloudwatch-datasource/pull/280)
 - CloudWatch Logs: Limit CloudWatch logs queries to use logGroupIdentifiers only for monitoring accounts in [#273](https://github.com/grafana/grafana-cloudwatch-datasource/pull/273)
