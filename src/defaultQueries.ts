@@ -29,6 +29,7 @@ export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
 
 export const DEFAULT_ANNOTATIONS_QUERY: Omit<CloudWatchAnnotationQuery, 'refId'> = {
   queryMode: 'Annotations',
+  annotationType: 'metrics', // Default to metrics for backward compatibility
   namespace: '',
   region: 'default',
   statistic: 'Average',

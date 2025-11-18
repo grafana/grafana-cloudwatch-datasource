@@ -163,5 +163,145 @@ describe('annotationSupport', () => {
         expect(CloudWatchAnnotationSupport.prepareQuery(query)).toBeUndefined();
       });
     });
+
+    describe('Logs Annotation Validation', () => {
+      const validLogsAnnotationQuery: CloudWatchAnnotationQuery = {
+        queryMode: 'Annotations',
+        annotationType: 'logs',
+        region: 'us-east-1',
+        refId: 'anno',
+        expression: 'fields @timestamp, @message | sort @timestamp desc',
+        logGroups: [
+          {
+            arn: 'arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/test',
+            name: '/aws/lambda/test',
+          },
+        ],
+      };
+
+      describe('is being called with a complete logs annotation query', () => {
+        it('should return the annotation target', () => {
+          const query = {
+            ...annotationQuery,
+            target: validLogsAnnotationQuery,
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toEqual(validLogsAnnotationQuery);
+        });
+      });
+
+      describe('is being called with logs annotation query missing expression', () => {
+        it('should return undefined', () => {
+          const query = {
+            ...annotationQuery,
+            target: {
+              ...validLogsAnnotationQuery,
+              expression: undefined,
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toBeUndefined();
+        });
+
+        it('should return undefined when expression is empty string', () => {
+          const query = {
+            ...annotationQuery,
+            target: {
+              ...validLogsAnnotationQuery,
+              expression: '',
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toBeUndefined();
+        });
+      });
+
+      describe('is being called with logs annotation query missing log groups', () => {
+        it('should return undefined when logGroups is empty', () => {
+          const query = {
+            ...annotationQuery,
+            target: {
+              ...validLogsAnnotationQuery,
+              logGroups: [],
+              logGroupNames: undefined,
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toBeUndefined();
+        });
+
+        it('should return undefined when logGroups is undefined', () => {
+          const query = {
+            ...annotationQuery,
+            target: {
+              ...validLogsAnnotationQuery,
+              logGroups: undefined,
+              logGroupNames: undefined,
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toBeUndefined();
+        });
+      });
+
+      describe('is being called with logs annotation query using legacy logGroupNames', () => {
+        it('should return the annotation target when logGroupNames is provided', () => {
+          const query = {
+            ...annotationQuery,
+            target: {
+              ...validLogsAnnotationQuery,
+              logGroups: undefined,
+              logGroupNames: ['/aws/lambda/test'],
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toEqual(query.target);
+        });
+
+        it('should return undefined when logGroupNames is empty', () => {
+          const query = {
+            ...annotationQuery,
+            target: {
+              ...validLogsAnnotationQuery,
+              logGroups: undefined,
+              logGroupNames: [],
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toBeUndefined();
+        });
+      });
+
+      describe('is being called with logs annotation query with both logGroups and logGroupNames', () => {
+        it('should return the annotation target (logGroups takes precedence)', () => {
+          const query = {
+            ...annotationQuery,
+            target: {
+              ...validLogsAnnotationQuery,
+              logGroups: [
+                {
+                  arn: 'arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/test',
+                  name: '/aws/lambda/test',
+                },
+              ],
+              logGroupNames: ['/aws/lambda/legacy'],
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(query)).toEqual(query.target);
+        });
+      });
+    });
+
+    describe('Backward Compatibility', () => {
+      describe('is being called with metrics annotation without annotationType field', () => {
+        it('should return the annotation target (defaults to metrics)', () => {
+          const queryWithoutType = {
+            ...annotationQuery,
+            target: {
+              queryMode: 'Annotations' as const,
+              region: 'us-east-2',
+              namespace: 'AWS/EC2',
+              metricName: 'CPUUtilization',
+              statistic: 'Average',
+              refId: 'anno',
+            },
+          };
+          expect(CloudWatchAnnotationSupport.prepareQuery(queryWithoutType)).toEqual(queryWithoutType.target);
+        });
+      });
+    });
   });
 });

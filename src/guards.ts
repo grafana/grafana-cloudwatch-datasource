@@ -28,5 +28,20 @@ export const isCloudWatchAnnotationQuery = (
   cloudwatchQuery: CloudWatchQuery
 ): cloudwatchQuery is CloudWatchAnnotationQuery => cloudwatchQuery.queryMode === 'Annotations';
 
+export const isMetricsAnnotationQuery = (query: CloudWatchQuery): query is CloudWatchAnnotationQuery => {
+  if (!isCloudWatchAnnotationQuery(query)) {
+    return false;
+  }
+  // Default to metrics for backward compatibility (when annotationType is not set)
+  return !query.annotationType || query.annotationType === 'metrics';
+};
+
+export const isLogsAnnotationQuery = (query: CloudWatchQuery): query is CloudWatchAnnotationQuery => {
+  if (!isCloudWatchAnnotationQuery(query)) {
+    return false;
+  }
+  return query.annotationType === 'logs';
+};
+
 export const isCloudWatchAnnotation = (query: unknown): query is AnnotationQuery<CloudWatchAnnotationQuery> =>
   (query as AnnotationQuery<CloudWatchAnnotationQuery>).target?.queryMode === 'Annotations';

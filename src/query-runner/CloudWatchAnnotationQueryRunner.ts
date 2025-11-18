@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
+import { isLogsAnnotationQuery } from '../guards';
 import { CloudWatchAnnotationQuery, CloudWatchJsonData, CloudWatchQuery } from '../types';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
@@ -20,19 +21,37 @@ export class CloudWatchAnnotationQueryRunner extends CloudWatchRequest {
   ): Observable<DataQueryResponse> {
     return queryFn({
       ...options,
-      targets: queries.map((query) => ({
-        ...query,
-        statistic: this.templateSrv.replace(query.statistic),
-        region: this.templateSrv.replace(this.getActualRegion(query.region)),
-        namespace: this.templateSrv.replace(query.namespace),
-        metricName: this.templateSrv.replace(query.metricName),
-        dimensions: this.convertDimensionFormat(query.dimensions ?? {}, {}),
-        period: query.period ?? '',
-        actionPrefix: query.actionPrefix ?? '',
-        alarmNamePrefix: query.alarmNamePrefix ?? '',
-        type: 'annotationQuery',
-        datasource: this.ref,
-      })),
+      targets: queries.map((query) => {
+        const baseQuery = {
+          ...query,
+          region: this.templateSrv.replace(this.getActualRegion(query.region)),
+          type: 'annotationQuery',
+          datasource: this.ref,
+        };
+
+        // Handle logs annotations
+        if (isLogsAnnotationQuery(query)) {
+          return {
+            ...baseQuery,
+            expression: this.templateSrv.replace(query.expression ?? ''),
+            logGroups: query.logGroups || [],
+            logGroupNames: query.logGroupNames || [],
+            queryLanguage: query.queryLanguage,
+          };
+        }
+
+        // Handle metrics annotations (default for backward compatibility)
+        return {
+          ...baseQuery,
+          statistic: this.templateSrv.replace(query.statistic),
+          namespace: this.templateSrv.replace(query.namespace),
+          metricName: this.templateSrv.replace(query.metricName),
+          dimensions: this.convertDimensionFormat(query.dimensions ?? {}, {}),
+          period: query.period ?? '',
+          actionPrefix: query.actionPrefix ?? '',
+          alarmNamePrefix: query.alarmNamePrefix ?? '',
+        };
+      }),
     });
   }
 }

@@ -182,15 +182,34 @@ composableKinds: DataQuery: {
 
 				#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="type")
 
+				#CloudWatchAnnotationType: "metrics" | "logs" @cuetsy(kind="type")
+
 				// Shape of a CloudWatch Annotation query
 				#CloudWatchAnnotationQuery: {
 					common.DataQuery
-					#MetricStat
 
 					// Whether a query is a Metrics, Logs, or Annotations query
 					queryMode: #CloudWatchQueryMode
-					// Enable matching on the prefix of the action name or alarm name, specify the prefixes with actionPrefix and/or alarmNamePrefix
-					prefixMatching?: bool
+					// The type of annotation query - metrics (alarms) or logs (log events)
+					annotationType?: #CloudWatchAnnotationType
+					// AWS region to query for the annotations
+					region: string
+
+					// ===== Metrics Annotation Fields (CloudWatch Alarms) =====
+					// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
+					accountId?: string
+					// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
+					namespace?: string
+					// Name of the metric
+					metricName?: string
+					// The dimensions of the metric
+					dimensions?: #Dimensions
+					// Only show metrics that exactly match all defined dimension names.
+					matchExact?: bool
+					// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
+					statistic?: string
+					// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
+					period?: string
 					// Use this parameter to filter the results of the operation to only those alarms
 					// that use a certain alarm action. For example, you could specify the ARN of
 					// an SNS topic to find all alarms that send notifications to that topic.
@@ -201,6 +220,18 @@ composableKinds: DataQuery: {
 					// about all alarms that have names that start with this prefix.
 					// e.g. `my-team-service-` would match `my-team-service-high-cpu` but not match `your-team-service-high-cpu`
 					alarmNamePrefix?: string
+					// Enable matching on the prefix of the action name or alarm name, specify the prefixes with actionPrefix and/or alarmNamePrefix
+					prefixMatching?: bool
+
+					// ===== Logs Annotation Fields (CloudWatch Logs Insights) =====
+					// The CloudWatch Logs Insights query to execute
+					expression?: string
+					// Log groups to query
+					logGroups?: [...#LogGroup]
+					// @deprecated use logGroups
+					logGroupNames?: [...string]
+					// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
+					queryLanguage?: #LogsQueryLanguage
 				} @cuetsy(kind="interface")
 
 				// TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer

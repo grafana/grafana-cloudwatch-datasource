@@ -2,7 +2,7 @@ import { AnnotationQuery } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor/AnnotationQueryEditor';
 import { DEFAULT_ANNOTATIONS_QUERY } from './defaultQueries';
-import { isCloudWatchAnnotation } from './guards';
+import { isCloudWatchAnnotation, isLogsAnnotationQuery, isMetricsAnnotationQuery } from './guards';
 import { CloudWatchAnnotationQuery, CloudWatchQuery, LegacyAnnotationQuery } from './types';
 
 export const CloudWatchAnnotationSupport = {
@@ -38,12 +38,28 @@ export const CloudWatchAnnotationSupport = {
       return undefined;
     }
 
-    const { prefixMatching, actionPrefix, alarmNamePrefix, statistic, namespace, metricName } = anno.target;
-    const validPrefixMatchingQuery = !!prefixMatching && !!actionPrefix && !!alarmNamePrefix;
-    const validMetricStatQuery = !prefixMatching && !!namespace && !!metricName && !!statistic;
+    // Check if it's a logs annotation query
+    if (isLogsAnnotationQuery(anno.target)) {
+      const { expression, logGroups, logGroupNames } = anno.target;
+      const hasLogGroups = (logGroups && logGroups.length > 0) || (logGroupNames && logGroupNames.length > 0);
+      const validLogsQuery = !!expression && hasLogGroups;
 
-    if (validPrefixMatchingQuery || validMetricStatQuery) {
-      return anno.target;
+      if (validLogsQuery) {
+        return anno.target;
+      }
+
+      return undefined;
+    }
+
+    // Check if it's a metrics annotation query (default)
+    if (isMetricsAnnotationQuery(anno.target)) {
+      const { prefixMatching, actionPrefix, alarmNamePrefix, statistic, namespace, metricName } = anno.target;
+      const validPrefixMatchingQuery = !!prefixMatching && !!actionPrefix && !!alarmNamePrefix;
+      const validMetricStatQuery = !prefixMatching && !!namespace && !!metricName && !!statistic;
+
+      if (validPrefixMatchingQuery || validMetricStatQuery) {
+        return anno.target;
+      }
     }
 
     return undefined;
