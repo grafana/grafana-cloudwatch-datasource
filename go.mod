@@ -4,11 +4,11 @@ go 1.24.6
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.39.6
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.52.1
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.58.7
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.52.2
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.58.8
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.261.1
-	github.com/aws/aws-sdk-go-v2/service/oam v1.23.3
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.11
+	github.com/aws/aws-sdk-go-v2/service/oam v1.23.4
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.12
 	github.com/aws/smithy-go v1.23.2
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
