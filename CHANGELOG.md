@@ -2,6 +2,10 @@
 
 ## 12.4.0
 
+- CloudWatch Logs: Hide internal logs field in [#299](https://github.com/grafana/grafana-cloudwatch-datasource/pull/299)
+- ConfigEditor: add links to data source docs in [#291](https://github.com/grafana/grafana-cloudwatch-datasource/pull/291)
+- Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.281.0 to 0.282.0 in [#301](https://github.com/grafana/grafana-cloudwatch-datasource/pull/301)
+- Chore: bump the aws-sdk-go-v2 group with 4 updates in [#300](https://github.com/grafana/grafana-cloudwatch-datasource/pull/300)
 - chore(deps): update module golang.org/x/crypto to v0.43.0 [security] in [#294](https://github.com/grafana/grafana-cloudwatch-datasource/pull/294)
 - Metrics: Make match exact toggle false by default in [#283](https://github.com/grafana/grafana-cloudwatch-datasource/pull/283)
 - Log anomalies: Update docs, add anomaly command to language support in [#280](https://github.com/grafana/grafana-cloudwatch-datasource/pull/280)
