@@ -1,5 +1,42 @@
 # Changelog
 
+## 12.4.0
+
+- Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.282.0 to 0.283.0 in [#305](https://github.com/grafana/grafana-cloudwatch-datasource/pull/305)
+- CloudWatch Logs: Hide internal logs field in [#299](https://github.com/grafana/grafana-cloudwatch-datasource/pull/299)
+- ConfigEditor: add links to data source docs in [#291](https://github.com/grafana/grafana-cloudwatch-datasource/pull/291)
+- Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.281.0 to 0.282.0 in [#301](https://github.com/grafana/grafana-cloudwatch-datasource/pull/301)
+- Chore: bump the aws-sdk-go-v2 group with 4 updates in [#300](https://github.com/grafana/grafana-cloudwatch-datasource/pull/300)
+- chore(deps): update module golang.org/x/crypto to v0.43.0 [security] in [#294](https://github.com/grafana/grafana-cloudwatch-datasource/pull/294)
+- Metrics: Make match exact toggle false by default in [#283](https://github.com/grafana/grafana-cloudwatch-datasource/pull/283)
+- Log anomalies: Update docs, add anomaly command to language support in [#280](https://github.com/grafana/grafana-cloudwatch-datasource/pull/280)
+- CloudWatch Logs: Limit CloudWatch logs queries to use logGroupIdentifiers only for monitoring accounts in [#273](https://github.com/grafana/grafana-cloudwatch-datasource/pull/273)
+- Chore: bump @typescript-eslint/parser from 8.46.2 to 8.46.3 in the npm-patch-dev-dependencies group in [#292](https://github.com/grafana/grafana-cloudwatch-datasource/pull/292)
+- Chore: bump @typescript-eslint/parser from 8.45.0 to 8.46.2 in [#290](https://github.com/grafana/grafana-cloudwatch-datasource/pull/290)
+- Chore: bump the aws-sdk-go-v2 group with 6 updates in [#289](https://github.com/grafana/grafana-cloudwatch-datasource/pull/289)
+- Chore: bump the npm-patch-dev-dependencies group with 2 updates in [#288](https://github.com/grafana/grafana-cloudwatch-datasource/pull/288)
+- Chore: bump github.com/aws/smithy-go from 1.23.1 to 1.23.2 in [#286](https://github.com/grafana/grafana-cloudwatch-datasource/pull/286)
+- Docs: Fix dead links and replace X-ray with Application Signals references in [#284](https://github.com/grafana/grafana-cloudwatch-datasource/pull/284)
+- Chore: bump sass from 1.89.2 to 1.93.2 in [#285](https://github.com/grafana/grafana-cloudwatch-datasource/pull/285)
+- Add local documentation infrastructure in [#235](https://github.com/grafana/grafana-cloudwatch-datasource/pull/235)
+- Chore: bump golang.org/x/sync from 0.17.0 to 0.18.0 in [#282](https://github.com/grafana/grafana-cloudwatch-datasource/pull/282)
+- Chore: bump jest-environment-jsdom from 30.0.5 to 30.2.0 in [#275](https://github.com/grafana/grafana-cloudwatch-datasource/pull/275)
+- fix(deps): update aws-sdk-go-v2 monorepo in [#241](https://github.com/grafana/grafana-cloudwatch-datasource/pull/241)
+- chore(deps): pin dependencies in [#239](https://github.com/grafana/grafana-cloudwatch-datasource/pull/239)
+- Publish to every environment on Cloud and add on-prem promotion in [#266](https://github.com/grafana/grafana-cloudwatch-datasource/pull/266)
+- Chore: bump @eslint/js from 9.36.0 to 9.38.0 in [#272](https://github.com/grafana/grafana-cloudwatch-datasource/pull/272)
+- Chore: bump @types/node from 22.18.12 to 22.18.13 in the npm-patch-dev-dependencies group in [#270](https://github.com/grafana/grafana-cloudwatch-datasource/pull/270)
+- Chore: bump @grafana/scenes from 6.42.2 to 6.42.3 in [#269](https://github.com/grafana/grafana-cloudwatch-datasource/pull/269)
+- Chore: bump @playwright/test from 1.55.1 to 1.56.1 in [#264](https://github.com/grafana/grafana-cloudwatch-datasource/pull/264)
+- Chore: bump @grafana/plugin-ui from 0.10.10 to 0.11.1 in [#265](https://github.com/grafana/grafana-cloudwatch-datasource/pull/265)
+- Chore: bump the npm-patch-dev-dependencies group with 4 updates in [#261](https://github.com/grafana/grafana-cloudwatch-datasource/pull/261)
+- Chore: bump @grafana/scenes from 6.13.0 to 6.42.2 in [#262](https://github.com/grafana/grafana-cloudwatch-datasource/pull/262)
+- Chore: bump the aws-sdk-go-v2 group with 3 updates in [#260](https://github.com/grafana/grafana-cloudwatch-datasource/pull/260)
+- Chore: bump the aws-sdk-go-v2 group across 1 directory with 6 updates in [#204](https://github.com/grafana/grafana-cloudwatch-datasource/pull/204)
+- Chore: bump actions/setup-node from 5 to 6 in [#234](https://github.com/grafana/grafana-cloudwatch-datasource/pull/234)
+- Chore: bump eslint-plugin-jsdoc from 54.7.0 to 60.5.0 in [#256](https://github.com/grafana/grafana-cloudwatch-datasource/pull/256)
+- Chore: bump @grafana/aws-sdk from 0.7.1 to 0.8.2 in [#254](https://github.com/grafana/grafana-cloudwatch-datasource/pull/254)
+
 ## 12.3.0
 
 - Feature: Support Log Anomalies queries in [#257](https://github.com/grafana/grafana-cloudwatch-datasource/pull/257)
