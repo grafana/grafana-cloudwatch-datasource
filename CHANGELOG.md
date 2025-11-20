@@ -2,6 +2,7 @@
 
 ## 12.4.0
 
+- Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.282.0 to 0.283.0 in [#305](https://github.com/grafana/grafana-cloudwatch-datasource/pull/305)
 - CloudWatch Logs: Hide internal logs field in [#299](https://github.com/grafana/grafana-cloudwatch-datasource/pull/299)
 - ConfigEditor: add links to data source docs in [#291](https://github.com/grafana/grafana-cloudwatch-datasource/pull/291)
 - Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.281.0 to 0.282.0 in [#301](https://github.com/grafana/grafana-cloudwatch-datasource/pull/301)
