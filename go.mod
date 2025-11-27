@@ -3,12 +3,12 @@ module github.com/grafana/grafana-cloudwatch-datasource
 go 1.24.6
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.39.6
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.52.2
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.58.8
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.261.1
-	github.com/aws/aws-sdk-go-v2/service/oam v1.23.4
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.12
+	github.com/aws/aws-sdk-go-v2 v1.40.0
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.52.4
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.58.9
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.267.0
+	github.com/aws/aws-sdk-go-v2/service/oam v1.23.6
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.30.13
 	github.com/aws/smithy-go v1.23.2
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
@@ -28,8 +28,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.31.17 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.13 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.13 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.13 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.14 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.13 // indirect
