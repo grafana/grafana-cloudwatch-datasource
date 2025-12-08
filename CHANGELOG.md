@@ -1,5 +1,13 @@
 # Changelog
 
+## 12.4.1
+
+- Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.283.0 to 0.284.0 in [#308](https://github.com/grafana/grafana-cloudwatch-datasource/pull/308)
+- Chore: bump github.com/grafana/grafana-aws-sdk from 1.3.1 to 1.4.0 in [#311](https://github.com/grafana/grafana-cloudwatch-datasource/pull/311)
+- revert skip dev image for e2e tests in [#309](https://github.com/grafana/grafana-cloudwatch-datasource/pull/309)
+- Chore: bump tar from 7.5.1 to 7.5.2 in [#317](https://github.com/grafana/grafana-cloudwatch-datasource/pull/317)
+- update ci-cd workflows to v4.3.0 in [#313](https://github.com/grafana/grafana-cloudwatch-datasource/pull/313)
+
 ## 12.4.0
 
 - Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.282.0 to 0.283.0 in [#305](https://github.com/grafana/grafana-cloudwatch-datasource/pull/305)
