@@ -1,5 +1,14 @@
 # Changelog
 
+## 12.4.2
+
+- Mark missing default region error downstream in [#333](https://github.com/grafana/grafana-cloudwatch-datasource/pull/333)
+- Chore: fix error source for some query errors in [#331](https://github.com/grafana/grafana-cloudwatch-datasource/pull/331)
+- Chore: bump js-yaml from 3.14.1 to 3.14.2 in [#326](https://github.com/grafana/grafana-cloudwatch-datasource/pull/326)
+- Chore: bump golang.org/x/sync from 0.18.0 to 0.19.0 in [#325](https://github.com/grafana/grafana-cloudwatch-datasource/pull/325)
+- Chore: bump github.com/aws/smithy-go from 1.23.2 to 1.24.0 in [#324](https://github.com/grafana/grafana-cloudwatch-datasource/pull/324)
+- chore(deps): update dependency @grafana/plugin-e2e to v2.2.3 in [#243](https://github.com/grafana/grafana-cloudwatch-datasource/pull/243)
+
 ## 12.4.1
 
 - Chore: bump github.com/grafana/grafana-plugin-sdk-go from 0.283.0 to 0.284.0 in [#308](https://github.com/grafana/grafana-cloudwatch-datasource/pull/308)
