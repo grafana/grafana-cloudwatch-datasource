@@ -13,7 +13,7 @@ require (
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/grafana-aws-sdk v1.4.0
+	github.com/grafana/grafana-aws-sdk v1.4.2
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.23.2
