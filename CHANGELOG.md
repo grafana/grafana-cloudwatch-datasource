@@ -2,6 +2,7 @@
 
 ## 12.4.2
 
+- Update grafana-aws-sdk to 1.4.2 in [#337](https://github.com/grafana/grafana-cloudwatch-datasource/pull/337)
 - Mark missing default region error downstream in [#333](https://github.com/grafana/grafana-cloudwatch-datasource/pull/333)
 - Chore: fix error source for some query errors in [#331](https://github.com/grafana/grafana-cloudwatch-datasource/pull/331)
 - Chore: bump js-yaml from 3.14.1 to 3.14.2 in [#326](https://github.com/grafana/grafana-cloudwatch-datasource/pull/326)
