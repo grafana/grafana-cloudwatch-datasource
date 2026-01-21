@@ -133,7 +133,7 @@ export const ConfigEditor = (props: Props) => {
         <Field
           htmlFor="logsTimeout"
           label="Query Result Timeout"
-          description='Grafana will poll for Cloudwatch Logs results every second until Done status is returned from AWS or timeout is exceeded, in which case Grafana will return an error. Note: For Alerting, the timeout from Grafana config file will take precedence. Must be a valid duration string, such as "30m" (default) "30s" "2000ms" etc.'
+          description='Grafana will poll for Cloudwatch Logs results every second until Done status is returned from AWS or timeout is exceeded, in which case Grafana will return an error. Note: For Alerting, the timeout from Grafana config file will take precedence. Must be a valid duration string, such as "30m" (default), "30s", "2000ms", etc.'
           invalid={Boolean(logsTimeoutError)}
         >
           <Input
