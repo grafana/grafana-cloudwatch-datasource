@@ -5,6 +5,7 @@ import { CoreApp, Field } from '@grafana/data';
 
 import {
   CloudWatchSettings,
+  accountIdVariable,
   fieldsVariable,
   logGroupNamesVariable,
   regionVariable,
@@ -433,12 +434,81 @@ describe('datasource', () => {
 
       datasource.interpolateVariablesInQueries([metricsQuery], {});
 
-      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, and `nameSpace` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, `statistic`, `id`, and `nameSpace` in CloudWatchMetricsQuery
       expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(8);
+      expect(templateService.replace).toHaveBeenCalledTimes(10);
 
       expect(mockGetVariableName).toHaveBeenCalledWith(`$${variableName}`);
       expect(mockGetVariableName).toHaveBeenCalledTimes(1);
+    });
+
+    it('should interpolate accountId variable in a CloudWatchMetricsQuery when called via interpolateVariablesInQueries', () => {
+      const { datasource } = setupMockedDataSource({ variables: [accountIdVariable] });
+      const metricsQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
+        id: '',
+        refId: 'A',
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {},
+        matchExact: true,
+        statistic: 'Average',
+        period: '300',
+        accountId: '$accountId',
+      };
+
+      const result = datasource.interpolateVariablesInQueries([metricsQuery], {});
+
+      expect(result[0]).toMatchObject({
+        accountId: 'templatedaccountId',
+      });
+    });
+
+    it('should interpolate accountId variable in a CloudWatchMetricsQuery when called via applyTemplateVariables', () => {
+      const { datasource } = setupMockedDataSource({ variables: [accountIdVariable] });
+      const metricsQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
+        id: '',
+        refId: 'A',
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {},
+        matchExact: true,
+        statistic: 'Average',
+        period: '300',
+        accountId: '$accountId',
+      };
+
+      const result = datasource.applyTemplateVariables(metricsQuery, {});
+
+      expect(result).toMatchObject({
+        accountId: 'templatedaccountId',
+      });
+    });
+
+    it('should not modify accountId if it is not a template variable', () => {
+      const { datasource } = setupMockedDataSource({ variables: [accountIdVariable] });
+      const metricsQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
+        id: '',
+        refId: 'A',
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {},
+        matchExact: true,
+        statistic: 'Average',
+        period: '300',
+        accountId: '123456789012',
+      };
+
+      const result = datasource.applyTemplateVariables(metricsQuery, {});
+
+      expect(result).toMatchObject({
+        accountId: '123456789012',
+      });
     });
   });
 
