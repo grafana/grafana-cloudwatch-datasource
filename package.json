@@ -19,7 +19,7 @@
     "@eslint/eslintrc": "3.3.3",
     "@eslint/js": "9.39.2",
     "@grafana/eslint-config": "9.0.0",
-    "@grafana/plugin-e2e": "3.2.0",
+    "@grafana/plugin-e2e": "3.2.1",
     "@grafana/tsconfig": "2.0.1",
     "@playwright/test": "1.57.0",
     "@stylistic/eslint-plugin-ts": "4.4.1",
