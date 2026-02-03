@@ -1,4 +1,14 @@
 {
   "extends": "./.config/tsconfig.json",
-  "compilerOptions": { "jsx": "react-jsx"},
+  "compilerOptions": { 
+    "jsx": "react-jsx",
+    "module": "commonjs",
+    "esModuleInterop": true
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    },
+    "transpileOnly": true
+  }
 }
