@@ -102,6 +102,7 @@ export const ConfigEditor = (props: Props) => {
       <Divider />
       <ConnectionConfig
         {...props}
+        showHttpProxySettings
         loadRegions={
           datasource &&
           (async () => {
