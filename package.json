@@ -2,8 +2,8 @@
   "name": "grafana-cloudwatch-datasource",
   "version": "12.4.2",
   "scripts": {
-    "build": "NODE_OPTIONS='--require ts-node/register' webpack -c ./webpack.config.ts --env production",
-    "dev": "NODE_OPTIONS='--require ts-node/register' webpack -w -c ./webpack.config.ts --env development",
+    "build": "webpack -c ./webpack.config.ts --env production",
+    "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
     "typecheck": "tsc --noEmit",
