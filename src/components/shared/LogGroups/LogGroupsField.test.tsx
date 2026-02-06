@@ -27,6 +27,8 @@ describe('LogGroupSelection', () => {
       fn.cancel = () => {};
       return fn;
     });
+    // Re-mock isMonitoringAccount after resetAllMocks
+    defaultProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
   });
   afterEach(() => {
     config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
