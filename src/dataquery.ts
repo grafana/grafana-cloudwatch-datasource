@@ -253,7 +253,7 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
   /**
    * Log group name prefixes for namePrefix scope mode (max 5)
    */
-  logGroupPrefixes?: Array<string>;
+  logGroupPrefixes?: string[];
   /**
    * Log groups to query
    */
@@ -281,7 +281,7 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
   /**
    * Selected account IDs for cross-account queries (max 20)
    */
-  selectedAccountIds?: Array<string>;
+  selectedAccountIds?: string[];
   /**
    * Fields to group the results by, this field is automatically populated whenever the query is updated
    */
