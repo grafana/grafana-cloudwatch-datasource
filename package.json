@@ -33,7 +33,7 @@
     "@types/jest": "30.0.0",
     "@types/jsurl": "0.1.2",
     "@types/node": "24.10.13",
-    "@types/prismjs": "1.26.5",
+    "@types/prismjs": "1.26.6",
     "@types/slate": "0.47.16",
     "@typescript-eslint/eslint-plugin": "8.54.0",
     "@typescript-eslint/parser": "8.54.0",
