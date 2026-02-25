@@ -1251,8 +1251,8 @@ __metadata:
   linkType: hard
 
 "@grafana/scenes@npm:^6.42.3":
-  version: 6.57.0
-  resolution: "@grafana/scenes@npm:6.57.0"
+  version: 6.57.1
+  resolution: "@grafana/scenes@npm:6.57.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -1272,7 +1272,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10c0/38cf33577d6d21e4ee7334969d7cf9aba2aee925ecbe943c63f624333c9a58fd846d6d70910529f9e8bf0b76ad0886f61f48f6e373ff7525b882589f478694dd
+  checksum: 10c0/8a49d4548adaaba61a6db654521ceb10bc2931ebd073f5cd1db459b8d91f2a8e4a93cfefe43b2785f2e1033fd33bebd72a290bbd3c332611ca166530fe34558e
   languageName: node
   linkType: hard
 
