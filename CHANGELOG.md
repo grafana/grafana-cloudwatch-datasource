@@ -2,6 +2,7 @@
 
 ## 12.5.1
 
+- chore(deps): update dependency @eslint/eslintrc to v3.3.4 in [#465](https://github.com/grafana/grafana-cloudwatch-datasource/pull/465)
 - chore(deps): update eslint monorepo to v9.39.3 in [#452](https://github.com/grafana/grafana-cloudwatch-datasource/pull/452)
 - update go to 1.25.7 in [#463](https://github.com/grafana/grafana-cloudwatch-datasource/pull/463)
 - chore(deps): update dependency @grafana/scenes to v6.57.2 in [#461](https://github.com/grafana/grafana-cloudwatch-datasource/pull/461)
