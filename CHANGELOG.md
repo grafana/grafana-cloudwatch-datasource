@@ -1,5 +1,27 @@
 # Changelog
 
+## 12.5.1
+
+- chore(deps): update eslint monorepo to v9.39.3 in [#452](https://github.com/grafana/grafana-cloudwatch-datasource/pull/452)
+- update go to 1.25.7 in [#463](https://github.com/grafana/grafana-cloudwatch-datasource/pull/463)
+- chore(deps): update dependency @grafana/scenes to v6.57.2 in [#461](https://github.com/grafana/grafana-cloudwatch-datasource/pull/461)
+- fix(deps): update module github.com/aws/aws-sdk-go-v2/service/ec2 to v1.290.0 in [#457](https://github.com/grafana/grafana-cloudwatch-datasource/pull/457)
+- chore(deps): update typescript-eslint monorepo to v8.56.0 in [#438](https://github.com/grafana/grafana-cloudwatch-datasource/pull/438)
+- chore(deps): update dependency @grafana/scenes to v6.57.1 in [#458](https://github.com/grafana/grafana-cloudwatch-datasource/pull/458)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.3.3 in [#456](https://github.com/grafana/grafana-cloudwatch-datasource/pull/456)
+- chore(deps): update dependency @grafana/scenes to v6.57.0 in [#454](https://github.com/grafana/grafana-cloudwatch-datasource/pull/454)
+- chore(deps): update grafana/grafana-enterprise:latest docker digest to 582fc54 in [#455](https://github.com/grafana/grafana-cloudwatch-datasource/pull/455)
+- chore(deps): update dependency css-loader to v7.1.4 in [#446](https://github.com/grafana/grafana-cloudwatch-datasource/pull/446)
+- fix(deps): update module github.com/aws/aws-sdk-go-v2/service/ec2 to v1.289.1 in [#453](https://github.com/grafana/grafana-cloudwatch-datasource/pull/453)
+- fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.289.0 in [#376](https://github.com/grafana/grafana-cloudwatch-datasource/pull/376)
+- fix(deps): update aws-sdk-go-v2 monorepo in [#447](https://github.com/grafana/grafana-cloudwatch-datasource/pull/447)
+- chore(deps): update dependency @grafana/scenes to v6.56.0 in [#450](https://github.com/grafana/grafana-cloudwatch-datasource/pull/450)
+- chore(deps): update module go.opentelemetry.io/otel/sdk to v1.40.0 [security] in [#448](https://github.com/grafana/grafana-cloudwatch-datasource/pull/448)
+- chore(deps): update dependency webpack to v5.105.2 in [#434](https://github.com/grafana/grafana-cloudwatch-datasource/pull/434)
+- chore(deps): update dependency @grafana/scenes to v6.55.1 in [#445](https://github.com/grafana/grafana-cloudwatch-datasource/pull/445)
+- chore(deps): update dependency glob to v13.0.3 in [#432](https://github.com/grafana/grafana-cloudwatch-datasource/pull/432)
+- fix(deps): update module github.com/aws/aws-sdk-go-v2/service/ec2 to v1.287.0 in [#443](https://github.com/grafana/grafana-cloudwatch-datasource/pull/443)
+
 ## 12.5.0
 
 - chore: support React 19 readiness in [#421](https://github.com/grafana/grafana-cloudwatch-datasource/pull/421)
