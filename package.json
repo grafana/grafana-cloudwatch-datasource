@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/eslintrc": "3.3.4",
-    "@eslint/js": "9.39.3",
+    "@eslint/js": "10.0.1",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.3.3",
     "@grafana/tsconfig": "2.0.1",
@@ -39,7 +39,7 @@
     "@typescript-eslint/parser": "8.56.1",
     "copy-webpack-plugin": "13.0.1",
     "css-loader": "7.1.4",
-    "eslint": "9.39.3",
+    "eslint": "10.0.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-deprecation": "3.0.0",
     "eslint-plugin-jsdoc": "62.7.1",
