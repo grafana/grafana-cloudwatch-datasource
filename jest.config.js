@@ -10,6 +10,13 @@ module.exports = {
     require('./.config/jest/utils').nodeModulesToTransform([
       ...require('./.config/jest/utils').grafanaESModules,
       'monaco-editor',
+      'marked',
+      'react-calendar',
+      'get-user-locale',
+      'memoize',
+      'mimic-function',
+      '@wojtekmaj',
+      '@grafana/aws-sdk',
     ]),
   ],
 };
