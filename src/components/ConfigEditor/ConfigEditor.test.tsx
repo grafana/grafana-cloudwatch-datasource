@@ -40,6 +40,7 @@ jest.mock('@grafana/runtime', () => ({
     get: loadDataSourceMock,
   }),
   getAppEvents: () => mockAppEvents,
+  usePluginInteractionReporter: () => jest.fn(),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     awsAssumeRoleEnabled: true,
