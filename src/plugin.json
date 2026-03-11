@@ -11,17 +11,35 @@
   "backend": true,
   "executable": "gpx_grafana_cloudwatch_datasource",
   "includes": [
-    { "type": "dashboard", "name": "EC2", "path": "dashboards/ec2.json" },
-    { "type": "dashboard", "name": "EBS", "path": "dashboards/EBS.json" },
-    { "type": "dashboard", "name": "Lambda", "path": "dashboards/Lambda.json" },
-    { "type": "dashboard", "name": "Logs", "path": "dashboards/Logs.json" },
-    { "type": "dashboard", "name": "RDS", "path": "dashboards/RDS.json" }
+    {
+      "type": "dashboard",
+      "name": "EC2",
+      "path": "dashboards/ec2.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "EBS",
+      "path": "dashboards/EBS.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Lambda",
+      "path": "dashboards/Lambda.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Logs",
+      "path": "dashboards/Logs.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "RDS",
+      "path": "dashboards/RDS.json"
+    }
   ],
-
   "queryOptions": {
     "minInterval": true
   },
-
   "info": {
     "description": "Data source for Amazon AWS monitoring service",
     "author": {
@@ -34,13 +52,19 @@
       "large": "img/amazon-web-services.png"
     },
     "links": [
-      { "name": "Raise issue", "url": "https://github.com/grafana/grafana-cloudwatch-datasource/issues/new" },
-      { "name": "Documentation", "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/" }
+      {
+        "name": "Raise issue",
+        "url": "https://github.com/grafana/grafana-cloudwatch-datasource/issues/new"
+      },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"
+      }
     ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
   "dependencies": {
-    "grafanaDependency": ">=11.6.x"
+    "grafanaDependency": ">=11.6.11 <12 || >=12.0.10 <12.1 || >=12.1.7 <12.2 || >=12.2.5"
   }
 }
