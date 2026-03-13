@@ -951,13 +951,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.10.1":
-  version: 0.10.1
-  resolution: "@grafana/aws-sdk@npm:0.10.1"
+"@grafana/aws-sdk@npm:0.10.2":
+  version: 0.10.2
+  resolution: "@grafana/aws-sdk@npm:0.10.2"
   dependencies:
     "@grafana/async-query-data": "npm:0.4.2"
     "@grafana/plugin-ui": "npm:^0.13.0"
-  checksum: 10c0/38f42bd613bc21aef479372cb104223edc1ed681ae47a61e1bdea866dea5647a73f4891b5abe3e6e005d9ad8c3b8b3ebaff5195529dd71f9ceb6c437fa0b3ea3
+  checksum: 10c0/de9809075c52853441a6e46b21681e83b38099ac1ee70272d8f1397262fd3ea495b1fa898c8df7a29a70c46a97cc6bf614a2283e3a78aba3be4f6000d852e382
   languageName: node
   linkType: hard
 
@@ -1156,8 +1156,8 @@ __metadata:
   linkType: hard
 
 "@grafana/scenes@npm:^7.0.0":
-  version: 7.1.2
-  resolution: "@grafana/scenes@npm:7.1.2"
+  version: 7.1.4
+  resolution: "@grafana/scenes@npm:7.1.4"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -1182,7 +1182,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10c0/f4cde600142ee2b7953b5d59b7fcd9a819afbdaaead930ee2d869a912125c724ce8e9da4ff2a3e6b5381250078156b9a6f8bf190c284a6efe2ef2f2e42ddae3e
+  checksum: 10c0/8ff265efb67333fa7803722f7e62723440ca936d16c29c1c62f1667ca58bd178e86f4338a50c1e1b49118040e624d92449d0857d5ddd183f48b279df2cfcef7d
   languageName: node
   linkType: hard
 
@@ -6014,7 +6014,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"espree@npm:^11.1.0, espree@npm:^11.1.1":
+"espree@npm:^11.1.0":
+  version: 11.1.1
+  resolution: "espree@npm:11.1.1"
+  dependencies:
+    acorn: "npm:^8.16.0"
+    acorn-jsx: "npm:^5.3.2"
+    eslint-visitor-keys: "npm:^5.0.1"
+  checksum: 10c0/2feae74efdfb037b9e9fcb30506799845cf20900de5e441ed03e5c51aaa249f85ea5818ff177682acc0c9bfb4ac97e1965c238ee44ac7c305aab8747177bab69
+  languageName: node
+  linkType: hard
+
+"espree@npm:^11.1.1":
   version: 11.2.0
   resolution: "espree@npm:11.2.0"
   dependencies:
@@ -6672,7 +6683,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@eslint/compat": "npm:2.0.3"
     "@eslint/js": "npm:10.0.1"
-    "@grafana/aws-sdk": "npm:0.10.1"
+    "@grafana/aws-sdk": "npm:0.10.2"
     "@grafana/data": "npm:^12.0.2"
     "@grafana/eslint-config": "npm:9.0.0"
     "@grafana/plugin-e2e": "npm:3.4.6"

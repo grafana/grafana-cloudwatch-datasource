@@ -1,5 +1,20 @@
 # Changelog
 
+## 12.6.0
+
+- chore(deps): update frontend dependencies in [#475](https://github.com/grafana/grafana-cloudwatch-datasource/pull/475)
+- fix(deps): update backend dependencies in [#474](https://github.com/grafana/grafana-cloudwatch-datasource/pull/474)
+- chore(deps): lock file maintenance in [#451](https://github.com/grafana/grafana-cloudwatch-datasource/pull/451)
+- Update renovate config to use data-sources base preset in [#467](https://github.com/grafana/grafana-cloudwatch-datasource/pull/467)
+- fix(deps): update go patch updates in [#473](https://github.com/grafana/grafana-cloudwatch-datasource/pull/473)
+- chore(deps): update typescript-eslint monorepo to v8.56.1 in [#472](https://github.com/grafana/grafana-cloudwatch-datasource/pull/472)
+- chore(deps): update grafana/plugin-ci-workflows/ci-cd-workflows action to v6.1.1 in [#471](https://github.com/grafana/grafana-cloudwatch-datasource/pull/471)
+- chore(deps): update dependency webpack to v5.105.3 in [#470](https://github.com/grafana/grafana-cloudwatch-datasource/pull/470)
+- chore(deps): update dependency eslint-plugin-jsdoc to v62.7.1 in [#439](https://github.com/grafana/grafana-cloudwatch-datasource/pull/439)
+- chore(deps): update actions/setup-node digest to 53b8394 in [#468](https://github.com/grafana/grafana-cloudwatch-datasource/pull/468)
+- chore(deps): update dependency glob to v13.0.6 in [#449](https://github.com/grafana/grafana-cloudwatch-datasource/pull/449)
+- Cloudwatch: Add log group prefix and all-log queries in [#437](https://github.com/grafana/grafana-cloudwatch-datasource/pull/437)
+
 ## 12.5.1
 
 - chore(deps): update dependency @eslint/eslintrc to v3.3.4 in [#465](https://github.com/grafana/grafana-cloudwatch-datasource/pull/465)
