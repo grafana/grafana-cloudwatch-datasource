@@ -1,16 +1,27 @@
 import { DataQueryRequest, DataQueryResponse, dateMath, FieldType } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { config, DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { CloudWatchQuery } from '../types';
 
 import { addDataLinksToLogsResponse } from './datalinks';
 
 describe('addDataLinksToLogsResponse', () => {
+  // @ts-ignore ignore feature toggle type error
+  const originalFeatureToggleValue = config.featureToggles.cloudWatchLogsInsightsDataLinks;
+
+  afterEach(() => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = originalFeatureToggleValue;
+  });
+
   const time = {
     from: dateMath.toDateTime('2016-12-31 15:00:00Z', { roundUp: false })!,
     to: dateMath.toDateTime('2016-12-31 16:00:00Z', { roundUp: false })!,
   };
   it('should add data links to response from log group names', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = true;
+
     const mockResponse: DataQueryResponse = {
       data: [
         {
@@ -104,6 +115,9 @@ describe('addDataLinksToLogsResponse', () => {
   });
 
   it('should add a data link field to response from log groups, trimming :*', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = true;
+
     const mockResponse: DataQueryResponse = {
       data: [
         {
@@ -169,6 +183,9 @@ describe('addDataLinksToLogsResponse', () => {
   });
 
   it('should add data links to response from log groups, even without trimming :*', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = true;
+
     const mockResponse: DataQueryResponse = {
       data: [
         {
@@ -228,5 +245,49 @@ describe('addDataLinksToLogsResponse', () => {
         },
       ],
     });
+  });
+
+  it('should not add CloudWatch console link when feature toggle is disabled', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = false;
+
+    const mockResponse: DataQueryResponse = {
+      data: [
+        {
+          fields: [
+            {
+              name: '@message',
+              config: {},
+              values: ['log message one', 'log message two'],
+            },
+          ],
+          refId: 'A',
+        },
+      ],
+    };
+
+    const mockOptions = {
+      targets: [
+        {
+          refId: 'A',
+          expression: 'stats count(@message) by bin(1h)',
+          logGroupNames: ['fake-log-group-one'],
+          logGroups: [{}],
+          region: 'us-east-1',
+        },
+      ],
+      range: { ...time, raw: time },
+    } as DataQueryRequest<CloudWatchQuery>;
+
+    await addDataLinksToLogsResponse(
+      mockResponse,
+      mockOptions,
+      (s) => s ?? '',
+      (v) => [v],
+      (r) => r
+    );
+
+    expect(mockResponse.data[0].fields).toHaveLength(1);
+    expect(mockResponse.data[0].fields[0].name).toBe('@message');
   });
 });

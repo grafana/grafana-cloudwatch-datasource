@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
-import { CoreApp, Field } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 
 import {
   CloudWatchSettings,
@@ -11,7 +11,6 @@ import {
   regionVariable,
   setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
-import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { TimeRangeMock } from './__mocks__/timeRange';
 import {
@@ -312,52 +311,6 @@ describe('datasource', () => {
         logGroupNames: ['templatedGroup-1', 'templatedGroup-2'],
         region: 'templatedRegion',
       });
-    });
-
-    it('should add links to log insights queries', async () => {
-      const { datasource } = setupForLogs();
-
-      const observable = datasource.query({
-        targets: [
-          {
-            id: '',
-            region: '',
-            queryMode: 'Logs',
-            logGroupNames: ['test'],
-            expression: 'some query',
-            refId: 'a',
-          },
-        ],
-        requestId: '',
-        interval: '',
-        intervalMs: 0,
-        range: TimeRangeMock,
-        scopedVars: {},
-        timezone: '',
-        app: '',
-        startTime: 0,
-      });
-
-      const emits = await lastValueFrom(observable.pipe(toArray()));
-      expect(emits).toHaveLength(1);
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '@xrayTraceId').config.links).toMatchObject([
-        {
-          title: 'Xray',
-          url: '',
-          internal: {
-            query: { query: '${__value.raw}', region: 'us-west-1', queryType: 'getTrace' },
-            datasourceUid: 'xray',
-            datasourceName: 'Xray',
-          },
-        },
-      ]);
-
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '').config.links).toMatchObject([
-        {
-          title: 'View in CloudWatch console',
-          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
-        },
-      ]);
     });
   });
 
