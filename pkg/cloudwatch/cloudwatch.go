@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/patrickmn/go-cache"
+	schemas "github.com/grafana/schemads"
 )
 
 const (
@@ -99,6 +100,18 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 	return cfg, nil
 }
 
+// DataSourceWithSchema wraps DataSource with schemads support, intercepting
+// abstractionSchema/* CallResource paths and forwarding all others to the
+// existing HTTP mux.
+type DataSourceWithSchema struct {
+	*DataSource
+	*schemas.SchemaDatasource
+}
+
+func (ds *DataSourceWithSchema) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return ds.SchemaDatasource.CallResource(ctx, req, sender)
+}
+
 func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	instanceSettings, err := models.LoadCloudWatchSettings(ctx, settings)
 	if err != nil {
@@ -119,7 +132,17 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		tagValueCache:     cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
-	return ds, nil
+
+	schemaProvider := NewSchemaProvider(ds)
+	schemaDs := schemas.NewSchemaDatasource(
+		schemaProvider,     // SchemaHandler
+		schemaProvider,     // TablesHandler
+		schemaProvider,     // ColumnsHandler
+		schemaProvider,     // TableParameterValuesHandler
+		schemaProvider,     // ColumnValuesHandler
+		ds.resourceHandler, // forward non-schema routes to the existing HTTP mux
+	)
+	return &DataSourceWithSchema{DataSource: ds, SchemaDatasource: schemaDs}, nil
 }
 
 // instrumentContext adds plugin key-values to the context; later, logger.FromContext(ctx) will provide a logger
