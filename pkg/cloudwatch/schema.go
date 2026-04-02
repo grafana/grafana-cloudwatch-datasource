@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -12,10 +13,21 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
 )
 
+// standardStatistics mirrors the frontend's standardStatistics list in
+// src/standardStatistics.ts. Extended statistics (e.g. p99, TM(5:95)) are
+// accepted as free-form input by the frontend and are not included here.
+var standardStatistics = []string{"Average", "Maximum", "Minimum", "Sum", "SampleCount", "IQM"}
+
 var (
 	dimensionOperators = []schemas.Operator{
 		schemas.OperatorEquals,
 		schemas.OperatorIn,
+	}
+
+	statisticColumn = schemas.Column{
+		Name:      "statistic",
+		Type:      schemas.ColumnTypeString,
+		Operators: []schemas.Operator{schemas.OperatorEquals},
 	}
 
 	tableParameters = []schemas.TableParameter{
@@ -26,8 +38,11 @@ var (
 
 // SchemaProvider implements the schemads SchemaHandler, TablesHandler,
 // ColumnsHandler, and TableParameterValuesHandler interfaces for CloudWatch
-// metrics. Tables are identified as "namespace.metricName" (e.g.
-// "AWS/EC2.CPUUtilization"); columns are dimension keys.
+// metrics. Tables are identified as "metrics|<namespace>|<metricName>" (e.g.
+// "metrics|AWS/EC2|CPUUtilization"); columns are dimension keys.
+// The "|" separator is used throughout because both namespace names
+// (e.g. "Custom.App") and metric names (e.g. Glue's
+// "glue.driver.aggregate.bytesRead") may contain dots.
 type SchemaProvider struct {
 	ds *DataSource
 }
@@ -37,19 +52,22 @@ func NewSchemaProvider(ds *DataSource) *SchemaProvider {
 	return &SchemaProvider{ds: ds}
 }
 
-const metricsTablePrefix = "metrics."
+const metricsTablePrefix = "metrics|"
 
-// splitTableName parses a three-part "metrics.namespace.metricName" table
-// identifier and returns the namespace and metricName components.
-// The "metrics." prefix distinguishes metrics tables from any future logs
-// tables (e.g. "logs./aws/lambda/fn") and enables unambiguous query routing.
+// splitTableName parses a "metrics|<namespace>|<metricName>" table identifier
+// and returns the namespace and metricName components.
+// The "metrics|" prefix distinguishes metrics tables from any future table
+// types (e.g. "logs|/aws/lambda/fn") and enables unambiguous query routing.
+// The "|" separator is used throughout because both namespace names
+// (e.g. "Custom.App") and metric names (e.g. Glue's
+// "glue.driver.aggregate.bytesRead") may contain dots.
 // Returns ("", "") if the string does not start with the metrics prefix.
 func splitTableName(table string) (namespace, metricName string) {
 	if !strings.HasPrefix(table, metricsTablePrefix) {
 		return "", ""
 	}
 	inner := table[len(metricsTablePrefix):]
-	if i := strings.Index(inner, "."); i >= 0 {
+	if i := strings.Index(inner, "|"); i >= 0 {
 		return inner[:i], inner[i+1:]
 	}
 	return inner, ""
@@ -57,17 +75,38 @@ func splitTableName(table string) (namespace, metricName string) {
 
 // Schema implements schemas.SchemaHandler.
 func (p *SchemaProvider) Schema(ctx context.Context, _ *schemas.SchemaRequest) (*schemas.SchemaResponse, error) {
-	// Namespace errors are non-fatal for the full schema; return whatever succeeded.
-	tables, _ := p.getAllTables(ctx)
+	// Namespace errors are non-fatal; return whatever tables succeeded alongside the error string.
+	tables, tableErrs := p.getAllTables(ctx)
 
 	// Pre-populate the root "region" table parameter values for every table.
 	// A failure here is also non-fatal; the schema is still usable without pre-populated regions.
 	var tableParamValues map[string]map[string][]string
-	if regionNames, err := p.getRegionNames(ctx); err == nil && len(regionNames) > 0 {
+	regionNames, regionErr := p.getRegionNames(ctx)
+	if regionErr == nil && len(regionNames) > 0 {
 		tableParamValues = make(map[string]map[string][]string, len(tables))
 		for _, t := range tables {
 			tableParamValues[t.Name] = map[string][]string{"region": regionNames}
 		}
+	}
+
+	// Collect all errors into a single string for the schema response.
+	var errStr string
+	var errParts []string
+	if len(tableErrs) > 0 {
+		namespaces := make([]string, 0, len(tableErrs))
+		for ns := range tableErrs {
+			namespaces = append(namespaces, ns)
+		}
+		sort.Strings(namespaces)
+		for _, ns := range namespaces {
+			errParts = append(errParts, fmt.Sprintf("%s: %s", ns, tableErrs[ns]))
+		}
+	}
+	if regionErr != nil {
+		errParts = append(errParts, fmt.Sprintf("regions: %s", regionErr))
+	}
+	if len(errParts) > 0 {
+		errStr = strings.Join(errParts, "; ")
 	}
 
 	return &schemas.SchemaResponse{
@@ -75,6 +114,7 @@ func (p *SchemaProvider) Schema(ctx context.Context, _ *schemas.SchemaRequest) (
 			Tables:               tables,
 			TableParameterValues: tableParamValues,
 		},
+		Errors: errStr,
 	}, nil
 }
 
@@ -98,6 +138,16 @@ func (p *SchemaProvider) Tables(ctx context.Context, _ *schemas.TablesRequest) (
 
 // Columns implements schemas.ColumnsHandler.
 func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsRequest) (*schemas.ColumnsResponse, error) {
+	region := req.TableParameters["region"]
+	if region == "" {
+		region = defaultRegion
+	}
+
+	var accountId *string
+	if id := req.TableParameters["accountId"]; id != "" {
+		accountId = &id
+	}
+
 	cols := make(map[string][]schemas.Column, len(req.Tables))
 	errs := make(map[string]string)
 	for _, tableName := range req.Tables {
@@ -105,12 +155,12 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 			continue
 		}
 		namespace, _ := splitTableName(tableName)
-		dimCols, err := p.dimensionColumnsForNamespace(ctx, namespace)
+		dimCols, err := p.dimensionColumnsForNamespace(ctx, region, accountId, namespace)
 		if err != nil {
 			errs[tableName] = err.Error()
 			continue
 		}
-		cols[tableName] = dimCols
+		cols[tableName] = append(dimCols, statisticColumn)
 	}
 	return &schemas.ColumnsResponse{Columns: cols, Errors: errs}, nil
 }
@@ -147,6 +197,11 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 			accountIds = append(accountIds, ar.Value.Id)
 		}
 		result["accountId"] = accountIds
+
+	default:
+		return &schemas.TableParametersValuesResponse{
+			Errors: map[string]string{req.TableParameter: fmt.Sprintf("unsupported table parameter %q", req.TableParameter)},
+		}, nil
 	}
 
 	return &schemas.TableParametersValuesResponse{TableParameterValues: result}, nil
@@ -161,16 +216,16 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 
 	// Hardcoded AWS namespaces from cloudWatchConsts.
 	for namespace, metrics := range cloudWatchConsts.NamespaceMetricsMap {
-		dimCols, err := p.dimensionColumnsForNamespace(ctx, namespace)
+		dimCols, err := p.dimensionColumnsForNamespace(ctx, defaultRegion, nil, namespace)
 		if err != nil {
 			errs[namespace] = err.Error()
 			continue
 		}
 		for _, metric := range metrics {
 			tables = append(tables, schemas.Table{
-				Name:            metricsTablePrefix + namespace + "." + metric,
+				Name:            metricsTablePrefix + namespace + "|" + metric,
 				TableParameters: tableParameters,
-				Columns:         dimCols,
+				Columns:         append(dimCols, statisticColumn),
 			})
 		}
 	}
@@ -184,15 +239,15 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 			}
 			// Custom namespaces have no hardcoded metrics — expose a single
 			// placeholder table for the namespace itself so it is discoverable.
-			dimCols, err := p.dimensionColumnsForNamespace(ctx, customNS)
+			dimCols, err := p.dimensionColumnsForNamespace(ctx, defaultRegion, nil, customNS)
 			if err != nil {
 				errs[customNS] = err.Error()
 				continue
 			}
 			tables = append(tables, schemas.Table{
-				Name:            metricsTablePrefix + customNS + ".",
+				Name:            metricsTablePrefix + customNS + "|",
 				TableParameters: tableParameters,
-				Columns:         dimCols,
+				Columns:         append(dimCols, statisticColumn),
 			})
 		}
 	}
@@ -217,16 +272,50 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 // all known values for the dimension key across the metric, not scoped to any
 // other already-selected dimensions.
 func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
-	columnValues := make(map[string][]string, len(req.Columns))
-	errors := make(map[string]string)
-
 	namespace, metricName := splitTableName(req.Table)
 	if namespace == "" {
-		return &schemas.ColumnValuesResponse{ColumnValues: columnValues}, nil
+		return nil, fmt.Errorf("unrecognised table format %q: expected metrics|<namespace>|<metricName>", req.Table)
 	}
 
 	region := req.TableParameters["region"]
 	if region == "" {
+		return nil, fmt.Errorf("region is a required table parameter")
+	}
+
+	var accountId *string
+	if id := req.TableParameters["accountId"]; id != "" {
+		accountId = &id
+	}
+
+	columnValues := make(map[string][]string, len(req.Columns))
+
+	// When no columns are specified, expand to all columns for the table:
+	// dimension keys plus the statistic column.
+	columns := req.Columns
+	if len(columns) == 0 {
+		dimCols, err := p.dimensionColumnsForNamespace(ctx, region, accountId, namespace)
+		if err != nil {
+			return nil, fmt.Errorf("could not enumerate columns for table %q: %w", req.Table, err)
+		}
+		dimNames := make([]string, len(dimCols))
+		for i, c := range dimCols {
+			dimNames[i] = c.Name
+		}
+		columns = append(dimNames, statisticColumn.Name)
+	}
+
+	// Separate statistic column (served from a fixed list) from dimension
+	// columns (served via ListMetrics API).
+	var dimensionCols []string
+	for _, col := range columns {
+		if col == statisticColumn.Name {
+			columnValues[col] = standardStatistics
+		} else {
+			dimensionCols = append(dimensionCols, col)
+		}
+	}
+
+	if len(dimensionCols) == 0 {
 		return &schemas.ColumnValuesResponse{ColumnValues: columnValues}, nil
 	}
 
@@ -238,51 +327,48 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 		}, nil
 	}
 
-	var accountId *string
-	if id := req.TableParameters["accountId"]; id != "" {
-		accountId = &id
+	dimValuesReq := resources.DimensionValuesRequest{
+		ResourceRequest: &resources.ResourceRequest{Region: region, AccountId: accountId},
+		Namespace:       namespace,
+		MetricName:      metricName,
+		DimensionFilter: []*resources.Dimension{},
 	}
-	resourceReq := &resources.ResourceRequest{
-		Region:    region,
-		AccountId: accountId,
+	p.ds.logger.FromContext(ctx).Info("Getting dimension values", "columns", dimensionCols, "namespace", namespace, "metricName", metricName)
+	dimValues, err := service.GetDimensionValuesForKeys(ctx, dimValuesReq, dimensionCols)
+	if err != nil {
+		p.ds.logger.FromContext(ctx).Error("Error getting dimension values", "columns", dimensionCols, "namespace", namespace, "metricName", metricName, "error", err)
+		colErrors := make(map[string]string, len(dimensionCols))
+		for _, col := range dimensionCols {
+			colErrors[col] = err.Error()
+		}
+		return &schemas.ColumnValuesResponse{ColumnValues: columnValues, Errors: colErrors}, nil
+	}
+	for col, vals := range dimValues {
+		// Prepend "*" so users can select "any value" for a dimension, matching the
+		// frontend behaviour in FilterItem.tsx which also prepends "*" to dimension
+		// value lists.
+		if len(vals) > 0 {
+			columnValues[col] = append([]string{"*"}, vals...)
+		}
 	}
 
-	for _, col := range req.Columns {
-		values, err := service.GetDimensionValuesByDimensionFilter(ctx, resources.DimensionValuesRequest{
-			ResourceRequest: resourceReq,
-			Namespace:       namespace,
-			MetricName:      metricName,
-			DimensionKey:    col,
-			DimensionFilter: []*resources.Dimension{},
-		})
-		if err != nil {
-			errors[col] = err.Error()
-			continue
-		}
-		strs := make([]string, len(values))
-		for i, v := range values {
-			strs[i] = v.Value
-		}
-		columnValues[col] = strs
-	}
-
-	return &schemas.ColumnValuesResponse{ColumnValues: columnValues, Errors: errors}, nil
+	return &schemas.ColumnValuesResponse{ColumnValues: columnValues}, nil
 }
 
 // dimensionColumnsForNamespace returns the dimension keys for namespace as
 // schemas.Column values with equality operators. For namespaces not present
 // in the hardcoded map (e.g. custom namespaces), it falls back to a
-// ListMetrics API call using the datasource's configured default region.
-func (p *SchemaProvider) dimensionColumnsForNamespace(ctx context.Context, namespace string) ([]schemas.Column, error) {
+// ListMetrics API call using the provided region and optional accountId.
+func (p *SchemaProvider) dimensionColumnsForNamespace(ctx context.Context, region string, accountId *string, namespace string) ([]schemas.Column, error) {
 	dimKeyResponses, err := services.GetHardCodedDimensionKeysByNamespace(namespace)
 	if err != nil {
 		// Not a known AWS namespace — query ListMetrics for the custom namespace.
-		svc, svcErr := p.ds.GetListMetricsService(ctx, defaultRegion)
+		svc, svcErr := p.ds.GetListMetricsService(ctx, region)
 		if svcErr != nil {
 			return nil, svcErr
 		}
 		dimKeyResponses, err = svc.GetDimensionKeysByDimensionFilter(ctx, resources.DimensionKeysRequest{
-			ResourceRequest: &resources.ResourceRequest{Region: defaultRegion},
+			ResourceRequest: &resources.ResourceRequest{Region: region, AccountId: accountId},
 			Namespace:       namespace,
 			DimensionFilter: []*resources.Dimension{},
 		})

@@ -30,6 +30,11 @@ type RequestContext struct {
 type ListMetricsProvider interface {
 	GetDimensionKeysByDimensionFilter(ctx context.Context, r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error)
 	GetDimensionValuesByDimensionFilter(ctx context.Context, r resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error)
+	// GetDimensionValuesForKeys makes a single ListMetrics call and returns a
+	// map of dimension key → unique sorted values for each of the requested keys.
+	// This is more efficient than calling GetDimensionValuesByDimensionFilter once
+	// per key when multiple keys share the same namespace/metricName/filter.
+	GetDimensionValuesForKeys(ctx context.Context, r resources.DimensionValuesRequest, keys []string) (map[string][]string, error)
 	GetMetricsByNamespace(ctx context.Context, r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error)
 }
 

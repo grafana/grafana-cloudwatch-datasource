@@ -112,6 +112,11 @@ func (ds *DataSourceWithSchema) CallResource(ctx context.Context, req *backend.C
 	return ds.SchemaDatasource.CallResource(ctx, req, sender)
 }
 
+func (ds *DataSourceWithSchema) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	req = normalizeGrafanaSQLRequest(req)
+	return ds.DataSource.QueryData(ctx, req)
+}
+
 func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	instanceSettings, err := models.LoadCloudWatchSettings(ctx, settings)
 	if err != nil {

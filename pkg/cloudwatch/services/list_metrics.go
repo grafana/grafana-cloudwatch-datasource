@@ -101,6 +101,46 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(ctx context.Con
 	return response, nil
 }
 
+func (l *ListMetricsService) GetDimensionValuesForKeys(ctx context.Context, r resources.DimensionValuesRequest, keys []string) (map[string][]string, error) {
+	input := &cloudwatch.ListMetricsInput{
+		Namespace:  aws.String(r.Namespace),
+		MetricName: aws.String(r.MetricName),
+	}
+	setDimensionFilter(input, r.DimensionFilter)
+	setAccount(input, r.ResourceRequest)
+
+	accountMetrics, err := l.ListMetricsWithPageLimit(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
+	}
+
+	sets := make(map[string]map[string]struct{}, len(keys))
+	for _, k := range keys {
+		sets[k] = make(map[string]struct{})
+	}
+
+	for _, metric := range accountMetrics {
+		for _, dim := range metric.Metric.Dimensions {
+			if set, ok := sets[*dim.Name]; ok {
+				set[*dim.Value] = struct{}{}
+			}
+		}
+	}
+
+	// Convert sets to sorted slices; sets are dereferenced after this loop.
+	result := make(map[string][]string, len(sets))
+	for k, set := range sets {
+		vals := make([]string, 0, len(set))
+		for v := range set {
+			vals = append(vals, v)
+		}
+		sort.Strings(vals)
+		result[k] = vals
+	}
+
+	return result, nil
+}
+
 func (l *ListMetricsService) GetMetricsByNamespace(ctx context.Context, r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error) {
 	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
 	setAccount(input, r.ResourceRequest)
