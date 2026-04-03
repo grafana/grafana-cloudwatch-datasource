@@ -270,9 +270,7 @@ func convertToTabular(resp *backend.QueryDataResponse, grafanaSQLRefIDs map[stri
 			RefID: refID,
 		}
 		outFrame.Fields = append(outFrame.Fields, timeField, valueField)
-		for _, df := range dimFields {
-			outFrame.Fields = append(outFrame.Fields, df)
-		}
+		outFrame.Fields = append(outFrame.Fields, dimFields...)
 		if len(dr.Frames) > 0 {
 			outFrame.Meta = dr.Frames[0].Meta
 		}
