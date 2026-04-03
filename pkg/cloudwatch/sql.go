@@ -3,8 +3,11 @@ package cloudwatch
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	schemas "github.com/grafana/schemads"
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/kinds/dataquery"
@@ -17,6 +20,10 @@ import (
 // executeTimeSeriesQuery already understands. Non-grafanaSQL queries are passed
 // through unchanged.
 //
+// The second return value is the set of refIDs that were rewritten. Callers
+// must post-process those responses with convertToTabular so the SQL engine
+// receives flat table frames rather than time-series-multi frames.
+//
 // MetricStat (MetricQueryTypeSearch + MetricEditorModeBuilder) is always used
 // rather than Metric Insights because:
 //   - The schemads column model (dimension keys + statistic) maps directly onto
@@ -26,13 +33,14 @@ import (
 //   - The dsAbstraction SQL engine (go-mysql-server) already handles GROUP BY,
 //     ORDER BY, and LIMIT against the returned frames; the datasource only needs
 //     to return the right raw data.
-func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) *backend.QueryDataRequest {
+func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
 	if req == nil || len(req.Queries) == 0 {
-		return req
+		return req, nil
 	}
 
 	grafanaConfig := req.PluginContext.GrafanaConfig
 	queries := make([]backend.DataQuery, 0, len(req.Queries))
+	grafanaSQLRefIDs := make(map[string]struct{})
 	for _, q := range req.Queries {
 		var query schemas.Query
 		if err := json.Unmarshal(q.JSON, &query); err != nil {
@@ -103,6 +111,7 @@ func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) *backend.QueryDat
 			continue
 		}
 
+		grafanaSQLRefIDs[q.RefID] = struct{}{}
 		queries = append(queries, backend.DataQuery{
 			RefID:         q.RefID,
 			QueryType:     q.QueryType,
@@ -117,7 +126,7 @@ func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) *backend.QueryDat
 		PluginContext: req.PluginContext,
 		Headers:       req.Headers,
 		Queries:       queries,
-	}
+	}, grafanaSQLRefIDs
 }
 
 // applyFilters translates schemads ColumnFilter predicates into a CloudWatch
@@ -184,4 +193,137 @@ func anyToStr(v any) string {
 		return s
 	}
 	return fmt.Sprintf("%v", v)
+}
+
+// convertToTabular converts the FrameTypeTimeSeriesMulti frames returned by
+// executeTimeSeriesQuery into a single flat table frame for each grafanaSQL
+// refID. The dsAbstraction SQL engine (vtable.go) maps rows by field name, so
+// dimension values that are encoded as field labels must become real named
+// fields alongside "time" and "value".
+//
+// For example, two series frames:
+//
+//	Frame 1: time=[t1,t2]  value(InstanceId=i-111)=[10,11]
+//	Frame 2: time=[t1,t2]  value(InstanceId=i-222)=[8,9]
+//
+// become one flat frame:
+//
+//	time=[t1,t1,t2,t2]  value=[10,8,11,9]  InstanceId=[i-111,i-222,i-111,i-222]
+func convertToTabular(resp *backend.QueryDataResponse, grafanaSQLRefIDs map[string]struct{}) {
+	for refID := range grafanaSQLRefIDs {
+		dr, ok := resp.Responses[refID]
+		if !ok || len(dr.Frames) == 0 {
+			continue
+		}
+
+		// Collect all label keys across all frames so every output row has the
+		// same columns regardless of which series carries which labels.
+		labelKeySet := make(map[string]struct{})
+		for _, f := range dr.Frames {
+			_, valueField := timeAndValueFields(f)
+			if valueField == nil {
+				continue
+			}
+			for k := range valueField.Labels {
+				labelKeySet[k] = struct{}{}
+			}
+		}
+		// Sort for deterministic column ordering.
+		labelKeys := make([]string, 0, len(labelKeySet))
+		for k := range labelKeySet {
+			labelKeys = append(labelKeys, k)
+		}
+		sort.Strings(labelKeys)
+
+		// Build output fields.
+		timeField := data.NewField("time", nil, []time.Time{})
+		valueField := data.NewField("value", nil, []*float64{})
+		dimFields := make([]*data.Field, len(labelKeys))
+		for i, k := range labelKeys {
+			dimFields[i] = data.NewField(k, nil, []string{})
+		}
+
+		// Append rows from every series frame.
+		for _, f := range dr.Frames {
+			tf, vf := timeAndValueFields(f)
+			if tf == nil || vf == nil {
+				continue
+			}
+
+			for i := range tf.Len() {
+				t, ok := fieldTimeAt(tf, i)
+				if !ok {
+					continue
+				}
+				v := fieldFloat64At(vf, i)
+				timeField.Append(t)
+				valueField.Append(v)
+				for j, k := range labelKeys {
+					dimFields[j].Append(vf.Labels[k])
+				}
+			}
+		}
+
+		// Assemble the flat output frame preserving RefID and Meta.
+		outFrame := &data.Frame{
+			Name:  refID,
+			RefID: refID,
+		}
+		outFrame.Fields = append(outFrame.Fields, timeField, valueField)
+		for _, df := range dimFields {
+			outFrame.Fields = append(outFrame.Fields, df)
+		}
+		if len(dr.Frames) > 0 {
+			outFrame.Meta = dr.Frames[0].Meta
+		}
+
+		dr.Frames = data.Frames{outFrame}
+		resp.Responses[refID] = dr
+	}
+}
+
+// timeAndValueFields returns the first time field and the first value field
+// from a frame, or nil if either is absent.
+func timeAndValueFields(f *data.Frame) (*data.Field, *data.Field) {
+	var tf, vf *data.Field
+	for _, field := range f.Fields {
+		if field == nil {
+			continue
+		}
+		if tf == nil && field.Type() == data.FieldTypeTime {
+			tf = field
+		}
+		if vf == nil && (field.Type() == data.FieldTypeFloat64 || field.Type() == data.FieldTypeNullableFloat64) {
+			vf = field
+		}
+	}
+	return tf, vf
+}
+
+// fieldTimeAt returns the time.Time value at index i from a time field,
+// handling both time.Time and *time.Time underlying types.
+func fieldTimeAt(f *data.Field, i int) (time.Time, bool) {
+	v := f.At(i)
+	switch t := v.(type) {
+	case time.Time:
+		return t, true
+	case *time.Time:
+		if t != nil {
+			return *t, true
+		}
+	}
+	return time.Time{}, false
+}
+
+// fieldFloat64At returns the *float64 value at index i from a value field,
+// handling both float64 and *float64 underlying types.
+func fieldFloat64At(f *data.Field, i int) *float64 {
+	v := f.At(i)
+	switch n := v.(type) {
+	case float64:
+		return &n
+	case *float64:
+		return n
+	}
+	return nil
 }

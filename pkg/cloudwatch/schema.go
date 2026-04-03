@@ -24,6 +24,19 @@ var (
 		schemas.OperatorIn,
 	}
 
+	// timeColumn and valueColumn are the two data columns present in every
+	// metrics table. They are prepended to the column list so the SQL engine
+	// exposes them as queryable columns (SELECT time, value FROM ...).
+	// Neither has enumerable values, so ColumnValues skips them.
+	timeColumn = schemas.Column{
+		Name: "time",
+		Type: schemas.ColumnTypeTimestamp,
+	}
+	valueColumn = schemas.Column{
+		Name: "value",
+		Type: schemas.ColumnTypeFloat64,
+	}
+
 	statisticColumn = schemas.Column{
 		Name:      "statistic",
 		Type:      schemas.ColumnTypeString,
@@ -160,7 +173,7 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 			errs[tableName] = err.Error()
 			continue
 		}
-		cols[tableName] = append(dimCols, statisticColumn)
+		cols[tableName] = metricsColumns(dimCols)
 	}
 	return &schemas.ColumnsResponse{Columns: cols, Errors: errs}, nil
 }
@@ -225,7 +238,7 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 			tables = append(tables, schemas.Table{
 				Name:            metricsTablePrefix + namespace + "|" + metric,
 				TableParameters: tableParameters,
-				Columns:         append(dimCols, statisticColumn),
+				Columns:         metricsColumns(dimCols),
 			})
 		}
 	}
@@ -247,7 +260,7 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 			tables = append(tables, schemas.Table{
 				Name:            metricsTablePrefix + customNS + "|",
 				TableParameters: tableParameters,
-				Columns:         append(dimCols, statisticColumn),
+				Columns:         metricsColumns(dimCols),
 			})
 		}
 	}
@@ -284,7 +297,9 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 	columnValues := make(map[string][]string, len(req.Columns))
 
 	// When no columns are specified, expand to all columns for the table:
-	// dimension keys plus the statistic column.
+	// dimension keys plus the statistic column. time and value are data
+	// columns with no enumerable values so they are excluded from the
+	// expansion but silently skipped when explicitly requested below.
 	columns := req.Columns
 	if len(columns) == 0 {
 		dimCols, err := p.dimensionColumnsForNamespace(ctx, region, accountId, namespace)
@@ -299,12 +314,16 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 	}
 
 	// Separate statistic column (served from a fixed list) from dimension
-	// columns (served via ListMetrics API).
+	// columns (served via ListMetrics API). time and value are data columns
+	// with no enumerable values; skip them silently.
 	var dimensionCols []string
 	for _, col := range columns {
-		if col == statisticColumn.Name {
+		switch col {
+		case statisticColumn.Name:
 			columnValues[col] = standardStatistics
-		} else {
+		case timeColumn.Name, valueColumn.Name:
+			// no enumerable values for data columns
+		default:
 			dimensionCols = append(dimensionCols, col)
 		}
 	}
@@ -348,6 +367,17 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 	}
 
 	return &schemas.ColumnValuesResponse{ColumnValues: columnValues}, nil
+}
+
+// metricsColumns assembles the full column list for a metrics table: the two
+// fixed data columns (time, value) followed by the dimension key columns and
+// the statistic filter column.
+func metricsColumns(dimCols []schemas.Column) []schemas.Column {
+	cols := make([]schemas.Column, 0, 2+len(dimCols)+1)
+	cols = append(cols, timeColumn, valueColumn)
+	cols = append(cols, dimCols...)
+	cols = append(cols, statisticColumn)
+	return cols
 }
 
 // dimensionColumnsForNamespace returns the dimension keys for namespace as

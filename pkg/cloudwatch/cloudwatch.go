@@ -166,7 +166,7 @@ func (ds *DataSource) CallResource(ctx context.Context, req *backend.CallResourc
 }
 
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	req = normalizeGrafanaSQLRequest(req)
+	req, grafanaSQLRefIDs := normalizeGrafanaSQLRequest(req)
 	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
 	q := req.Queries[0]
 	var model DataQueryJson
@@ -210,6 +210,10 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 		fallthrough
 	default:
 		result, err = ds.executeTimeSeriesQuery(ctx, req)
+	}
+
+	if len(grafanaSQLRefIDs) > 0 && result != nil {
+		convertToTabular(result, grafanaSQLRefIDs)
 	}
 
 	return result, err

@@ -3,12 +3,17 @@ package cloudwatch
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	schemas "github.com/grafana/schemads"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
 )
 
 // pluginCtxWithFeatureToggle returns a PluginContext with the dsAbstractionApp
@@ -82,9 +87,10 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, refIDs := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
+		assert.NotContains(t, refIDs, "A")
 	})
 
 	t.Run("grafanaSQL query with empty table passes through unchanged", func(t *testing.T) {
@@ -93,13 +99,14 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 	})
 
 	t.Run("nil request returns nil", func(t *testing.T) {
-		assert.Nil(t, normalizeGrafanaSQLRequest(nil))
+		out, _ := normalizeGrafanaSQLRequest(nil)
+		assert.Nil(t, out)
 	})
 
 	t.Run("empty query list returns empty", func(t *testing.T) {
@@ -107,7 +114,7 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		assert.Empty(t, out.Queries)
 	})
 }
@@ -119,7 +126,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil)},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		assert.Empty(t, out.Queries)
 	})
 
@@ -134,7 +141,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 				{RefID: "B", JSON: nativeJSON},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, "B", out.Queries[0].RefID)
 	})
@@ -152,7 +159,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, refIDs := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 
 		m := unmarshalNormalized(t, out.Queries[0])
@@ -162,6 +169,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		assert.Equal(t, "us-east-1", m["region"])
 		assert.Equal(t, "Average", m["statistic"], "should default to Average")
 		assert.Equal(t, false, m["matchExact"], "no dimension filters → matchExact should be false")
+		assert.Contains(t, refIDs, "A")
 	})
 
 	t.Run("maps all table fields: namespace (with slash), metricName, region, accountId, refId, and maxDataPoints", func(t *testing.T) {
@@ -176,7 +184,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 
 		m := unmarshalNormalized(t, out.Queries[0])
@@ -197,7 +205,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 
 		m := unmarshalNormalized(t, out.Queries[0])
@@ -211,9 +219,27 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, refIDs := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
+		assert.NotContains(t, refIDs, "A")
+	})
+
+	t.Run("mixed request: only the normalised grafanaSQL refID is in the returned set", func(t *testing.T) {
+		nativeJSON := []byte(`{"refId":"B","type":"timeSeriesQuery","namespace":"AWS/EC2","metricName":"CPUUtilization","statistic":"Average"}`)
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				})},
+				{RefID: "B", JSON: nativeJSON},
+			},
+		}
+		out, refIDs := normalizeGrafanaSQLRequest(req)
+		require.Len(t, out.Queries, 2)
+		assert.Contains(t, refIDs, "A")
+		assert.NotContains(t, refIDs, "B")
 	})
 
 	t.Run("omits accountId field when not present in tableParameterValues", func(t *testing.T) {
@@ -225,7 +251,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		_, hasAccountId := m["accountId"]
 		assert.False(t, hasAccountId, "accountId should not be present when not specified")
@@ -252,7 +278,7 @@ func TestNormalizeGrafanaSQLRequest_StatisticFilter(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 
 		m := unmarshalNormalized(t, out.Queries[0])
@@ -272,7 +298,7 @@ func TestNormalizeGrafanaSQLRequest_StatisticFilter(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, "Average", m["statistic"])
 	})
@@ -294,7 +320,7 @@ func TestNormalizeGrafanaSQLRequest_StatisticFilter(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, "p99", m["statistic"])
 	})
@@ -320,7 +346,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		dims := dimensionsFromMap(t, m)
 		assert.Equal(t, []string{"i-12345"}, dims["InstanceId"])
@@ -343,7 +369,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		dims := dimensionsFromMap(t, m)
 		assert.ElementsMatch(t, []string{"i-11111", "i-22222"}, dims["InstanceId"])
@@ -378,7 +404,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		dims := dimensionsFromMap(t, m)
 		assert.Equal(t, []string{"i-abc"}, dims["InstanceId"])
@@ -405,7 +431,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		dims := dimensionsFromMap(t, m)
 		assert.Empty(t, dims, "unsupported operator should not add any dimension")
@@ -428,7 +454,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		dims := dimensionsFromMap(t, m)
 		assert.Empty(t, dims)
@@ -444,7 +470,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		dims := dimensionsFromMap(t, m)
 		assert.Empty(t, dims)
@@ -466,7 +492,7 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, false, m["matchExact"], "no dimension filters → matchExact should be false")
 	})
@@ -488,7 +514,7 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, true, m["matchExact"], "dimension filters present → matchExact should be true")
 	})
@@ -513,7 +539,7 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out := normalizeGrafanaSQLRequest(req)
+		out, _ := normalizeGrafanaSQLRequest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, false, m["matchExact"], "statistic-only filter → matchExact should be false")
 	})
@@ -550,4 +576,152 @@ func TestApplyFilters(t *testing.T) {
 		assert.NotContains(t, dims["InstanceId"], "i-ignored")
 	})
 
+}
+
+// ---- convertToTabular unit tests ----
+
+// makeTimeSeriesFrame builds a minimal FrameTypeTimeSeriesMulti frame as
+// produced by buildDataFrames: a Time field and a nullable float64 Value field
+// whose Labels carry the dimension key-value pairs.
+func makeTimeSeriesFrame(refID string, labels data.Labels, timestamps []time.Time, values []*float64) *data.Frame {
+	tf := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
+	vf := data.NewField(data.TimeSeriesValueFieldName, labels, values)
+	frame := data.NewFrame(refID, tf, vf)
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+	return frame
+}
+
+func TestConvertToTabular(t *testing.T) {
+	t0 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	t1 := time.Date(2024, 1, 1, 0, 1, 0, 0, time.UTC)
+
+	t.Run("single series becomes flat frame with time, value and dimension fields", func(t *testing.T) {
+		resp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: data.Frames{
+						makeTimeSeriesFrame("A", data.Labels{"InstanceId": "i-111"},
+							[]time.Time{t0, t1}, []*float64{utils.Pointer(10.5), utils.Pointer(11.2)}),
+					},
+				},
+			},
+		}
+		convertToTabular(resp, map[string]struct{}{"A": {}})
+
+		require.Len(t, resp.Responses["A"].Frames, 1)
+		expected := data.NewFrame("A",
+			data.NewField("time", nil, []time.Time{t0, t1}),
+			data.NewField("value", nil, []*float64{utils.Pointer(10.5), utils.Pointer(11.2)}),
+			data.NewField("InstanceId", nil, []string{"i-111", "i-111"}),
+		)
+		expected.RefID = "A"
+		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+		if diff := cmp.Diff(expected, resp.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("frame mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("multiple series are concatenated into one flat frame", func(t *testing.T) {
+		resp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: data.Frames{
+						makeTimeSeriesFrame("A", data.Labels{"InstanceId": "i-111"},
+							[]time.Time{t0, t1}, []*float64{utils.Pointer(float64(10)), utils.Pointer(float64(11))}),
+						makeTimeSeriesFrame("A", data.Labels{"InstanceId": "i-222"},
+							[]time.Time{t0, t1}, []*float64{utils.Pointer(float64(8)), utils.Pointer(float64(9))}),
+					},
+				},
+			},
+		}
+		convertToTabular(resp, map[string]struct{}{"A": {}})
+
+		require.Len(t, resp.Responses["A"].Frames, 1)
+		// Rows are emitted series-first: all timestamps for i-111, then all for i-222.
+		expected := data.NewFrame("A",
+			data.NewField("time", nil, []time.Time{t0, t1, t0, t1}),
+			data.NewField("value", nil, []*float64{
+				utils.Pointer(float64(10)), utils.Pointer(float64(11)),
+				utils.Pointer(float64(8)), utils.Pointer(float64(9)),
+			}),
+			data.NewField("InstanceId", nil, []string{"i-111", "i-111", "i-222", "i-222"}),
+		)
+		expected.RefID = "A"
+		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+		if diff := cmp.Diff(expected, resp.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("frame mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("multi-dimensional labels all become fields", func(t *testing.T) {
+		resp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: data.Frames{
+						makeTimeSeriesFrame("A",
+							data.Labels{"InstanceId": "i-111", "AutoScalingGroupName": "asg-1"},
+							[]time.Time{t0}, []*float64{utils.Pointer(float64(5))}),
+					},
+				},
+			},
+		}
+		convertToTabular(resp, map[string]struct{}{"A": {}})
+
+		require.Len(t, resp.Responses["A"].Frames, 1)
+		// Dimension columns are sorted alphabetically: AutoScalingGroupName before InstanceId.
+		expected := data.NewFrame("A",
+			data.NewField("time", nil, []time.Time{t0}),
+			data.NewField("value", nil, []*float64{utils.Pointer(float64(5))}),
+			data.NewField("AutoScalingGroupName", nil, []string{"asg-1"}),
+			data.NewField("InstanceId", nil, []string{"i-111"}),
+		)
+		expected.RefID = "A"
+		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+		if diff := cmp.Diff(expected, resp.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("frame mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("refIDs not in the set are not converted", func(t *testing.T) {
+		originalFrame := makeTimeSeriesFrame("B", data.Labels{"InstanceId": "i-999"},
+			[]time.Time{t0}, []*float64{utils.Pointer(float64(1))})
+		resp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"B": {Frames: data.Frames{originalFrame}},
+			},
+		}
+		convertToTabular(resp, map[string]struct{}{"A": {}}) // "B" is not in the set
+
+		// Frame for "B" must be unchanged.
+		frames := resp.Responses["B"].Frames
+		require.Len(t, frames, 1)
+		assert.Equal(t, originalFrame, frames[0])
+	})
+
+	t.Run("nil value pointers are preserved", func(t *testing.T) {
+		resp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: data.Frames{
+						makeTimeSeriesFrame("A", data.Labels{"InstanceId": "i-111"},
+							[]time.Time{t0}, []*float64{nil}),
+					},
+				},
+			},
+		}
+		convertToTabular(resp, map[string]struct{}{"A": {}})
+
+		require.Len(t, resp.Responses["A"].Frames, 1)
+		expected := data.NewFrame("A",
+			data.NewField("time", nil, []time.Time{t0}),
+			data.NewField("value", nil, []*float64{nil}),
+			data.NewField("InstanceId", nil, []string{"i-111"}),
+		)
+		expected.RefID = "A"
+		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+		if diff := cmp.Diff(expected, resp.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("frame mismatch (-want +got):\n%s", diff)
+		}
+	})
 }

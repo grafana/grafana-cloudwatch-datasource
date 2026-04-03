@@ -200,13 +200,16 @@ func TestSchemaProvider_Columns(t *testing.T) {
 
 		cols, ok := resp.Columns["metrics|AWS/EC2|CPUUtilization"]
 		assert.True(t, ok, "expected columns for metrics.AWS/EC2|CPUUtilization")
-		// +1 for the statistic column that is always appended.
-		assert.Len(t, cols, len(dimKeys)+1)
+		// +1 for statistic, +2 for time and value data columns.
+		assert.Len(t, cols, len(dimKeys)+3)
 
 		colNames := make(map[string]struct{}, len(cols))
 		for _, c := range cols {
 			colNames[c.Name] = struct{}{}
-			assert.Equal(t, schemas.ColumnTypeString, c.Type)
+			// time and value are data columns with no operators; skip operator checks for them.
+			if c.Name == timeColumn.Name || c.Name == valueColumn.Name {
+				continue
+			}
 			assert.Contains(t, c.Operators, schemas.OperatorEquals)
 			// Dimension columns support IN; the statistic column only supports equals.
 			if c.Name != statisticColumn.Name {
@@ -215,6 +218,10 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		}
 		_, hasInstanceId := colNames["InstanceId"]
 		assert.True(t, hasInstanceId, "expected InstanceId dimension key for AWS/EC2")
+		_, hasTime := colNames["time"]
+		assert.True(t, hasTime, "expected time data column")
+		_, hasValue := colNames["value"]
+		assert.True(t, hasValue, "expected value data column")
 	})
 
 
@@ -252,9 +259,11 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		})
 		require.NoError(t, err)
 		cols := resp.Columns["metrics|Unknown/NS|SomeMetric"]
-		// Even when no dimension keys are discovered, the statistic column is always present.
-		require.Len(t, cols, 1)
-		assert.Equal(t, statisticColumn.Name, cols[0].Name)
+		// Even when no dimension keys are discovered, time, value and statistic columns are always present.
+		require.Len(t, cols, 3)
+		assert.Equal(t, timeColumn.Name, cols[0].Name)
+		assert.Equal(t, valueColumn.Name, cols[1].Name)
+		assert.Equal(t, statisticColumn.Name, cols[2].Name)
 	})
 
 	t.Run("sets error in response and continues for failed namespace lookup", func(t *testing.T) {
