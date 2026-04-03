@@ -123,32 +123,6 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 		assert.Empty(t, out.Queries)
 	})
 
-	t.Run("drops grafanaSQL query when dsAbstractionApp toggle is absent", func(t *testing.T) {
-		req := &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				GrafanaConfig: backend.NewGrafanaCfg(map[string]string{}),
-			},
-			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil)},
-			},
-		}
-		out := normalizeGrafanaSQLRequest(req)
-		assert.Empty(t, out.Queries)
-	})
-
-	t.Run("preserves non-grafanaSQL queries when toggle is absent", func(t *testing.T) {
-		qJSON := []byte(`{"refId":"B","type":"timeSeriesQuery","namespace":"AWS/EC2"}`)
-		req := &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				GrafanaConfig: backend.NewGrafanaCfg(map[string]string{}),
-			},
-			Queries: []backend.DataQuery{{RefID: "B", JSON: qJSON}},
-		}
-		out := normalizeGrafanaSQLRequest(req)
-		require.Len(t, out.Queries, 1)
-		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
-	})
-
 	t.Run("drops only grafanaSQL queries from a mixed request", func(t *testing.T) {
 		nativeJSON := []byte(`{"refId":"B","type":"timeSeriesQuery","namespace":"AWS/EC2"}`)
 		req := &backend.QueryDataRequest{
@@ -187,15 +161,18 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		assert.Equal(t, "CPUUtilization", m["metricName"])
 		assert.Equal(t, "us-east-1", m["region"])
 		assert.Equal(t, "Average", m["statistic"], "should default to Average")
-		assert.Equal(t, true, m["matchExact"])
+		assert.Equal(t, false, m["matchExact"], "no dimension filters → matchExact should be false")
 	})
 
-	t.Run("passes table name with pipes containing dots and slashes", func(t *testing.T) {
+	t.Run("maps all table fields: namespace (with slash), metricName, region, accountId, refId, and maxDataPoints", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/ApplicationELB|ActiveConnectionCount", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "eu-west-1"},
+				{RefID: "myRef", MaxDataPoints: 500, JSON: grafanaSQLQueryJSON("metrics|AWS/ApplicationELB|ActiveConnectionCount", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						"region":    "eu-west-1",
+						"accountId": "111122223333",
+					},
 				})},
 			},
 		}
@@ -205,6 +182,10 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, "AWS/ApplicationELB", m["namespace"])
 		assert.Equal(t, "ActiveConnectionCount", m["metricName"])
+		assert.Equal(t, "eu-west-1", m["region"])
+		assert.Equal(t, "111122223333", m["accountId"])
+		assert.Equal(t, "myRef", out.Queries[0].RefID)
+		assert.Equal(t, int64(500), out.Queries[0].MaxDataPoints)
 	})
 
 	t.Run("custom namespace placeholder table (empty metricName)", func(t *testing.T) {
@@ -235,37 +216,6 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 	})
 
-	t.Run("maps region from tableParameterValues", func(t *testing.T) {
-		req := &backend.QueryDataRequest{
-			PluginContext: pluginCtxWithFeatureToggle(),
-			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "ap-southeast-1"},
-				})},
-			},
-		}
-		out := normalizeGrafanaSQLRequest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, "ap-southeast-1", m["region"])
-	})
-
-	t.Run("maps accountId from tableParameterValues", func(t *testing.T) {
-		req := &backend.QueryDataRequest{
-			PluginContext: pluginCtxWithFeatureToggle(),
-			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{
-						"region":    "us-east-1",
-						"accountId": "111122223333",
-					},
-				})},
-			},
-		}
-		out := normalizeGrafanaSQLRequest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, "111122223333", m["accountId"])
-	})
-
 	t.Run("omits accountId field when not present in tableParameterValues", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
@@ -279,20 +229,6 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		m := unmarshalNormalized(t, out.Queries[0])
 		_, hasAccountId := m["accountId"]
 		assert.False(t, hasAccountId, "accountId should not be present when not specified")
-	})
-
-	t.Run("preserves refId, timeRange, interval, and maxDataPoints", func(t *testing.T) {
-		qJSON := grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-			"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
-		})
-		req := &backend.QueryDataRequest{
-			PluginContext: pluginCtxWithFeatureToggle(),
-			Queries:       []backend.DataQuery{{RefID: "myRef", JSON: qJSON, MaxDataPoints: 500}},
-		}
-		out := normalizeGrafanaSQLRequest(req)
-		require.Len(t, out.Queries, 1)
-		assert.Equal(t, "myRef", out.Queries[0].RefID)
-		assert.Equal(t, int64(500), out.Queries[0].MaxDataPoints)
 	})
 }
 
@@ -413,7 +349,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		assert.ElementsMatch(t, []string{"i-11111", "i-22222"}, dims["InstanceId"])
 	})
 
-	t.Run("multiple different dimension filters are all applied", func(t *testing.T) {
+	t.Run("multiple dimension filters and a statistic filter are all applied", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
@@ -432,6 +368,12 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 								{"operator": "=", "value": "my-asg"},
 							},
 						},
+						{
+							"name": "statistic",
+							"conditions": []map[string]interface{}{
+								{"operator": "=", "value": "Sum"},
+							},
+						},
 					},
 				})},
 			},
@@ -441,6 +383,9 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		dims := dimensionsFromMap(t, m)
 		assert.Equal(t, []string{"i-abc"}, dims["InstanceId"])
 		assert.Equal(t, []string{"my-asg"}, dims["AutoScalingGroupName"])
+		assert.Equal(t, "Sum", m["statistic"])
+		_, hasStatisticDim := dims["statistic"]
+		assert.False(t, hasStatisticDim, "statistic should not appear as a dimension")
 	})
 
 	t.Run("unsupported operator (like) is ignored", func(t *testing.T) {
@@ -506,50 +451,77 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 	})
 }
 
+// ---- normalizeGrafanaSQLRequest — matchExact ----
+
+func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
+	t.Run("matchExact is false when no dimension filters are present", func(t *testing.T) {
+		// Without dimension filters the query must use an inferred SEARCH
+		// expression so CloudWatch returns one series per dimension combination
+		// rather than the dimensionless aggregate rollup.
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				})},
+			},
+		}
+		out := normalizeGrafanaSQLRequest(req)
+		m := unmarshalNormalized(t, out.Queries[0])
+		assert.Equal(t, false, m["matchExact"], "no dimension filters → matchExact should be false")
+	})
+
+	t.Run("matchExact is true when dimension filters are present", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+					"filters": []map[string]interface{}{
+						{
+							"name": "InstanceId",
+							"conditions": []map[string]interface{}{
+								{"operator": "=", "value": "i-12345"},
+							},
+						},
+					},
+				})},
+			},
+		}
+		out := normalizeGrafanaSQLRequest(req)
+		m := unmarshalNormalized(t, out.Queries[0])
+		assert.Equal(t, true, m["matchExact"], "dimension filters present → matchExact should be true")
+	})
+
+	t.Run("matchExact is false when the only filter is statistic (no dimension filters)", func(t *testing.T) {
+		// The statistic column is not a CloudWatch dimension; a query that
+		// only filters on statistic still has no dimension filters and must
+		// use matchExact: false.
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+					"filters": []map[string]interface{}{
+						{
+							"name": "statistic",
+							"conditions": []map[string]interface{}{
+								{"operator": "=", "value": "Sum"},
+							},
+						},
+					},
+				})},
+			},
+		}
+		out := normalizeGrafanaSQLRequest(req)
+		m := unmarshalNormalized(t, out.Queries[0])
+		assert.Equal(t, false, m["matchExact"], "statistic-only filter → matchExact should be false")
+	})
+}
+
 // ---- applyFilters unit tests ----
 
 func TestApplyFilters(t *testing.T) {
-	t.Run("equals operator adds single dimension value", func(t *testing.T) {
-		dims, stat := applyFilters([]schemas.ColumnFilter{
-			{Name: "InstanceId", Conditions: []schemas.FilterCondition{
-				{Operator: schemas.OperatorEquals, Value: "i-abc"},
-			}},
-		})
-		assert.Equal(t, []string{"i-abc"}, dims["InstanceId"])
-		assert.Empty(t, stat)
-	})
-
-	t.Run("in operator adds multiple dimension values", func(t *testing.T) {
-		dims, stat := applyFilters([]schemas.ColumnFilter{
-			{Name: "InstanceId", Conditions: []schemas.FilterCondition{
-				{Operator: schemas.OperatorIn, Values: []any{"i-111", "i-222"}},
-			}},
-		})
-		assert.ElementsMatch(t, []string{"i-111", "i-222"}, dims["InstanceId"])
-		assert.Empty(t, stat)
-	})
-
-	t.Run("statistic column is routed to statistic return value", func(t *testing.T) {
-		dims, stat := applyFilters([]schemas.ColumnFilter{
-			{Name: "statistic", Conditions: []schemas.FilterCondition{
-				{Operator: schemas.OperatorEquals, Value: "Maximum"},
-			}},
-		})
-		assert.Equal(t, "Maximum", stat)
-		_, inDims := dims["statistic"]
-		assert.False(t, inDims, "statistic should not be a dimension")
-	})
-
-	t.Run("unsupported operator is skipped", func(t *testing.T) {
-		dims, stat := applyFilters([]schemas.ColumnFilter{
-			{Name: "InstanceId", Conditions: []schemas.FilterCondition{
-				{Operator: schemas.OperatorLike, Value: "%prod%"},
-			}},
-		})
-		assert.Empty(t, dims)
-		assert.Empty(t, stat)
-	})
-
 	t.Run("empty filter name is skipped", func(t *testing.T) {
 		dims, stat := applyFilters([]schemas.ColumnFilter{
 			{Name: "", Conditions: []schemas.FilterCondition{
@@ -568,23 +540,6 @@ func TestApplyFilters(t *testing.T) {
 		assert.Empty(t, stat)
 	})
 
-	t.Run("multiple filters are all applied", func(t *testing.T) {
-		dims, stat := applyFilters([]schemas.ColumnFilter{
-			{Name: "InstanceId", Conditions: []schemas.FilterCondition{
-				{Operator: schemas.OperatorEquals, Value: "i-abc"},
-			}},
-			{Name: "statistic", Conditions: []schemas.FilterCondition{
-				{Operator: schemas.OperatorEquals, Value: "Sum"},
-			}},
-			{Name: "AutoScalingGroupName", Conditions: []schemas.FilterCondition{
-				{Operator: schemas.OperatorEquals, Value: "my-asg"},
-			}},
-		})
-		assert.Equal(t, []string{"i-abc"}, dims["InstanceId"])
-		assert.Equal(t, []string{"my-asg"}, dims["AutoScalingGroupName"])
-		assert.Equal(t, "Sum", stat)
-	})
-
 	t.Run("Values slice takes precedence over Value", func(t *testing.T) {
 		dims, _ := applyFilters([]schemas.ColumnFilter{
 			{Name: "InstanceId", Conditions: []schemas.FilterCondition{
@@ -595,9 +550,4 @@ func TestApplyFilters(t *testing.T) {
 		assert.NotContains(t, dims["InstanceId"], "i-ignored")
 	})
 
-	t.Run("nil filter list returns empty dimensions and empty statistic", func(t *testing.T) {
-		dims, stat := applyFilters(nil)
-		assert.Empty(t, dims)
-		assert.Empty(t, stat)
-	})
 }

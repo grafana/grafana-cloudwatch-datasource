@@ -226,7 +226,7 @@ const timeSeriesQuery = "timeSeriesQuery"
 
 var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 
-type metricsDataQuery struct {
+type MetricsDataQuery struct {
 	dataquery.CloudWatchMetricsQuery
 	Sql               *sqlExpression `json:"sql,omitempty"`
 	Type              string         `json:"type"`
@@ -237,9 +237,9 @@ type metricsDataQuery struct {
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
 func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, logger log.Logger,
 	crossAccountQueryingEnabled bool) ([]*CloudWatchQuery, error) {
-	var metricDataQueries = make(map[string]metricsDataQuery)
+	var metricDataQueries = make(map[string]MetricsDataQuery)
 	for _, query := range dataQueries {
-		var metricsDataQuery metricsDataQuery
+		var metricsDataQuery MetricsDataQuery
 		err := json.Unmarshal(query.JSON, &metricsDataQuery)
 		if err != nil {
 			return nil, &QueryError{Err: err, RefID: query.RefID}
@@ -311,12 +311,12 @@ func (q *CloudWatchQuery) applyMacros(startTime, endTime time.Time) {
 	}
 }
 
-func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery) {
+func (q *CloudWatchQuery) migrateLegacyQuery(query MetricsDataQuery) {
 	q.Statistic = getStatistic(query)
 	q.Label = getLabel(query)
 }
 
-func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
+func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery MetricsDataQuery, startTime, endTime time.Time,
 	defaultRegionValue string, crossAccountQueryingEnabled bool) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
 		return backend.DownstreamError(fmt.Errorf("query must have either statistic or statistics field"))
@@ -386,11 +386,11 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 	return nil
 }
 
-// getStatistic determines the value of Statistic in a CloudWatchQuery from the metricsDataQuery input
+// getStatistic determines the value of Statistic in a CloudWatchQuery from the MetricsDataQuery input
 // migrates queries that has a `statistics` field to use the `statistic` field instead.
 // In case the query used more than one stat, the first stat in the slice will be used in the statistic field
 // Read more here https://github.com/grafana/grafana/issues/30629
-func getStatistic(query metricsDataQuery) string {
+func getStatistic(query MetricsDataQuery) string {
 	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
 	if query.Statistic == nil {
 		if len(query.Statistics) > 0 {
@@ -413,7 +413,7 @@ var aliasPatterns = map[string]string{
 
 var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
-func getLabel(query metricsDataQuery) string {
+func getLabel(query MetricsDataQuery) string {
 	deprecatedAlias := query.Alias //nolint:staticcheck
 
 	if query.Label != nil {
@@ -458,7 +458,7 @@ func calculatePeriodBasedOnTimeRange(startTime, endTime time.Time) int {
 	return period
 }
 
-func getPeriod(query metricsDataQuery, startTime, endTime time.Time) (int, error) {
+func getPeriod(query MetricsDataQuery, startTime, endTime time.Time) (int, error) {
 	periodString := ""
 	if query.Period != nil {
 		periodString = *query.Period

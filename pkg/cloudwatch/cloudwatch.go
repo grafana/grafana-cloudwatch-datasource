@@ -25,8 +25,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/patrickmn/go-cache"
 	schemas "github.com/grafana/schemads"
+	"github.com/patrickmn/go-cache"
 )
 
 const (
@@ -100,9 +100,9 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 	return cfg, nil
 }
 
-// DataSourceWithSchema wraps DataSource with schemads support, intercepting
-// abstractionSchema/* CallResource paths and forwarding all others to the
-// existing HTTP mux.
+// DataSourceWithSchema wraps DataSource with schemads support, routing
+// abstractionSchema/* CallResource paths to the schema handler and forwarding
+// all others to the existing HTTP mux. QueryData is inherited from DataSource.
 type DataSourceWithSchema struct {
 	*DataSource
 	*schemas.SchemaDatasource
@@ -110,11 +110,6 @@ type DataSourceWithSchema struct {
 
 func (ds *DataSourceWithSchema) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return ds.SchemaDatasource.CallResource(ctx, req, sender)
-}
-
-func (ds *DataSourceWithSchema) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	req = normalizeGrafanaSQLRequest(req)
-	return ds.DataSource.QueryData(ctx, req)
 }
 
 func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -171,6 +166,7 @@ func (ds *DataSource) CallResource(ctx context.Context, req *backend.CallResourc
 }
 
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	req = normalizeGrafanaSQLRequest(req)
 	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
 	q := req.Queries[0]
 	var model DataQueryJson

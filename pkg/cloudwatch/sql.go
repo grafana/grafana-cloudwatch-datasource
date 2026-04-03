@@ -8,16 +8,9 @@ import (
 	schemas "github.com/grafana/schemads"
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/kinds/dataquery"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
 )
-
-// grafanaSQLQuery is a typed representation of the JSON payload produced by
-// normalizeGrafanaSQLRequest. It mirrors the unexported models.metricsDataQuery
-// struct so that ParseMetricDataQueries can unmarshal it correctly.
-type grafanaSQLQuery struct {
-	dataquery.CloudWatchMetricsQuery
-	Type string `json:"type"`
-}
 
 // normalizeGrafanaSQLRequest rewrites queries that carry a grafanaSQL payload
 // (set by dsAbstraction) into the native CloudWatch MetricStat query JSON that
@@ -80,14 +73,20 @@ func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) *backend.QueryDat
 			dims[k] = dataquery.StringOrArrayOfString{ArrayOfString: vals}
 		}
 
-		normalized := grafanaSQLQuery{
+		// matchExact is set to true only when dimension filters are present so
+		// that CloudWatch returns an exact MetricStat result. When there are no
+		// dimension filters the query should return all series for the metric,
+		// which requires matchExact: false so that an inferred SEARCH expression
+		// is used instead of a dimensionless MetricStat (which would return only
+		// the aggregate rollup).
+		normalized := models.MetricsDataQuery{
 			Type: timeSeriesQuery,
 			CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
 				Region:     region,
 				Namespace:  namespace,
 				Statistic:  &statistic,
 				Dimensions: &dims,
-				MatchExact: utils.Pointer(true),
+				MatchExact: utils.Pointer(len(dimensions) > 0),
 			},
 		}
 		if metricName != "" {

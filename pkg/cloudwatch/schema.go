@@ -265,12 +265,6 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 // column (dimension key) it calls ListMetrics to enumerate the distinct values
 // that exist for the given namespace + metricName combination. One ListMetrics
 // API call is made per column, bounded by the datasource's ListMetricsPageLimit.
-//
-// Note: unlike the existing /dimension-values HTTP endpoint, this handler does
-// not support narrowing results via an existing dimension filter, because
-// ColumnValuesRequest has no field for that. Values returned are therefore
-// all known values for the dimension key across the metric, not scoped to any
-// other already-selected dimensions.
 func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
 	namespace, metricName := splitTableName(req.Table)
 	if namespace == "" {
@@ -327,14 +321,15 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 		}, nil
 	}
 
-	dimValuesReq := resources.DimensionValuesRequest{
+	dimValuesReq := resources.DimensionValuesForKeysRequest{
 		ResourceRequest: &resources.ResourceRequest{Region: region, AccountId: accountId},
 		Namespace:       namespace,
 		MetricName:      metricName,
+		DimensionKeys:   dimensionCols,
 		DimensionFilter: []*resources.Dimension{},
 	}
 	p.ds.logger.FromContext(ctx).Info("Getting dimension values", "columns", dimensionCols, "namespace", namespace, "metricName", metricName)
-	dimValues, err := service.GetDimensionValuesForKeys(ctx, dimValuesReq, dimensionCols)
+	dimValues, err := service.GetDimensionValuesForKeys(ctx, dimValuesReq)
 	if err != nil {
 		p.ds.logger.FromContext(ctx).Error("Error getting dimension values", "columns", dimensionCols, "namespace", namespace, "metricName", metricName, "error", err)
 		colErrors := make(map[string]string, len(dimensionCols))

@@ -457,11 +457,9 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 				{Value: "ServiceName"},
 			}, nil)
 		mockSvc.On("GetDimensionValuesForKeys",
-			mock.MatchedBy(func(r resources.DimensionValuesRequest) bool {
-				return r.Namespace == "Custom/App" && r.MetricName == "Latency"
-			}),
-			mock.MatchedBy(func(keys []string) bool {
-				return assert.ElementsMatch(t, []string{"Environment", "ServiceName"}, keys)
+			mock.MatchedBy(func(r resources.DimensionValuesForKeysRequest) bool {
+				return r.Namespace == "Custom/App" && r.MetricName == "Latency" &&
+					assert.ElementsMatch(t, []string{"Environment", "ServiceName"}, r.DimensionKeys)
 			}),
 		).Return(map[string][]string{
 			"Environment": {"prod"},
@@ -488,8 +486,9 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("returns statistic values alongside dimension values in a mixed request", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
 		mockSvc.On("GetDimensionValuesForKeys",
-			mock.Anything,
-			[]string{"InstanceId"},
+			mock.MatchedBy(func(r resources.DimensionValuesForKeysRequest) bool {
+				return assert.ElementsMatch(t, []string{"InstanceId"}, r.DimensionKeys)
+			}),
 		).Return(map[string][]string{"InstanceId": {"i-abc"}}, nil)
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -510,8 +509,9 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("returns dimension values for requested columns", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
 		mockSvc.On("GetDimensionValuesForKeys",
-			mock.Anything,
-			[]string{"InstanceId"},
+			mock.MatchedBy(func(r resources.DimensionValuesForKeysRequest) bool {
+				return assert.ElementsMatch(t, []string{"InstanceId"}, r.DimensionKeys)
+			}),
 		).Return(map[string][]string{"InstanceId": {"i-11111111", "i-22222222"}}, nil)
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -531,10 +531,10 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("passes namespace and metricName from table to the service", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
 		mockSvc.On("GetDimensionValuesForKeys",
-			mock.MatchedBy(func(r resources.DimensionValuesRequest) bool {
-				return r.Namespace == "AWS/EC2" && r.MetricName == "CPUUtilization"
+			mock.MatchedBy(func(r resources.DimensionValuesForKeysRequest) bool {
+				return r.Namespace == "AWS/EC2" && r.MetricName == "CPUUtilization" &&
+					assert.ElementsMatch(t, []string{"InstanceId"}, r.DimensionKeys)
 			}),
-			[]string{"InstanceId"},
 		).Return(map[string][]string{"InstanceId": {"i-abc"}}, nil)
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -554,10 +554,10 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("passes accountId to the service when present", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
 		mockSvc.On("GetDimensionValuesForKeys",
-			mock.MatchedBy(func(r resources.DimensionValuesRequest) bool {
-				return r.AccountId != nil && *r.AccountId == "111122223333"
+			mock.MatchedBy(func(r resources.DimensionValuesForKeysRequest) bool {
+				return r.AccountId != nil && *r.AccountId == "111122223333" &&
+					assert.ElementsMatch(t, []string{"InstanceId"}, r.DimensionKeys)
 			}),
-			[]string{"InstanceId"},
 		).Return(map[string][]string{"InstanceId": {"i-xyz"}}, nil)
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -597,9 +597,8 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("makes a single ListMetrics call for multiple requested columns", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
 		mockSvc.On("GetDimensionValuesForKeys",
-			mock.Anything,
-			mock.MatchedBy(func(keys []string) bool {
-				return assert.ElementsMatch(t, []string{"InstanceId", "AutoScalingGroupName"}, keys)
+			mock.MatchedBy(func(r resources.DimensionValuesForKeysRequest) bool {
+				return assert.ElementsMatch(t, []string{"InstanceId", "AutoScalingGroupName"}, r.DimensionKeys)
 			}),
 		).Return(map[string][]string{
 			"InstanceId":           {"i-111"},

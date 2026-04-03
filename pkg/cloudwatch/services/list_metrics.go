@@ -101,7 +101,7 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(ctx context.Con
 	return response, nil
 }
 
-func (l *ListMetricsService) GetDimensionValuesForKeys(ctx context.Context, r resources.DimensionValuesRequest, keys []string) (map[string][]string, error) {
+func (l *ListMetricsService) GetDimensionValuesForKeys(ctx context.Context, r resources.DimensionValuesForKeysRequest) (map[string][]string, error) {
 	input := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(r.Namespace),
 		MetricName: aws.String(r.MetricName),
@@ -114,8 +114,8 @@ func (l *ListMetricsService) GetDimensionValuesForKeys(ctx context.Context, r re
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
 
-	sets := make(map[string]map[string]struct{}, len(keys))
-	for _, k := range keys {
+	sets := make(map[string]map[string]struct{}, len(r.DimensionKeys))
+	for _, k := range r.DimensionKeys {
 		sets[k] = make(map[string]struct{})
 	}
 
