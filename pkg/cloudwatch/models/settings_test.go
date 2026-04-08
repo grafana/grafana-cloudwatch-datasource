@@ -227,6 +227,22 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("Should load sessionToken from secureJSONData", func(t *testing.T) {
+		settings := backend.DataSourceInstanceSettings{
+			ID:       33,
+			JSONData: []byte(`{"authType": "keys", "defaultRegion": "us-east-1"}`),
+			DecryptedSecureJSONData: map[string]string{
+				"accessKey":    "AKIAIOSFODNN7EXAMPLE",
+				"secretKey":    "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+				"sessionToken": "AQoDYXdzEJr//test-session-token",
+			},
+		}
+
+		s, err := LoadCloudWatchSettings(settingCtx, settings)
+		require.NoError(t, err)
+		assert.Equal(t, "AQoDYXdzEJr//test-session-token", s.SessionToken)
+	})
+
 	t.Run("Should load settings from context", func(t *testing.T) {
 		settingCtx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
 			awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",

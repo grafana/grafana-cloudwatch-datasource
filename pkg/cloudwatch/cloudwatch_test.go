@@ -223,6 +223,30 @@ func TestGetAWSConfig_passes_authSettings(t *testing.T) {
 	require.NoError(t, err)
 }
 
+type spyConfigProvider struct {
+	captured awsauth.Settings
+}
+
+func (s *spyConfigProvider) GetConfig(_ context.Context, settings awsauth.Settings) (aws.Config, error) {
+	s.captured = settings
+	return aws.Config{}, nil
+}
+
+func TestNewAWSConfig_passesSessionToken(t *testing.T) {
+	spy := &spyConfigProvider{}
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.AWSConfigProvider = spy
+		ds.Settings.AuthType = awsds.AuthTypeKeys
+		ds.Settings.AccessKey = "AKIAIOSFODNN7EXAMPLE"
+		ds.Settings.SecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+		ds.Settings.SessionToken = "AQoDYXdzEJr//test-session-token"
+	})
+
+	_, err := ds.newAWSConfig(context.Background(), "us-east-1")
+	require.NoError(t, err)
+	assert.Equal(t, "AQoDYXdzEJr//test-session-token", spy.captured.SessionToken)
+}
+
 func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
 	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewCWClient
