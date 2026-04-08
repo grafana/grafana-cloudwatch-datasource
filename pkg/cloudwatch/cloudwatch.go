@@ -78,6 +78,7 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 		Region:             region,
 		AccessKey:          ds.Settings.AccessKey,
 		SecretKey:          ds.Settings.SecretKey,
+		SessionToken:       ds.Settings.SessionToken,
 		HTTPClient:         &http.Client{},
 	}
 	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
