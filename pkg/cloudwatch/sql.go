@@ -264,6 +264,28 @@ func convertToTabular(resp *backend.QueryDataResponse, grafanaSQLRefIDs map[stri
 			}
 		}
 
+		// Sort all rows by ascending time. Build a row-index slice, sort it by
+		// the time field, then reorder every field in lockstep.
+		n := timeField.Len()
+		idx := make([]int, n)
+		for i := range idx {
+			idx[i] = i
+		}
+		sort.SliceStable(idx, func(a, b int) bool {
+			ta, _ := timeField.At(idx[a]).(time.Time)
+			tb, _ := timeField.At(idx[b]).(time.Time)
+			return ta.Before(tb)
+		})
+		allFields := append([]*data.Field{timeField, valueField}, dimFields...)
+		for _, field := range allFields {
+			sorted := data.NewFieldFromFieldType(field.Type(), n)
+			sorted.Name = field.Name
+			for newPos, oldPos := range idx {
+				sorted.Set(newPos, field.At(oldPos))
+			}
+			*field = *sorted
+		}
+
 		// Assemble the flat output frame preserving RefID and Meta.
 		outFrame := &data.Frame{
 			Name:  refID,

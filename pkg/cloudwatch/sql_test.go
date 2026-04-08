@@ -638,14 +638,14 @@ func TestConvertToTabular(t *testing.T) {
 		convertToTabular(resp, map[string]struct{}{"A": {}})
 
 		require.Len(t, resp.Responses["A"].Frames, 1)
-		// Rows are emitted series-first: all timestamps for i-111, then all for i-222.
+		// After time-sorting: both t0 rows come before both t1 rows.
 		expected := data.NewFrame("A",
-			data.NewField("time", nil, []time.Time{t0, t1, t0, t1}),
+			data.NewField("time", nil, []time.Time{t0, t0, t1, t1}),
 			data.NewField("value", nil, []*float64{
-				utils.Pointer(float64(10)), utils.Pointer(float64(11)),
-				utils.Pointer(float64(8)), utils.Pointer(float64(9)),
+				utils.Pointer(float64(10)), utils.Pointer(float64(8)),
+				utils.Pointer(float64(11)), utils.Pointer(float64(9)),
 			}),
-			data.NewField("InstanceId", nil, []string{"i-111", "i-111", "i-222", "i-222"}),
+			data.NewField("InstanceId", nil, []string{"i-111", "i-222", "i-111", "i-222"}),
 		)
 		expected.RefID = "A"
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/cloudWatchConsts"
-	schemas "github.com/grafana/schemads"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	schemas "github.com/grafana/schemads"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -200,7 +200,7 @@ func TestSchemaProvider_Columns(t *testing.T) {
 
 		cols, ok := resp.Columns["metrics|AWS/EC2|CPUUtilization"]
 		assert.True(t, ok, "expected columns for metrics.AWS/EC2|CPUUtilization")
-		// +1 for statistic, +2 for time and value data columns.
+		// +1 statistic, time and value columns.
 		assert.Len(t, cols, len(dimKeys)+3)
 
 		colNames := make(map[string]struct{}, len(cols))
@@ -223,7 +223,6 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		_, hasValue := colNames["value"]
 		assert.True(t, hasValue, "expected value data column")
 	})
-
 
 	t.Run("correctly parses namespace from metrics.namespace|metricName table string", func(t *testing.T) {
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
