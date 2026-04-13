@@ -27,10 +27,10 @@ github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 h1:WKuaxf++XKWlHWu9ECbMlha8WOEG
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4/go.mod h1:ZWy7j6v1vWGmPReu0iSGvRiise4YI5SkR3OHKTZ6Wuc=
 github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.56.0 h1:ud2A364lLBkhGAC7oYw/1xg9BF4acwJC+qdLykxy83o=
 github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.56.0/go.mod h1:+bNfizG/fpRGctZuVeH8uWht/0BLD9wUyXOKM4VaCVA=
-github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.67.0 h1:8PdeEH2umADwg0j0bNxt9AYaNgVqUP50KMlMNkcgdZ8=
-github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.67.0/go.mod h1:PobeppEnIjw4pcgjFryNDZCTH7AiqZw0yb5r98Gvf9c=
-github.com/aws/aws-sdk-go-v2/service/ec2 v1.296.2 h1:Ytu50ChAxCiDsOlBcBq8jbczXy6+QLb07T65DBJASRs=
-github.com/aws/aws-sdk-go-v2/service/ec2 v1.296.2/go.mod h1:R+2BNtUfTfhPY0RH18oL02q116bakeBWjanrbnVBqkM=
+github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.68.0 h1:+/lmB/+i2oqkzbmlQxsW0kr/+wmJgmyiEF9VDJicX34=
+github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.68.0/go.mod h1:PobeppEnIjw4pcgjFryNDZCTH7AiqZw0yb5r98Gvf9c=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.297.0 h1:A+7NViqbMUCoTQFWjbSXdbzE4K5Ziu2zWJtZzAusm+A=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.297.0/go.mod h1:R+2BNtUfTfhPY0RH18oL02q116bakeBWjanrbnVBqkM=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.7 h1:5EniKhLZe4xzL7a+fU3C2tfUN4nWIqlLesfrjkuPFTY=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.7/go.mod h1:x0nZssQ3qZSnIcePWLvcoFisRXJzcTVvYpAAdYX8+GI=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.21 h1:c31//R3xgIJMSC8S6hEVq+38DcvUlgFY0FM6mSI5oto=
@@ -111,8 +111,8 @@ github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6k
 github.com/grafana/dataplane/sdata v0.0.9/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/grafana-aws-sdk v1.4.3 h1:Gwm7f2zyVTfVRmYS0GuZPe46aoQxVejb2/9c/woYgEw=
 github.com/grafana/grafana-aws-sdk v1.4.3/go.mod h1:tFJTBtW+0kmPqnPUaWch48aUSeZgnOCx+Lrf2/fiBP8=
-github.com/grafana/grafana-plugin-sdk-go v0.291.0 h1:VlA6wYdjMxx7xpthEd0qZgbtfqlRWRZJ3CqnMNks0+U=
-github.com/grafana/grafana-plugin-sdk-go v0.291.0/go.mod h1:cLkz5/DpTRGiX65qF1k4RoIydzWtYbwTD/asDOY7aMk=
+github.com/grafana/grafana-plugin-sdk-go v0.291.1 h1:Z/zhv2EXiBE1oT/IGjE0CnN+MfW7zaCTJ7QB5eotjBU=
+github.com/grafana/grafana-plugin-sdk-go v0.291.1/go.mod h1:qTjY9ymtF0ughH8xdXk8WNejJvwB2J2epeMBdauaIB0=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.9 h1:c1Us8i6eSmkW+Ez05d3co8kasnuOY813tbMN8i/a3Og=
