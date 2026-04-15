@@ -2,6 +2,7 @@
 
 ## 12.7.0
 
+- chore(deps): update actions/create-github-app-token action to v3 in [#491](https://github.com/grafana/grafana-cloudwatch-datasource/pull/491)
 - chore(deps): update dependency @grafana/plugin-e2e to v3.4.13 in [#523](https://github.com/grafana/grafana-cloudwatch-datasource/pull/523)
 - chore(deps): update dependency prettier to v3.8.2 in [#522](https://github.com/grafana/grafana-cloudwatch-datasource/pull/522)
 - fix(deps): update backend dependencies in [#521](https://github.com/grafana/grafana-cloudwatch-datasource/pull/521)
