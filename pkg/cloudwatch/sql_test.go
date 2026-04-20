@@ -256,6 +256,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		_, hasAccountId := m["accountId"]
 		assert.False(t, hasAccountId, "accountId should not be present when not specified")
 	})
+
 }
 
 // ---- normalizeGrafanaSQLRequest — statistic filter ----
@@ -725,3 +726,4 @@ func TestConvertToTabular(t *testing.T) {
 		}
 	})
 }
+

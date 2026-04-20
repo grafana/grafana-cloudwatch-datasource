@@ -24,10 +24,6 @@ var (
 		schemas.OperatorIn,
 	}
 
-	// timeColumn and valueColumn are the two data columns present in every
-	// metrics table. They are prepended to the column list so the SQL engine
-	// exposes them as queryable columns (SELECT time, value FROM ...).
-	// Neither has enumerable values, so ColumnValues skips them.
 	timeColumn = schemas.Column{
 		Name: "time",
 		Type: schemas.ColumnTypeTimestamp,
@@ -87,7 +83,8 @@ func splitTableName(table string) (namespace, metricName string) {
 }
 
 // Schema implements schemas.SchemaHandler.
-func (p *SchemaProvider) Schema(ctx context.Context, _ *schemas.SchemaRequest) (*schemas.SchemaResponse, error) {
+func (p *SchemaProvider) Schema(ctx context.Context, req *schemas.SchemaRequest) (*schemas.SchemaResponse, error) {
+	ctx = instrumentContext(ctx, "schema/fullSchema", req.PluginContext)
 	// Namespace errors are non-fatal; return whatever tables succeeded alongside the error string.
 	tables, tableErrs := p.getAllTables(ctx)
 
@@ -132,7 +129,8 @@ func (p *SchemaProvider) Schema(ctx context.Context, _ *schemas.SchemaRequest) (
 }
 
 // Tables implements schemas.TablesHandler.
-func (p *SchemaProvider) Tables(ctx context.Context, _ *schemas.TablesRequest) (*schemas.TablesResponse, error) {
+func (p *SchemaProvider) Tables(ctx context.Context, req *schemas.TablesRequest) (*schemas.TablesResponse, error) {
+	ctx = instrumentContext(ctx, "schema/tables", req.PluginContext)
 	tables, errs := p.getAllTables(ctx)
 
 	names := make([]string, len(tables))
@@ -151,6 +149,7 @@ func (p *SchemaProvider) Tables(ctx context.Context, _ *schemas.TablesRequest) (
 
 // Columns implements schemas.ColumnsHandler.
 func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsRequest) (*schemas.ColumnsResponse, error) {
+	ctx = instrumentContext(ctx, "schema/columns", req.PluginContext)
 	region := req.TableParameters["region"]
 	if region == "" {
 		region = defaultRegion
@@ -180,6 +179,7 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 
 // TableParameterValues implements schemas.TableParameterValuesHandler.
 func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.TableParameterValuesRequest) (*schemas.TableParametersValuesResponse, error) {
+	ctx = instrumentContext(ctx, "schema/tableParameterValues", req.PluginContext)
 	result := make(map[string][]string)
 
 	switch req.TableParameter {
@@ -279,6 +279,7 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 // that exist for the given namespace + metricName combination. One ListMetrics
 // API call is made per column, bounded by the datasource's ListMetricsPageLimit.
 func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
+	ctx = instrumentContext(ctx, "schema/columnValues", req.PluginContext)
 	namespace, metricName := splitTableName(req.Table)
 	if namespace == "" {
 		return nil, fmt.Errorf("unrecognised table format %q: expected metrics|<namespace>|<metricName>", req.Table)

@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/grafana-aws-sdk v1.4.3
 	github.com/grafana/grafana-plugin-sdk-go v0.290.1
-	github.com/grafana/schemads v0.0.7
+	github.com/grafana/schemads v0.0.8
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
