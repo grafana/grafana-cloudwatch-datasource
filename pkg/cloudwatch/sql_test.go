@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -144,6 +145,47 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 		out, _ := normalizeGrafanaSQLRequest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, "B", out.Queries[0].RefID)
+	})
+}
+
+func TestQueryData_NoQueriesAfterGrafanaSQLNormalization(t *testing.T) {
+	ds := newTestDatasource()
+	now := time.Now()
+	tr := backend.TimeRange{From: now.Add(-time.Hour), To: now}
+
+	t.Run("returns error when all queries were grafanaSQL and GrafanaConfig is nil", func(t *testing.T) {
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{{
+				RefID:     "A",
+				TimeRange: tr,
+				JSON:      grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil),
+			}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no queries to execute")
+	})
+
+	t.Run("returns error when all queries were grafanaSQL and dsAbstractionApp is off", func(t *testing.T) {
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				GrafanaConfig: backend.NewGrafanaCfg(map[string]string{}),
+			},
+			Queries: []backend.DataQuery{{
+				RefID:     "A",
+				TimeRange: tr,
+				JSON:      grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil),
+			}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no queries to execute")
+	})
+
+	t.Run("returns error when request had no queries", func(t *testing.T) {
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no queries to execute")
 	})
 }
 

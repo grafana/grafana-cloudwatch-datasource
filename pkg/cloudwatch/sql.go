@@ -20,6 +20,12 @@ import (
 // executeTimeSeriesQuery already understands. Non-grafanaSQL queries are passed
 // through unchanged.
 //
+// When grafanaSQL cannot be applied (GrafanaConfig missing, dsAbstractionApp
+// disabled, or unrecoverable marshal failure where noted below), those queries
+// are omitted rather than passed through: the raw grafanaSQL JSON is not valid
+// input for CloudWatch metric execution, unlike a bad table name where the
+// caller may still rely on native query fields.
+//
 // The second return value is the set of refIDs that were rewritten. Callers
 // must post-process those responses with convertToTabular so the SQL engine
 // receives flat table frames rather than time-series-multi frames.
