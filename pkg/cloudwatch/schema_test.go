@@ -167,24 +167,16 @@ func TestSchemaProvider_Tables(t *testing.T) {
 func TestSchemaProvider_Columns(t *testing.T) {
 	p := newSchemaProviderForTest()
 
-	t.Run("every table includes a statistic column with OperatorEquals", func(t *testing.T) {
+	t.Run("columns do not include a statistic column (statistic is a table hint)", func(t *testing.T) {
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
 			Tables: []string{"metrics|AWS/EC2|CPUUtilization"},
 		})
 		require.NoError(t, err)
 		cols := resp.Columns["metrics|AWS/EC2|CPUUtilization"]
 		require.NotEmpty(t, cols)
-
-		var statCol *schemas.Column
-		for i := range cols {
-			if cols[i].Name == "statistic" {
-				statCol = &cols[i]
-				break
-			}
+		for _, c := range cols {
+			assert.NotEqual(t, "statistic", c.Name, "statistic should be a FOR hint, not a column")
 		}
-		require.NotNil(t, statCol, "expected a statistic column")
-		assert.Equal(t, schemas.ColumnTypeString, statCol.Type)
-		assert.Equal(t, []schemas.Operator{schemas.OperatorEquals}, statCol.Operators)
 	})
 
 	t.Run("returns dimension key columns for a known namespace", func(t *testing.T) {
@@ -200,8 +192,8 @@ func TestSchemaProvider_Columns(t *testing.T) {
 
 		cols, ok := resp.Columns["metrics|AWS/EC2|CPUUtilization"]
 		assert.True(t, ok, "expected columns for metrics.AWS/EC2|CPUUtilization")
-		// +1 statistic, time and value columns.
-		assert.Len(t, cols, len(dimKeys)+3)
+		// time and value columns plus dimension keys (no statistic column).
+		assert.Len(t, cols, len(dimKeys)+2)
 
 		colNames := make(map[string]struct{}, len(cols))
 		for _, c := range cols {
@@ -211,10 +203,7 @@ func TestSchemaProvider_Columns(t *testing.T) {
 				continue
 			}
 			assert.Contains(t, c.Operators, schemas.OperatorEquals)
-			// Dimension columns support IN; the statistic column only supports equals.
-			if c.Name != statisticColumn.Name {
-				assert.Contains(t, c.Operators, schemas.OperatorIn)
-			}
+			assert.Contains(t, c.Operators, schemas.OperatorIn)
 		}
 		_, hasInstanceId := colNames["InstanceId"]
 		assert.True(t, hasInstanceId, "expected InstanceId dimension key for AWS/EC2")
@@ -258,11 +247,10 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		})
 		require.NoError(t, err)
 		cols := resp.Columns["metrics|Unknown/NS|SomeMetric"]
-		// Even when no dimension keys are discovered, time, value and statistic columns are always present.
-		require.Len(t, cols, 3)
+		// Even when no dimension keys are discovered, time and value columns are always present.
+		require.Len(t, cols, 2)
 		assert.Equal(t, timeColumn.Name, cols[0].Name)
 		assert.Equal(t, valueColumn.Name, cols[1].Name)
-		assert.Equal(t, statisticColumn.Name, cols[2].Name)
 	})
 
 	t.Run("sets error in response and continues for failed namespace lookup", func(t *testing.T) {
@@ -404,8 +392,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	origNewListMetricsService := services.NewListMetricsService
 	t.Cleanup(func() { services.NewListMetricsService = origNewListMetricsService })
 
-	t.Run("returns standard statistics for the statistic column without calling ListMetrics", func(t *testing.T) {
-		// No mock needed — statistic values are served from a fixed list.
+	t.Run("statistic is not a column — requesting it yields no enumerable values and no ListMetrics call", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
 			Table:           "metrics|AWS/EC2|CPUUtilization",
@@ -413,7 +400,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 			TableParameters: map[string]string{"region": "us-east-1"},
 		})
 		require.NoError(t, err)
-		assert.ElementsMatch(t, standardStatistics, resp.ColumnValues["statistic"])
+		assert.Empty(t, resp.ColumnValues)
 		assert.Empty(t, resp.Errors)
 	})
 
@@ -454,7 +441,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 		require.ErrorContains(t, err, "could not enumerate columns")
 	})
 
-	t.Run("empty Columns with region returns statistic plus all dimension values", func(t *testing.T) {
+	t.Run("empty Columns with region returns all dimension values only", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
 		// Use a custom namespace so that GetDimensionKeysByDimensionFilter is called
 		// to enumerate keys (AWS namespaces use hardcoded keys and would require
@@ -484,14 +471,13 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 			TableParameters: map[string]string{"region": "us-east-1"},
 		})
 		require.NoError(t, err)
-		assert.ElementsMatch(t, standardStatistics, resp.ColumnValues["statistic"])
 		assert.Equal(t, []string{"*", "prod"}, resp.ColumnValues["Environment"])
 		assert.Equal(t, []string{"*", "api"}, resp.ColumnValues["ServiceName"])
 		mockSvc.AssertNumberOfCalls(t, "GetDimensionValuesForKeys", 1)
 		assert.Empty(t, resp.Errors)
 	})
 
-	t.Run("returns statistic values alongside dimension values in a mixed request", func(t *testing.T) {
+	t.Run("mixed request with statistic skips statistic and returns dimension values", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
 		mockSvc.On("GetDimensionValuesForKeys",
 			mock.MatchedBy(func(r resources.DimensionValuesForKeysRequest) bool {
@@ -509,7 +495,6 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 			TableParameters: map[string]string{"region": "us-east-1"},
 		})
 		require.NoError(t, err)
-		assert.ElementsMatch(t, standardStatistics, resp.ColumnValues["statistic"])
 		assert.Equal(t, []string{"*", "i-abc"}, resp.ColumnValues["InstanceId"])
 		mockSvc.AssertNumberOfCalls(t, "GetDimensionValuesForKeys", 1)
 	})
@@ -665,5 +650,19 @@ func TestSchemaProvider_Schema(t *testing.T) {
 	t.Run("schema passes schemads validation", func(t *testing.T) {
 		err := schemas.ValidateSchema(resp.FullSchema)
 		assert.NoError(t, err)
+	})
+
+	t.Run("every table advertises the statistic table hint", func(t *testing.T) {
+		for _, tbl := range resp.FullSchema.Tables {
+			require.NotEmpty(t, tbl.TableHints, "table %q should have TableHints", tbl.Name)
+			var found bool
+			for _, h := range tbl.TableHints {
+				if h.Name == statisticTableHint.Name && h.HasValue {
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, "table %q should include statistic hint with HasValue", tbl.Name)
+		}
 	})
 }

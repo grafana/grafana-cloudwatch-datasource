@@ -13,10 +13,9 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
 )
 
-// standardStatistics mirrors the frontend's standardStatistics list in
-// src/standardStatistics.ts. Extended statistics (e.g. p99, TM(5:95)) are
-// accepted as free-form input by the frontend and are not included here.
-var standardStatistics = []string{"Average", "Maximum", "Minimum", "Sum", "SampleCount", "IQM"}
+// StatisticTableHintValueKey is the key in schemas.Query.TableHintValues for the
+// metric statistic (uppercase per schemads).
+const StatisticTableHintValueKey = "STATISTIC"
 
 var (
 	dimensionOperators = []schemas.Operator{
@@ -33,10 +32,11 @@ var (
 		Type: schemas.ColumnTypeFloat64,
 	}
 
-	statisticColumn = schemas.Column{
-		Name:      "statistic",
-		Type:      schemas.ColumnTypeString,
-		Operators: []schemas.Operator{schemas.OperatorEquals},
+	// Advertised on each metrics table as Table.TableHints.
+	statisticTableHint = schemas.TableHint{
+		Name:        "statistic",
+		Description: "CloudWatch metric statistic. Standard values include Average, Minimum, Maximum, Sum, SampleCount, and IQM; extended statistics include percentiles (e.g. p99) and trimmed means (e.g. TM(90:10)). Syntax must match CloudWatch MetricStat.",
+		HasValue:    true,
 	}
 
 	tableParameters = []schemas.TableParameter{
@@ -238,6 +238,7 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 			tables = append(tables, schemas.Table{
 				Name:            metricsTablePrefix + namespace + "|" + metric,
 				TableParameters: tableParameters,
+				TableHints:      metricsTableHints(),
 				Columns:         metricsColumns(dimCols),
 			})
 		}
@@ -260,6 +261,7 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 			tables = append(tables, schemas.Table{
 				Name:            metricsTablePrefix + customNS + "|",
 				TableParameters: tableParameters,
+				TableHints:      metricsTableHints(),
 				Columns:         metricsColumns(dimCols),
 			})
 		}
@@ -297,10 +299,7 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 
 	columnValues := make(map[string][]string, len(req.Columns))
 
-	// When no columns are specified, expand to all columns for the table:
-	// dimension keys plus the statistic column. time and value are data
-	// columns with no enumerable values so they are excluded from the
-	// expansion but silently skipped when explicitly requested below.
+	// When no columns are specified, expand to dimension keys only.
 	columns := req.Columns
 	if len(columns) == 0 {
 		dimCols, err := p.dimensionColumnsForNamespace(ctx, region, accountId, namespace)
@@ -311,19 +310,16 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 		for i, c := range dimCols {
 			dimNames[i] = c.Name
 		}
-		columns = append(dimNames, statisticColumn.Name)
+		columns = dimNames
 	}
 
-	// Separate statistic column (served from a fixed list) from dimension
-	// columns (served via ListMetrics API). time and value are data columns
-	// with no enumerable values; skip them silently.
+	// Dimension columns are served via ListMetrics. time, value, and the statistic
+	// hint identifier have no enumerable values here; skip them.
 	var dimensionCols []string
 	for _, col := range columns {
 		switch col {
-		case statisticColumn.Name:
-			columnValues[col] = standardStatistics
-		case timeColumn.Name, valueColumn.Name:
-			// no enumerable values for data columns
+		case timeColumn.Name, valueColumn.Name, statisticTableHint.Name:
+			// no enumerable values for data columns / statistic hint
 		default:
 			dimensionCols = append(dimensionCols, col)
 		}
@@ -370,14 +366,16 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 	return &schemas.ColumnValuesResponse{ColumnValues: columnValues}, nil
 }
 
-// metricsColumns assembles the full column list for a metrics table: the two
-// fixed data columns (time, value) followed by the dimension key columns and
-// the statistic filter column.
+func metricsTableHints() []schemas.TableHint {
+	return []schemas.TableHint{statisticTableHint}
+}
+
+// metricsColumns assembles the full column list for a metrics table: time, value,
+// then dimension keys.
 func metricsColumns(dimCols []schemas.Column) []schemas.Column {
-	cols := make([]schemas.Column, 0, 2+len(dimCols)+1)
+	cols := make([]schemas.Column, 0, 2+len(dimCols))
 	cols = append(cols, timeColumn, valueColumn)
 	cols = append(cols, dimCols...)
-	cols = append(cols, statisticColumn)
 	return cols
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -32,8 +33,8 @@ import (
 //
 // MetricStat (MetricQueryTypeSearch + MetricEditorModeBuilder) is always used
 // rather than Metric Insights because:
-//   - The schemads column model (dimension keys + statistic) maps directly onto
-//     MetricStat's namespace/metricName/dimensions/statistic fields.
+//   - The schemads model (dimension columns + statistic via TableHintValues) maps
+//     onto MetricStat's namespace/metricName/dimensions/statistic fields.
 //   - MetricStat supports the full statistics surface (IQM, percentiles, TM…),
 //     whereas Metric Insights only supports AVG/MIN/MAX/SUM/COUNT.
 //   - The dsAbstraction SQL engine (go-mysql-server) already handles GROUP BY,
@@ -74,7 +75,8 @@ func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) (*backend.QueryDa
 			continue
 		}
 
-		dimensions, statistic := applyFilters(query.Filters)
+		dimensions := applyFilters(query.Filters)
+		statistic := strings.TrimSpace(query.TableHintValues[StatisticTableHintValueKey])
 		if statistic == "" {
 			statistic = "Average"
 		}
@@ -136,16 +138,12 @@ func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) (*backend.QueryDa
 }
 
 // applyFilters translates schemads ColumnFilter predicates into a CloudWatch
-// dimensions map and an optional statistic value.
-//
-// The "statistic" column is special-cased: its value is routed to the returned
-// statistic string rather than added to the dimensions map. All other columns
-// are treated as CloudWatch dimension keys.
+// dimensions map. Metric statistic is set via TableHintValues (FOR statistic), not filters.
 //
 // Only OperatorEquals and OperatorIn are meaningful for CloudWatch dimensions;
 // other operators are silently ignored.
-func applyFilters(filters []schemas.ColumnFilter) (dimensions map[string][]string, statistic string) {
-	dimensions = make(map[string][]string)
+func applyFilters(filters []schemas.ColumnFilter) map[string][]string {
+	dimensions := make(map[string][]string)
 
 	for _, f := range filters {
 		if f.Name == "" || len(f.Conditions) == 0 {
@@ -162,16 +160,11 @@ func applyFilters(filters []schemas.ColumnFilter) (dimensions map[string][]strin
 				continue
 			}
 
-			if f.Name == statisticColumn.Name {
-				statistic = values[0]
-				continue
-			}
-
 			dimensions[f.Name] = append(dimensions[f.Name], values...)
 		}
 	}
 
-	return dimensions, statistic
+	return dimensions
 }
 
 // extractConditionValues collects non-empty string values from a filter

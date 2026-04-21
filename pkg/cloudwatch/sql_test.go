@@ -301,23 +301,16 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 
 }
 
-// ---- normalizeGrafanaSQLRequest — statistic filter ----
+// ---- normalizeGrafanaSQLRequest — statistic table hint ----
 
-func TestNormalizeGrafanaSQLRequest_StatisticFilter(t *testing.T) {
-	t.Run("statistic filter sets the statistic field, not a dimension", func(t *testing.T) {
+func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
+	t.Run("tableHintValues STATISTIC sets the statistic field", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
-					"filters": []map[string]interface{}{
-						{
-							"name": "statistic",
-							"conditions": []map[string]interface{}{
-								{"operator": "=", "value": "Sum"},
-							},
-						},
-					},
+					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "Sum"},
 				})},
 			},
 		}
@@ -332,7 +325,7 @@ func TestNormalizeGrafanaSQLRequest_StatisticFilter(t *testing.T) {
 		assert.False(t, hasStatistic, "statistic should not appear in dimensions")
 	})
 
-	t.Run("no statistic filter defaults to Average", func(t *testing.T) {
+	t.Run("no statistic hint defaults to Average", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
@@ -346,20 +339,13 @@ func TestNormalizeGrafanaSQLRequest_StatisticFilter(t *testing.T) {
 		assert.Equal(t, "Average", m["statistic"])
 	})
 
-	t.Run("extended statistic (p99) is accepted as-is", func(t *testing.T) {
+	t.Run("extended statistic (p99) is accepted via table hint", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
-					"filters": []map[string]interface{}{
-						{
-							"name": "statistic",
-							"conditions": []map[string]interface{}{
-								{"operator": "=", "value": "p99"},
-							},
-						},
-					},
+					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "p99"},
 				})},
 			},
 		}
@@ -418,12 +404,13 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		assert.ElementsMatch(t, []string{"i-11111", "i-22222"}, dims["InstanceId"])
 	})
 
-	t.Run("multiple dimension filters and a statistic filter are all applied", func(t *testing.T) {
+	t.Run("multiple dimension filters and statistic table hint are all applied", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "Sum"},
 					"filters": []map[string]interface{}{
 						{
 							"name": "InstanceId",
@@ -435,12 +422,6 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 							"name": "AutoScalingGroupName",
 							"conditions": []map[string]interface{}{
 								{"operator": "=", "value": "my-asg"},
-							},
-						},
-						{
-							"name": "statistic",
-							"conditions": []map[string]interface{}{
-								{"operator": "=", "value": "Sum"},
 							},
 						},
 					},
@@ -562,23 +543,15 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 		assert.Equal(t, true, m["matchExact"], "dimension filters present → matchExact should be true")
 	})
 
-	t.Run("matchExact is false when the only filter is statistic (no dimension filters)", func(t *testing.T) {
-		// The statistic column is not a CloudWatch dimension; a query that
-		// only filters on statistic still has no dimension filters and must
-		// use matchExact: false.
+	t.Run("matchExact is false when only statistic hint is set (no dimension filters)", func(t *testing.T) {
+		// Statistic is not a CloudWatch dimension; a query that only sets the
+		// statistic hint still has no dimension filters and must use matchExact: false.
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
-					"filters": []map[string]interface{}{
-						{
-							"name": "statistic",
-							"conditions": []map[string]interface{}{
-								{"operator": "=", "value": "Sum"},
-							},
-						},
-					},
+					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "Sum"},
 				})},
 			},
 		}
@@ -592,25 +565,23 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 
 func TestApplyFilters(t *testing.T) {
 	t.Run("empty filter name is skipped", func(t *testing.T) {
-		dims, stat := applyFilters([]schemas.ColumnFilter{
+		dims := applyFilters([]schemas.ColumnFilter{
 			{Name: "", Conditions: []schemas.FilterCondition{
 				{Operator: schemas.OperatorEquals, Value: "foo"},
 			}},
 		})
 		assert.Empty(t, dims)
-		assert.Empty(t, stat)
 	})
 
 	t.Run("filter with no conditions is skipped", func(t *testing.T) {
-		dims, stat := applyFilters([]schemas.ColumnFilter{
+		dims := applyFilters([]schemas.ColumnFilter{
 			{Name: "InstanceId", Conditions: nil},
 		})
 		assert.Empty(t, dims)
-		assert.Empty(t, stat)
 	})
 
 	t.Run("Values slice takes precedence over Value", func(t *testing.T) {
-		dims, _ := applyFilters([]schemas.ColumnFilter{
+		dims := applyFilters([]schemas.ColumnFilter{
 			{Name: "InstanceId", Conditions: []schemas.FilterCondition{
 				{Operator: schemas.OperatorIn, Values: []any{"i-111", "i-222"}, Value: "i-ignored"},
 			}},
