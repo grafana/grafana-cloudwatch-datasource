@@ -17,6 +17,19 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
 )
 
+// cloudWatchUnsetLabelDimension is the placeholder CloudWatch GetMetricData uses
+// for an unset dimension slot in expanded metric labels. Grafana SQL tabular
+// frames map it to SQL NULL (nullable string); time-series frames keep the raw
+// label for compatibility with the panel editor.
+const cloudWatchUnsetLabelDimension = "--"
+
+func tabularDimensionCell(s string) *string {
+	if s == cloudWatchUnsetLabelDimension {
+		return nil
+	}
+	return utils.Pointer(s)
+}
+
 // normalizeGrafanaSQLRequest rewrites queries that carry a grafanaSQL payload
 // (set by dsAbstraction) into the native CloudWatch MetricStat query JSON that
 // executeTimeSeriesQuery already understands. Non-grafanaSQL queries are passed
@@ -275,7 +288,7 @@ func convertToTabular(resp *backend.QueryDataResponse, grafanaSQLRefIDs map[stri
 		valueField := data.NewField("value", nil, []*float64{})
 		dimFields := make([]*data.Field, len(labelKeys))
 		for i, k := range labelKeys {
-			dimFields[i] = data.NewField(k, nil, []string{})
+			dimFields[i] = data.NewField(k, nil, []*string{})
 		}
 
 		// Append rows from every series frame.
@@ -294,7 +307,7 @@ func convertToTabular(resp *backend.QueryDataResponse, grafanaSQLRefIDs map[stri
 				timeField.Append(t)
 				valueField.Append(v)
 				for j, k := range labelKeys {
-					dimFields[j].Append(vf.Labels[k])
+					dimFields[j].Append(tabularDimensionCell(vf.Labels[k]))
 				}
 			}
 		}

@@ -664,7 +664,7 @@ func TestConvertToTabular(t *testing.T) {
 		expected := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{t0, t1}),
 			data.NewField("value", nil, []*float64{utils.Pointer(10.5), utils.Pointer(11.2)}),
-			data.NewField("InstanceId", nil, []string{"i-111", "i-111"}),
+			data.NewField("InstanceId", nil, []*string{utils.Pointer("i-111"), utils.Pointer("i-111")}),
 		)
 		expected.RefID = "A"
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
@@ -696,7 +696,10 @@ func TestConvertToTabular(t *testing.T) {
 				utils.Pointer(float64(10)), utils.Pointer(float64(8)),
 				utils.Pointer(float64(11)), utils.Pointer(float64(9)),
 			}),
-			data.NewField("InstanceId", nil, []string{"i-111", "i-222", "i-111", "i-222"}),
+			data.NewField("InstanceId", nil, []*string{
+				utils.Pointer("i-111"), utils.Pointer("i-222"),
+				utils.Pointer("i-111"), utils.Pointer("i-222"),
+			}),
 		)
 		expected.RefID = "A"
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
@@ -724,8 +727,8 @@ func TestConvertToTabular(t *testing.T) {
 		expected := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{t0}),
 			data.NewField("value", nil, []*float64{utils.Pointer(float64(5))}),
-			data.NewField("AutoScalingGroupName", nil, []string{"asg-1"}),
-			data.NewField("InstanceId", nil, []string{"i-111"}),
+			data.NewField("AutoScalingGroupName", nil, []*string{utils.Pointer("asg-1")}),
+			data.NewField("InstanceId", nil, []*string{utils.Pointer("i-111")}),
 		)
 		expected.RefID = "A"
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
@@ -767,7 +770,7 @@ func TestConvertToTabular(t *testing.T) {
 		expected := data.NewFrame("A",
 			data.NewField("time", nil, []time.Time{t0}),
 			data.NewField("value", nil, []*float64{nil}),
-			data.NewField("InstanceId", nil, []string{"i-111"}),
+			data.NewField("InstanceId", nil, []*string{utils.Pointer("i-111")}),
 		)
 		expected.RefID = "A"
 		expected.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
@@ -775,5 +778,31 @@ func TestConvertToTabular(t *testing.T) {
 			t.Errorf("frame mismatch (-want +got):\n%s", diff)
 		}
 	})
-}
 
+	t.Run("CloudWatch unset label token becomes SQL NULL in dimension columns", func(t *testing.T) {
+		resp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: data.Frames{
+						makeTimeSeriesFrame("A", data.Labels{"InstanceId": "--", "Series": "s1"},
+							[]time.Time{t0}, []*float64{utils.Pointer(float64(1))}),
+					},
+				},
+			},
+		}
+		convertToTabular(resp, map[string]struct{}{"A": {}})
+
+		require.Len(t, resp.Responses["A"].Frames, 1)
+		frame := resp.Responses["A"].Frames[0]
+		// Sorted: InstanceId, Series.
+		instCol := frame.Fields[2]
+		seriesCol := frame.Fields[3]
+		require.Equal(t, "InstanceId", instCol.Name)
+		require.Equal(t, "Series", seriesCol.Name)
+		assert.True(t, instCol.NilAt(0), "InstanceId unset placeholder should be NULL")
+		seriesVal, ok := seriesCol.At(0).(*string)
+		require.True(t, ok)
+		require.NotNil(t, seriesVal)
+		assert.Equal(t, "s1", *seriesVal)
+	})
+}
