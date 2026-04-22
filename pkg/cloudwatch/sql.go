@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -40,7 +41,14 @@ import (
 //   - The dsAbstraction SQL engine (go-mysql-server) already handles GROUP BY,
 //     ORDER BY, and LIMIT against the returned frames; the datasource only needs
 //     to return the right raw data.
-func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
+//
+// When no dimension filters are present, schema dimension keys for the namespace
+// are injected as wildcard ("*") values so inferred SEARCH + dynamic labels can
+// populate the same dimension names declared in schemads. matchExact is set only
+// when the user supplied dimension filters (pushdown): with schema-only wildcards
+// matchExact stays false so SEARCH uses the non-schema form and still returns
+// metrics that only have a subset of the namespace's possible dimensions.
+func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
 	if req == nil || len(req.Queries) == 0 {
 		return req, nil
 	}
@@ -76,25 +84,36 @@ func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) (*backend.QueryDa
 		}
 
 		dimensions := applyFilters(query.Filters)
+		matchExact := len(dimensions) > 0
+
 		statistic := strings.TrimSpace(query.TableHintValues[StatisticTableHintValueKey])
 		if statistic == "" {
 			statistic = "Average"
 		}
 
 		region, _ := query.TableParameterValues["region"].(string)
-		accountId, _ := query.TableParameterValues["accountId"].(string)
+		accountIdStr, _ := query.TableParameterValues["accountId"].(string)
+		var accountIdPtr *string
+		if accountIdStr != "" {
+			accountIdPtr = &accountIdStr
+		}
+
+		if len(dimensions) == 0 && ds != nil {
+			keys, err := ds.dimensionKeysForGrafanaSQLWildcard(ctx, region, accountIdPtr, namespace)
+			if err != nil {
+				backend.Logger.Warn("grafanaSQL: could not resolve dimension keys for wildcard injection; using dimensionless query", "refId", q.RefID, "namespace", namespace, "error", err.Error())
+			} else {
+				for _, k := range keys {
+					dimensions[k] = []string{"*"}
+				}
+			}
+		}
 
 		dims := make(dataquery.Dimensions, len(dimensions))
 		for k, vals := range dimensions {
 			dims[k] = dataquery.StringOrArrayOfString{ArrayOfString: vals}
 		}
 
-		// matchExact is set to true only when dimension filters are present so
-		// that CloudWatch returns an exact MetricStat result. When there are no
-		// dimension filters the query should return all series for the metric,
-		// which requires matchExact: false so that an inferred SEARCH expression
-		// is used instead of a dimensionless MetricStat (which would return only
-		// the aggregate rollup).
 		normalized := models.MetricsDataQuery{
 			Type: timeSeriesQuery,
 			CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
@@ -102,14 +121,14 @@ func normalizeGrafanaSQLRequest(req *backend.QueryDataRequest) (*backend.QueryDa
 				Namespace:  namespace,
 				Statistic:  &statistic,
 				Dimensions: &dims,
-				MatchExact: utils.Pointer(len(dimensions) > 0),
+				MatchExact: utils.Pointer(matchExact),
 			},
 		}
 		if metricName != "" {
 			normalized.MetricName = &metricName
 		}
-		if accountId != "" {
-			normalized.AccountId = &accountId
+		if accountIdStr != "" {
+			normalized.AccountId = &accountIdStr
 		}
 
 		jsonBytes, err := json.Marshal(normalized)
@@ -192,6 +211,17 @@ func anyToStr(v any) string {
 		return s
 	}
 	return fmt.Sprintf("%v", v)
+}
+
+// dimensionKeysForGrafanaSQLWildcard returns metric dimension names for namespace
+// using the same source as schemads Columns (hardcoded keys or ListMetrics).
+func (ds *DataSource) dimensionKeysForGrafanaSQLWildcard(ctx context.Context, region string, accountId *string, namespace string) ([]string, error) {
+	reg := region
+	if reg == "" {
+		reg = defaultRegion
+	}
+	p := NewSchemaProvider(ds)
+	return p.dimensionColumnNamesForNamespace(ctx, reg, accountId, namespace)
 }
 
 // convertToTabular converts the FrameTypeTimeSeriesMulti frames returned by

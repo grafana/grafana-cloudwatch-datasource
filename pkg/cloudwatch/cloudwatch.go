@@ -166,10 +166,10 @@ func (ds *DataSource) CallResource(ctx context.Context, req *backend.CallResourc
 }
 
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	req, grafanaSQLRefIDs := normalizeGrafanaSQLRequest(req)
+	req, grafanaSQLRefIDs := ds.normalizeGrafanaSQLRequest(ctx, req)
 	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
 	if len(req.Queries) == 0 {
-		return nil, backend.DownstreamError(fmt.Errorf("no queries to execute: request was empty or all Grafana SQL queries were omitted (Grafana configuration and dsAbstractionApp feature toggle are required)"))
+		return nil, backend.DownstreamError(fmt.Errorf("no queries to execute: request was empty or all Grafana SQL queries were omitted"))
 	}
 	q := req.Queries[0]
 	var model DataQueryJson

@@ -135,14 +135,17 @@ func (p *SchemaProvider) Tables(ctx context.Context, req *schemas.TablesRequest)
 
 	names := make([]string, len(tables))
 	tableParamMap := make(map[string][]schemas.TableParameter, len(tables))
+	tableHintsMap := make(map[string][]schemas.TableHint, len(tables))
 	for i, t := range tables {
 		names[i] = t.Name
 		tableParamMap[t.Name] = t.TableParameters
+		tableHintsMap[t.Name] = t.TableHints
 	}
 
 	return &schemas.TablesResponse{
 		Tables:          names,
 		TableParameters: tableParamMap,
+		TableHints:      tableHintsMap,
 		Errors:          errs,
 	}, nil
 }
@@ -409,6 +412,20 @@ func (p *SchemaProvider) dimensionColumnsForNamespace(ctx context.Context, regio
 		})
 	}
 	return cols, nil
+}
+
+// dimensionColumnNamesForNamespace returns dimension column names for namespace in the
+// same order as [SchemaProvider.dimensionColumnsForNamespace] (hardcoded map or ListMetrics).
+func (p *SchemaProvider) dimensionColumnNamesForNamespace(ctx context.Context, region string, accountId *string, namespace string) ([]string, error) {
+	cols, err := p.dimensionColumnsForNamespace(ctx, region, accountId, namespace)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, len(cols))
+	for i, c := range cols {
+		names[i] = c.Name
+	}
+	return names, nil
 }
 
 // getRegionNames fetches the list of available AWS regions and returns their names.
