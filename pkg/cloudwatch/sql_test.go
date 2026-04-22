@@ -131,7 +131,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 	t.Run("drops grafanaSQL query when GrafanaConfig is nil", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil)},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", nil)},
 			},
 		}
 		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
@@ -145,7 +145,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 				GrafanaConfig: backend.NewGrafanaCfg(map[string]string{}),
 			},
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil)},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", nil)},
 				{RefID: "B", JSON: nativeJSON},
 			},
 		}
@@ -165,7 +165,7 @@ func TestQueryData_NoQueriesAfterGrafanaSQLNormalization(t *testing.T) {
 			Queries: []backend.DataQuery{{
 				RefID:     "A",
 				TimeRange: tr,
-				JSON:      grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil),
+				JSON:      grafanaSQLQueryJSON("metrics|AWS/EC2", nil),
 			}},
 		})
 		require.Error(t, err)
@@ -180,7 +180,7 @@ func TestQueryData_NoQueriesAfterGrafanaSQLNormalization(t *testing.T) {
 			Queries: []backend.DataQuery{{
 				RefID:     "A",
 				TimeRange: tr,
-				JSON:      grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", nil),
+				JSON:      grafanaSQLQueryJSON("metrics|AWS/EC2", nil),
 			}},
 		})
 		require.Error(t, err)
@@ -203,8 +203,8 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 				})},
 			},
 		}
@@ -215,7 +215,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		assert.Equal(t, timeSeriesQuery, m["type"])
 		assert.Equal(t, "AWS/EC2", m["namespace"])
 		assert.Equal(t, "CPUUtilization", m["metricName"])
-		assert.Equal(t, "us-east-1", m["region"])
+		assert.Equal(t, "us-east-1", m[RegionTableParameter])
 		assert.Equal(t, "Average", m["statistic"], "should default to Average")
 		assert.Equal(t, false, m["matchExact"], "schema-only wildcards use non-schema SEARCH so partial-dimension series are included")
 		dims := dimensionsFromMap(t, m)
@@ -230,10 +230,11 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "myRef", MaxDataPoints: 500, JSON: grafanaSQLQueryJSON("metrics|AWS/ApplicationELB|ActiveConnectionCount", map[string]interface{}{
+				{RefID: "myRef", MaxDataPoints: 500, JSON: grafanaSQLQueryJSON("metrics|AWS/ApplicationELB", map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						"region":    "eu-west-1",
-						"accountId": "111122223333",
+						RegionTableParameter:     "eu-west-1",
+						AccountIdTableParameter:  "111122223333",
+						MetricNameTableParameter: "ActiveConnectionCount",
 					},
 				})},
 			},
@@ -244,27 +245,48 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, "AWS/ApplicationELB", m["namespace"])
 		assert.Equal(t, "ActiveConnectionCount", m["metricName"])
-		assert.Equal(t, "eu-west-1", m["region"])
-		assert.Equal(t, "111122223333", m["accountId"])
+		assert.Equal(t, "eu-west-1", m[RegionTableParameter])
+		assert.Equal(t, "111122223333", m[AccountIdTableParameter])
 		assert.Equal(t, "myRef", out.Queries[0].RefID)
 		assert.Equal(t, int64(500), out.Queries[0].MaxDataPoints)
 	})
 
-	t.Run("custom namespace placeholder table (empty metricName)", func(t *testing.T) {
+	t.Run("custom namespace without metricName is not rewritten", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|Custom.App|", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-west-2"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|Custom.App", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-west-2"},
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
+		assert.NotContains(t, refIDs, "A")
+		var q schemas.Query
+		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &q))
+		assert.True(t, q.GrafanaSql)
+		assert.Equal(t, "metrics|Custom.App", q.Table)
+	})
 
+	t.Run("custom namespace with metricName is normalised", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|Custom.App", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:     "us-west-2",
+						MetricNameTableParameter: "Invocations",
+					},
+				})},
+			},
+		}
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
+		require.Len(t, out.Queries, 1)
+		assert.Contains(t, refIDs, "A")
 		m := unmarshalNormalized(t, out.Queries[0])
 		assert.Equal(t, "Custom.App", m["namespace"])
-		assert.NotContains(t, m, "metricName")
+		assert.Equal(t, "Invocations", m["metricName"])
 	})
 
 	t.Run("passes through unchanged when table has no metrics prefix", func(t *testing.T) {
@@ -284,8 +306,8 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 				})},
 				{RefID: "B", JSON: nativeJSON},
 			},
@@ -300,14 +322,14 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 				})},
 			},
 		}
 		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		m := unmarshalNormalized(t, out.Queries[0])
-		_, hasAccountId := m["accountId"]
+		_, hasAccountId := m[AccountIdTableParameter]
 		assert.False(t, hasAccountId, "accountId should not be present when not specified")
 	})
 
@@ -320,8 +342,8 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "Sum"},
 				})},
 			},
@@ -341,8 +363,8 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 				})},
 			},
 		}
@@ -355,8 +377,8 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "p99"},
 				})},
 			},
@@ -374,8 +396,8 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"filters": []map[string]interface{}{
 						{
 							"name": "InstanceId",
@@ -397,8 +419,8 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"filters": []map[string]interface{}{
 						{
 							"name": "InstanceId",
@@ -420,8 +442,8 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "Sum"},
 					"filters": []map[string]interface{}{
 						{
@@ -454,8 +476,8 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"filters": []map[string]interface{}{
 						{
 							"name": "InstanceId",
@@ -480,8 +502,8 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"filters": []map[string]interface{}{
 						{
 							"name": "InstanceId",
@@ -504,8 +526,8 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"filters":              nil,
 				})},
 			},
@@ -528,8 +550,8 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 				})},
 			},
 		}
@@ -542,8 +564,8 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"filters": []map[string]interface{}{
 						{
 							"name": "InstanceId",
@@ -564,8 +586,8 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
-				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2|CPUUtilization", map[string]interface{}{
-					"tableParameterValues": map[string]interface{}{"region": "us-east-1"},
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
 					"tableHintValues":      map[string]interface{}{StatisticTableHintValueKey: "Sum"},
 				})},
 			},

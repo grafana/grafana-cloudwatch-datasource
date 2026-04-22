@@ -76,9 +76,17 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 			continue
 		}
 
-		namespace, metricName := splitTableName(query.Table)
-		if namespace == "" {
+		namespace, nsOK := metricsTableNamespace(query.Table)
+		if !nsOK || namespace == "" {
 			backend.Logger.Warn("grafanaSQL query has unrecognised table format, skipping", "refId", q.RefID, "table", query.Table)
+			queries = append(queries, q)
+			continue
+		}
+
+		metricName, _ := query.TableParameterValues[MetricNameTableParameter].(string)
+		metricName = strings.TrimSpace(metricName)
+		if metricName == "" {
+			backend.Logger.Warn("grafanaSQL query missing required metricName table parameter, skipping", "refId", q.RefID, "namespace", namespace)
 			queries = append(queries, q)
 			continue
 		}
@@ -91,8 +99,8 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 			statistic = "Average"
 		}
 
-		region, _ := query.TableParameterValues["region"].(string)
-		accountIdStr, _ := query.TableParameterValues["accountId"].(string)
+		region, _ := query.TableParameterValues[RegionTableParameter].(string)
+		accountIdStr, _ := query.TableParameterValues[AccountIdTableParameter].(string)
 		var accountIdPtr *string
 		if accountIdStr != "" {
 			accountIdPtr = &accountIdStr
@@ -124,9 +132,7 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 				MatchExact: utils.Pointer(matchExact),
 			},
 		}
-		if metricName != "" {
-			normalized.MetricName = &metricName
-		}
+		normalized.MetricName = &metricName
 		if accountIdStr != "" {
 			normalized.AccountId = &accountIdStr
 		}

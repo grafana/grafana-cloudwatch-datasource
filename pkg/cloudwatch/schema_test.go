@@ -26,49 +26,35 @@ func newSchemaProviderForTest(opts ...func(*DataSource)) *SchemaProvider {
 	return NewSchemaProvider(ds)
 }
 
-// ---- splitTableName ---------------------------------------------------------
+// ---- metricsTableNamespace --------------------------------------------------
 
-func TestSplitTableName(t *testing.T) {
-	t.Run("splits metrics.namespace|metricName into namespace and metricName", func(t *testing.T) {
-		ns, metric := splitTableName("metrics|AWS/EC2|CPUUtilization")
+func TestMetricsTableNamespace(t *testing.T) {
+	t.Run("parses metrics|<namespace>", func(t *testing.T) {
+		ns, ok := metricsTableNamespace("metrics|AWS/EC2")
+		assert.True(t, ok)
 		assert.Equal(t, "AWS/EC2", ns)
-		assert.Equal(t, "CPUUtilization", metric)
 	})
 
 	t.Run("handles namespace with multiple slashes", func(t *testing.T) {
-		ns, metric := splitTableName("metrics|AWS/ApplicationELB|ActiveConnectionCount")
+		ns, ok := metricsTableNamespace("metrics|AWS/ApplicationELB")
+		assert.True(t, ok)
 		assert.Equal(t, "AWS/ApplicationELB", ns)
-		assert.Equal(t, "ActiveConnectionCount", metric)
 	})
 
-	t.Run("returns empty strings for non-metrics-prefixed table names", func(t *testing.T) {
-		ns, metric := splitTableName("AWS/EC2|CPUUtilization") // missing "metrics|" prefix
-		assert.Equal(t, "", ns)
-		assert.Equal(t, "", metric)
-	})
-
-	t.Run("returns empty metricName when no pipe after prefix", func(t *testing.T) {
-		ns, metric := splitTableName("metrics|AWS/EC2")
-		assert.Equal(t, "AWS/EC2", ns)
-		assert.Equal(t, "", metric)
+	t.Run("rejects non-metrics-prefixed table names", func(t *testing.T) {
+		_, ok := metricsTableNamespace("AWS/EC2|CPUUtilization")
+		assert.False(t, ok)
 	})
 
 	t.Run("handles custom namespace containing dots", func(t *testing.T) {
-		ns, metric := splitTableName("metrics|Custom.App|CPUUsage")
+		ns, ok := metricsTableNamespace("metrics|Custom.App")
+		assert.True(t, ok)
 		assert.Equal(t, "Custom.App", ns)
-		assert.Equal(t, "CPUUsage", metric)
 	})
 
-	t.Run("handles custom namespace containing dots with empty metricName", func(t *testing.T) {
-		ns, metric := splitTableName("metrics|Custom.App|")
-		assert.Equal(t, "Custom.App", ns)
-		assert.Equal(t, "", metric)
-	})
-
-	t.Run("handles metric name containing dots (e.g. Glue)", func(t *testing.T) {
-		ns, metric := splitTableName("metrics|Glue|glue.driver.aggregate.bytesRead")
-		assert.Equal(t, "Glue", ns)
-		assert.Equal(t, "glue.driver.aggregate.bytesRead", metric)
+	t.Run("rejects empty namespace", func(t *testing.T) {
+		_, ok := metricsTableNamespace("metrics|")
+		assert.False(t, ok)
 	})
 }
 
@@ -80,23 +66,19 @@ func TestSchemaProvider_Tables(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	t.Run("contains namespace|metricName entries for hardcoded namespaces", func(t *testing.T) {
-		// AWS/EC2 is always in the hardcoded map; verify at least one of its
-		// metrics appears with the expected pipe-notation name.
-		ec2Metrics, ok := cloudWatchConsts.NamespaceMetricsMap["AWS/EC2"]
+	t.Run("contains one table per hardcoded namespace", func(t *testing.T) {
+		_, ok := cloudWatchConsts.NamespaceMetricsMap["AWS/EC2"]
 		require.True(t, ok, "AWS/EC2 should be in hardcoded map")
-		require.NotEmpty(t, ec2Metrics)
 
 		tableSet := make(map[string]struct{}, len(resp.Tables))
 		for _, name := range resp.Tables {
 			tableSet[name] = struct{}{}
 		}
-		expected := "metrics|AWS/EC2|" + ec2Metrics[0]
-		_, found := tableSet[expected]
-		assert.True(t, found, "expected %s in tables", expected)
+		_, found := tableSet["metrics|AWS/EC2"]
+		assert.True(t, found, "expected metrics|AWS/EC2 in tables")
 	})
 
-	t.Run("every table carries region and accountId parameters", func(t *testing.T) {
+	t.Run("every table carries region, accountId, and metricName parameters", func(t *testing.T) {
 		require.NotEmpty(t, resp.Tables)
 		for _, name := range resp.Tables {
 			params, ok := resp.TableParameters[name]
@@ -107,17 +89,23 @@ func TestSchemaProvider_Tables(t *testing.T) {
 				paramByName[p.Name] = p
 			}
 
-			region, ok := paramByName["region"]
+			region, ok := paramByName[RegionTableParameter]
 			assert.True(t, ok, "table %q should have region parameter", name)
 			assert.True(t, region.Root)
 			assert.True(t, region.Required)
 			assert.Empty(t, region.DependsOn)
 
-			acct, ok := paramByName["accountId"]
+			acct, ok := paramByName[AccountIdTableParameter]
 			assert.True(t, ok, "table %q should have accountId parameter", name)
 			assert.False(t, acct.Root)
 			assert.False(t, acct.Required)
-			assert.Equal(t, []string{"region"}, acct.DependsOn)
+			assert.Equal(t, []string{RegionTableParameter}, acct.DependsOn)
+
+			metric, ok := paramByName[MetricNameTableParameter]
+			assert.True(t, ok, "table %q should have metricName parameter", name)
+			assert.False(t, metric.Root)
+			assert.Equal(t, []string{RegionTableParameter}, metric.DependsOn)
+			assert.True(t, metric.Required, "CloudWatch MetricStat.Metric requires MetricName")
 		}
 	})
 
@@ -136,7 +124,7 @@ func TestSchemaProvider_Tables(t *testing.T) {
 
 		found := false
 		for _, name := range customResp.Tables {
-			if name == "metrics|Custom/Namespace|" {
+			if name == "metrics|Custom/Namespace" {
 				found = true
 				break
 			}
@@ -153,7 +141,7 @@ func TestSchemaProvider_Tables(t *testing.T) {
 
 		found := false
 		for _, name := range customResp.Tables {
-			if name == "metrics|Custom.App|" {
+			if name == "metrics|Custom.App" {
 				found = true
 				break
 			}
@@ -169,10 +157,10 @@ func TestSchemaProvider_Columns(t *testing.T) {
 
 	t.Run("columns do not include a statistic column (statistic is a table hint)", func(t *testing.T) {
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
-			Tables: []string{"metrics|AWS/EC2|CPUUtilization"},
+			Tables: []string{"metrics|AWS/EC2"},
 		})
 		require.NoError(t, err)
-		cols := resp.Columns["metrics|AWS/EC2|CPUUtilization"]
+		cols := resp.Columns["metrics|AWS/EC2"]
 		require.NotEmpty(t, cols)
 		for _, c := range cols {
 			assert.NotEqual(t, "statistic", c.Name, "statistic should be a FOR hint, not a column")
@@ -185,13 +173,13 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		require.NotEmpty(t, dimKeys)
 
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
-			Tables: []string{"metrics|AWS/EC2|CPUUtilization"},
+			Tables: []string{"metrics|AWS/EC2"},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 
-		cols, ok := resp.Columns["metrics|AWS/EC2|CPUUtilization"]
-		assert.True(t, ok, "expected columns for metrics.AWS/EC2|CPUUtilization")
+		cols, ok := resp.Columns["metrics|AWS/EC2"]
+		assert.True(t, ok, "expected columns for metrics|AWS/EC2")
 		// time and value columns plus dimension keys (no statistic column).
 		assert.Len(t, cols, len(dimKeys)+2)
 
@@ -213,21 +201,20 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		assert.True(t, hasValue, "expected value data column")
 	})
 
-	t.Run("correctly parses namespace from metrics.namespace|metricName table string", func(t *testing.T) {
+	t.Run("columns for a namespace table match dimension keys for that namespace", func(t *testing.T) {
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
-			Tables: []string{"metrics|AWS/EC2|NetworkIn"},
+			Tables: []string{"metrics|AWS/EC2"},
 		})
 		require.NoError(t, err)
 
-		// Columns for metrics.AWS/EC2|NetworkIn should be the same as
-		// metrics.AWS/EC2|CPUUtilization — dimension keys are per-namespace.
-		colsNetworkIn, ok := resp.Columns["metrics|AWS/EC2|NetworkIn"]
+		// Dimension keys are per-namespace; repeated Columns calls for the same table match.
+		colsNetworkIn, ok := resp.Columns["metrics|AWS/EC2"]
 		assert.True(t, ok)
 
 		resp2, _ := p.Columns(context.Background(), &schemas.ColumnsRequest{
-			Tables: []string{"metrics|AWS/EC2|CPUUtilization"},
+			Tables: []string{"metrics|AWS/EC2"},
 		})
-		colsCPU := resp2.Columns["metrics|AWS/EC2|CPUUtilization"]
+		colsCPU := resp2.Columns["metrics|AWS/EC2"]
 		assert.Equal(t, len(colsCPU), len(colsNetworkIn))
 	})
 
@@ -243,10 +230,10 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		}
 
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
-			Tables: []string{"metrics|Unknown/NS|SomeMetric"},
+			Tables: []string{"metrics|Unknown/NS"},
 		})
 		require.NoError(t, err)
-		cols := resp.Columns["metrics|Unknown/NS|SomeMetric"]
+		cols := resp.Columns["metrics|Unknown/NS"]
 		// Even when no dimension keys are discovered, time and value columns are always present.
 		require.Len(t, cols, 2)
 		assert.Equal(t, timeColumn.Name, cols[0].Name)
@@ -265,12 +252,12 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		}
 
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
-			Tables: []string{"metrics|AWS/EC2|CPUUtilization", "metrics|Unknown/NS|SomeMetric"},
+			Tables: []string{"metrics|AWS/EC2", "metrics|Unknown/NS"},
 		})
 		require.NoError(t, err)
-		assert.Contains(t, resp.Columns, "metrics|AWS/EC2|CPUUtilization", "known namespace should still be populated")
-		assert.NotContains(t, resp.Columns, "metrics|Unknown/NS|SomeMetric", "failed table should be absent from columns")
-		assert.Contains(t, resp.Errors, "metrics|Unknown/NS|SomeMetric", "error should be set for the failed table")
+		assert.Contains(t, resp.Columns, "metrics|AWS/EC2", "known namespace should still be populated")
+		assert.NotContains(t, resp.Columns, "metrics|Unknown/NS", "failed table should be absent from columns")
+		assert.Contains(t, resp.Errors, "metrics|Unknown/NS", "error should be set for the failed table")
 	})
 
 	t.Run("handles multiple tables in a single request", func(t *testing.T) {
@@ -285,11 +272,11 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		}
 
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
-			Tables: []string{"metrics|AWS/EC2|CPUUtilization", "metrics|AWS/RDS|CPUUtilization"},
+			Tables: []string{"metrics|AWS/EC2", "metrics|AWS/RDS"},
 		})
 		require.NoError(t, err)
-		assert.Contains(t, resp.Columns, "metrics|AWS/EC2|CPUUtilization")
-		assert.Contains(t, resp.Columns, "metrics|AWS/RDS|CPUUtilization")
+		assert.Contains(t, resp.Columns, "metrics|AWS/EC2")
+		assert.Contains(t, resp.Columns, "metrics|AWS/RDS")
 	})
 }
 
@@ -310,12 +297,12 @@ func TestSchemaProvider_TableParameterValues_Region(t *testing.T) {
 
 	p := newSchemaProviderForTest()
 	resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
-		TableParameter: "region",
+		TableParameter: RegionTableParameter,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	regions := resp.TableParameterValues["region"]
+	regions := resp.TableParameterValues[RegionTableParameter]
 	assert.ElementsMatch(t, []string{"us-east-1", "eu-west-1"}, regions)
 }
 
@@ -337,12 +324,12 @@ func TestSchemaProvider_TableParameterValues_AccountId(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
-			TableParameter:   "accountId",
-			DependencyValues: map[string]string{"region": "us-east-1"},
+			TableParameter:   AccountIdTableParameter,
+			DependencyValues: map[string]string{RegionTableParameter: "us-east-1"},
 		})
 		require.NoError(t, err)
 
-		accountIds := resp.TableParameterValues["accountId"]
+		accountIds := resp.TableParameterValues[AccountIdTableParameter]
 		require.Len(t, accountIds, 3)
 		assert.Equal(t, "all", accountIds[0])
 		assert.ElementsMatch(t, []string{"all", "111122223333", "444455556666"}, accountIds)
@@ -359,21 +346,21 @@ func TestSchemaProvider_TableParameterValues_AccountId(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
-			TableParameter:   "accountId",
-			DependencyValues: map[string]string{"region": "us-east-1"},
+			TableParameter:   AccountIdTableParameter,
+			DependencyValues: map[string]string{RegionTableParameter: "us-east-1"},
 		})
 		require.NoError(t, err)
-		assert.Empty(t, resp.TableParameterValues["accountId"])
+		assert.Empty(t, resp.TableParameterValues[AccountIdTableParameter])
 	})
 
 	t.Run("returns empty list when region dependency is missing", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
-			TableParameter:   "accountId",
+			TableParameter:   AccountIdTableParameter,
 			DependencyValues: map[string]string{},
 		})
 		require.NoError(t, err)
-		assert.Empty(t, resp.TableParameterValues["accountId"])
+		assert.Empty(t, resp.TableParameterValues[AccountIdTableParameter])
 	})
 
 	t.Run("returns error in Errors map for unrecognised table parameter", func(t *testing.T) {
@@ -386,6 +373,52 @@ func TestSchemaProvider_TableParameterValues_AccountId(t *testing.T) {
 	})
 }
 
+func TestSchemaProvider_TableParameterValues_MetricName(t *testing.T) {
+	t.Run("lists metrics for built-in namespace", func(t *testing.T) {
+		p := newSchemaProviderForTest()
+		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
+			Table:          "metrics|AWS/EC2",
+			TableParameter: MetricNameTableParameter,
+			DependencyValues: map[string]string{
+				RegionTableParameter: "us-east-1",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		metrics := resp.TableParameterValues[MetricNameTableParameter]
+		require.NotEmpty(t, metrics)
+		assert.Contains(t, metrics, "CPUUtilization")
+	})
+
+	t.Run("lists metrics for custom namespace via ListMetrics", func(t *testing.T) {
+		origNewListMetricsService := services.NewListMetricsService
+		t.Cleanup(func() { services.NewListMetricsService = origNewListMetricsService })
+
+		mockSvc := &mocks.ListMetricsServiceMock{}
+		mockSvc.On("GetMetricsByNamespace", mock.Anything, mock.MatchedBy(func(r resources.MetricsRequest) bool {
+			return r.Namespace == "My/Custom/NS"
+		})).Return([]resources.ResourceResponse[resources.Metric]{
+			{Value: resources.Metric{Name: "Errors", Namespace: "My/Custom/NS"}},
+			{Value: resources.Metric{Name: "Latency", Namespace: "My/Custom/NS"}},
+		}, nil)
+		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
+			return mockSvc
+		}
+
+		customP := newSchemaProviderForTest(func(ds *DataSource) {
+			ds.Settings.Namespace = "My/Custom/NS"
+		})
+		resp, err := customP.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
+			Table:            "metrics|My/Custom/NS",
+			TableParameter:   MetricNameTableParameter,
+			DependencyValues: map[string]string{RegionTableParameter: "us-east-1"},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"Errors", "Latency"}, resp.TableParameterValues[MetricNameTableParameter])
+		mockSvc.AssertExpectations(t)
+	})
+}
+
 // ---- ColumnValues -----------------------------------------------------------
 
 func TestSchemaProvider_ColumnValues(t *testing.T) {
@@ -395,9 +428,9 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("statistic is not a column — requesting it yields no enumerable values and no ListMetrics call", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
+			Table:           "metrics|AWS/EC2",
 			Columns:         []string{"statistic"},
-			TableParameters: map[string]string{"region": "us-east-1"},
+			TableParameters: map[string]string{RegionTableParameter: "us-east-1"},
 		})
 		require.NoError(t, err)
 		assert.Empty(t, resp.ColumnValues)
@@ -407,7 +440,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("returns error when region is missing even for statistic-only request", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		_, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
+			Table:           "metrics|AWS/EC2",
 			Columns:         []string{"statistic"},
 			TableParameters: map[string]string{},
 		})
@@ -417,7 +450,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("returns error when region is missing for empty Columns request", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		_, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
+			Table:           "metrics|AWS/EC2",
 			Columns:         nil,
 			TableParameters: map[string]string{},
 		})
@@ -434,9 +467,12 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		_, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|Custom/App|Latency",
-			Columns:         nil,
-			TableParameters: map[string]string{"region": "us-east-1"},
+			Table:   "metrics|Custom/App",
+			Columns: nil,
+			TableParameters: map[string]string{
+				RegionTableParameter:     "us-east-1",
+				MetricNameTableParameter: "Latency",
+			},
 		})
 		require.ErrorContains(t, err, "could not enumerate columns")
 	})
@@ -466,9 +502,12 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|Custom/App|Latency",
-			Columns:         nil,
-			TableParameters: map[string]string{"region": "us-east-1"},
+			Table:   "metrics|Custom/App",
+			Columns: nil,
+			TableParameters: map[string]string{
+				RegionTableParameter:     "us-east-1",
+				MetricNameTableParameter: "Latency",
+			},
 		})
 		require.NoError(t, err)
 		assert.Equal(t, []string{"*", "prod"}, resp.ColumnValues["Environment"])
@@ -490,9 +529,11 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
-			Columns:         []string{"statistic", "InstanceId"},
-			TableParameters: map[string]string{"region": "us-east-1"},
+			Table:   "metrics|AWS/EC2",
+			Columns: []string{"statistic", "InstanceId"},
+			TableParameters: map[string]string{
+				RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization",
+			},
 		})
 		require.NoError(t, err)
 		assert.Equal(t, []string{"*", "i-abc"}, resp.ColumnValues["InstanceId"])
@@ -512,9 +553,11 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
-			Columns:         []string{"InstanceId"},
-			TableParameters: map[string]string{"region": "us-east-1"},
+			Table:   "metrics|AWS/EC2",
+			Columns: []string{"InstanceId"},
+			TableParameters: map[string]string{
+				RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization",
+			},
 		})
 		require.NoError(t, err)
 		assert.ElementsMatch(t, []string{"*", "i-11111111", "i-22222222"}, resp.ColumnValues["InstanceId"])
@@ -535,9 +578,11 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
-			Columns:         []string{"InstanceId"},
-			TableParameters: map[string]string{"region": "us-east-1"},
+			Table:   "metrics|AWS/EC2",
+			Columns: []string{"InstanceId"},
+			TableParameters: map[string]string{
+				RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization",
+			},
 		})
 		require.NoError(t, err)
 		mockSvc.AssertExpectations(t)
@@ -558,9 +603,12 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
-			Columns:         []string{"InstanceId"},
-			TableParameters: map[string]string{"region": "us-east-1", "accountId": "111122223333"},
+			Table:   "metrics|AWS/EC2",
+			Columns: []string{"InstanceId"},
+			TableParameters: map[string]string{
+				RegionTableParameter: "us-east-1", AccountIdTableParameter: "111122223333",
+				MetricNameTableParameter: "CPUUtilization",
+			},
 		})
 		require.NoError(t, err)
 		mockSvc.AssertExpectations(t)
@@ -570,11 +618,21 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("returns error when region is missing for dimension column request", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		_, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
+			Table:           "metrics|AWS/EC2",
 			Columns:         []string{"InstanceId"},
 			TableParameters: map[string]string{},
 		})
 		require.ErrorContains(t, err, "region is a required table parameter")
+	})
+
+	t.Run("returns error when metricName is missing for dimension column request", func(t *testing.T) {
+		p := newSchemaProviderForTest()
+		_, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
+			Table:           "metrics|AWS/EC2",
+			Columns:         []string{"InstanceId"},
+			TableParameters: map[string]string{RegionTableParameter: "us-east-1"},
+		})
+		require.ErrorContains(t, err, "metricName is a required table parameter")
 	})
 
 	t.Run("returns error for non-metrics table prefix", func(t *testing.T) {
@@ -582,7 +640,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 		_, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
 			Table:           "logs./aws/lambda/fn",
 			Columns:         []string{"someField"},
-			TableParameters: map[string]string{"region": "us-east-1"},
+			TableParameters: map[string]string{RegionTableParameter: "us-east-1"},
 		})
 		require.ErrorContains(t, err, "unrecognised table format")
 	})
@@ -603,9 +661,11 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           "metrics|AWS/EC2|CPUUtilization",
-			Columns:         []string{"InstanceId", "AutoScalingGroupName"},
-			TableParameters: map[string]string{"region": "us-east-1"},
+			Table:   "metrics|AWS/EC2",
+			Columns: []string{"InstanceId", "AutoScalingGroupName"},
+			TableParameters: map[string]string{
+				RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization",
+			},
 		})
 		require.NoError(t, err)
 		assert.Equal(t, []string{"*", "i-111"}, resp.ColumnValues["InstanceId"])
@@ -642,7 +702,7 @@ func TestSchemaProvider_Schema(t *testing.T) {
 		require.NotEmpty(t, resp.FullSchema.TableParameterValues)
 		// Pick any table and verify region is pre-populated.
 		for _, regions := range resp.FullSchema.TableParameterValues {
-			assert.NotEmpty(t, regions["region"])
+			assert.NotEmpty(t, regions[RegionTableParameter])
 			break
 		}
 	})
