@@ -1,5 +1,43 @@
 # Changelog
 
+## 12.7.0
+
+- chore(deps): update actions/create-github-app-token action to v3 in [#491](https://github.com/grafana/grafana-cloudwatch-datasource/pull/491)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.13 in [#523](https://github.com/grafana/grafana-cloudwatch-datasource/pull/523)
+- chore(deps): update dependency prettier to v3.8.2 in [#522](https://github.com/grafana/grafana-cloudwatch-datasource/pull/522)
+- fix(deps): update backend dependencies in [#521](https://github.com/grafana/grafana-cloudwatch-datasource/pull/521)
+- chore(deps): update frontend dependencies in [#520](https://github.com/grafana/grafana-cloudwatch-datasource/pull/520)
+- chore(deps): update module go.opentelemetry.io/otel/sdk to v1.43.0 [security] in [#519](https://github.com/grafana/grafana-cloudwatch-datasource/pull/519)
+- Add session token handling for auth service support in [#518](https://github.com/grafana/grafana-cloudwatch-datasource/pull/518)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.12 in [#517](https://github.com/grafana/grafana-cloudwatch-datasource/pull/517)
+- fix(deps): update backend dependencies in [#515](https://github.com/grafana/grafana-cloudwatch-datasource/pull/515)
+- chore(deps): update frontend dependencies in [#514](https://github.com/grafana/grafana-cloudwatch-datasource/pull/514)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.11 in [#512](https://github.com/grafana/grafana-cloudwatch-datasource/pull/512)
+- Update codeowners in [#511](https://github.com/grafana/grafana-cloudwatch-datasource/pull/511)
+- Replace template README and add CONTRIBUTING.md in [#478](https://github.com/grafana/grafana-cloudwatch-datasource/pull/478)
+- chore(deps): lock file maintenance in [#508](https://github.com/grafana/grafana-cloudwatch-datasource/pull/508)
+- chore(deps): update grafana/shared-workflows/ action to in [#509](https://github.com/grafana/grafana-cloudwatch-datasource/pull/509)
+- chore(deps): update frontend dependencies in [#506](https://github.com/grafana/grafana-cloudwatch-datasource/pull/506)
+- fix(deps): update backend dependencies in [#507](https://github.com/grafana/grafana-cloudwatch-datasource/pull/507)
+- chore(deps): update grafana/grafana-enterprise:latest docker digest to 8b65309 in [#505](https://github.com/grafana/grafana-cloudwatch-datasource/pull/505)
+- Logs: remove datalink from results in [#484](https://github.com/grafana/grafana-cloudwatch-datasource/pull/484)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.10 in [#503](https://github.com/grafana/grafana-cloudwatch-datasource/pull/503)
+- chore(deps): pin dependencies in [#504](https://github.com/grafana/grafana-cloudwatch-datasource/pull/504)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.9 in [#500](https://github.com/grafana/grafana-cloudwatch-datasource/pull/500)
+- CloudWatch: add id to datalink in [#493](https://github.com/grafana/grafana-cloudwatch-datasource/pull/493)
+- chore(deps): lock file maintenance in [#499](https://github.com/grafana/grafana-cloudwatch-datasource/pull/499)
+- fix(deps): update backend dependencies in [#498](https://github.com/grafana/grafana-cloudwatch-datasource/pull/498)
+- chore(deps): update frontend dependencies in [#497](https://github.com/grafana/grafana-cloudwatch-datasource/pull/497)
+- chore(deps): update dependency webpack-cli to v7 in [#496](https://github.com/grafana/grafana-cloudwatch-datasource/pull/496)
+- chore(deps): update module google.golang.org/grpc to v1.79.3 [security] in [#495](https://github.com/grafana/grafana-cloudwatch-datasource/pull/495)
+- chore(deps): lock file maintenance in [#477](https://github.com/grafana/grafana-cloudwatch-datasource/pull/477)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.8 in [#494](https://github.com/grafana/grafana-cloudwatch-datasource/pull/494)
+- chore(deps): update frontend dependencies in [#487](https://github.com/grafana/grafana-cloudwatch-datasource/pull/487)
+- fix(deps): update module github.com/grafana/grafana-plugin-sdk-go to v0.290.1 in [#488](https://github.com/grafana/grafana-cloudwatch-datasource/pull/488)
+- chore(deps): update grafana/grafana-enterprise:latest docker digest to 8e8fc4c in [#486](https://github.com/grafana/grafana-cloudwatch-datasource/pull/486)
+- chore(deps): update actions/create-github-app-token digest to fee1f7d in [#485](https://github.com/grafana/grafana-cloudwatch-datasource/pull/485)
+- chore(deps): update dependency @grafana/plugin-e2e to v3.4.7 in [#483](https://github.com/grafana/grafana-cloudwatch-datasource/pull/483)
+
 ## 12.6.0
 
 - chore(deps): update frontend dependencies in [#475](https://github.com/grafana/grafana-cloudwatch-datasource/pull/475)
