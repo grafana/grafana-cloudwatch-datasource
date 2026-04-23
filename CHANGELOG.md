@@ -1,5 +1,9 @@
 # Changelog
 
+## 12.7.1
+
+- chore(deps): bump github.com/grafana/grafana-aws-sdk from 1.4.3 to 1.4.4 in [#531](https://github.com/grafana/grafana-cloudwatch-datasource/pull/531)
+
 ## 12.7.0
 
 - chore(deps): update actions/create-github-app-token action to v3 in [#491](https://github.com/grafana/grafana-cloudwatch-datasource/pull/491)
