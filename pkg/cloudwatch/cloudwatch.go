@@ -32,6 +32,11 @@ import (
 const (
 	tagValueCacheExpiration = time.Hour * 24
 
+	// schemaMetadataCacheExpiration is the TTL for ListMetrics-backed schema
+	// discovery (custom-namespace metric names and dimension keys). Shorter than
+	// tagValueCache so new metrics and dimensions show up without a long wait.
+	schemaMetadataCacheExpiration = 5 * time.Minute
+
 	// headerFromExpression is used by datasources to identify expression queries
 	headerFromExpression = "X-Grafana-From-Expr"
 
@@ -59,6 +64,7 @@ type DataSource struct {
 
 	logger                 log.Logger
 	tagValueCache          *cache.Cache
+	schemaMetadataCache    *cache.Cache
 	resourceHandler        backend.CallResourceHandler
 	monitoringAccountCache sync.Map
 }
@@ -129,7 +135,8 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		ProxyOpts:         opts.ProxyOptions,
 		AWSConfigProvider: awsauth.NewConfigProvider(),
 		logger:            backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
-		tagValueCache:     cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		tagValueCache:          cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		schemaMetadataCache:    cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 

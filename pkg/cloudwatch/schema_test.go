@@ -223,7 +223,7 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		t.Cleanup(func() { services.NewListMetricsService = origNewListMetricsService })
 
 		mockSvc := &mocks.ListMetricsServiceMock{}
-		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything, mock.Anything).
+		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything).
 			Return([]resources.ResourceResponse[string]{}, nil)
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -245,7 +245,7 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		t.Cleanup(func() { services.NewListMetricsService = origNewListMetricsService })
 
 		mockSvc := &mocks.ListMetricsServiceMock{}
-		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything, mock.Anything).
+		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything).
 			Return([]resources.ResourceResponse[string](nil), fmt.Errorf("API unavailable"))
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -265,7 +265,7 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		t.Cleanup(func() { services.NewListMetricsService = origNewListMetricsService })
 
 		mockSvc := &mocks.ListMetricsServiceMock{}
-		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything, mock.Anything).
+		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything).
 			Return([]resources.ResourceResponse[string]{}, nil)
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -395,7 +395,7 @@ func TestSchemaProvider_TableParameterValues_MetricName(t *testing.T) {
 		t.Cleanup(func() { services.NewListMetricsService = origNewListMetricsService })
 
 		mockSvc := &mocks.ListMetricsServiceMock{}
-		mockSvc.On("GetMetricsByNamespace", mock.Anything, mock.MatchedBy(func(r resources.MetricsRequest) bool {
+		mockSvc.On("GetMetricsByNamespace", mock.MatchedBy(func(r resources.MetricsRequest) bool {
 			return r.Namespace == "My/Custom/NS"
 		})).Return([]resources.ResourceResponse[resources.Metric]{
 			{Value: resources.Metric{Name: "Errors", Namespace: "My/Custom/NS"}},
@@ -459,7 +459,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 
 	t.Run("empty Columns returns error when dimension key enumeration fails", func(t *testing.T) {
 		mockSvc := &mocks.ListMetricsServiceMock{}
-		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything, mock.Anything).
+		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything).
 			Return([]resources.ResourceResponse[string]{}, errors.New("API unavailable"))
 		services.NewListMetricsService = func(_ models.MetricsClientProvider) models.ListMetricsProvider {
 			return mockSvc
@@ -482,7 +482,7 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 		// Use a custom namespace so that GetDimensionKeysByDimensionFilter is called
 		// to enumerate keys (AWS namespaces use hardcoded keys and would require
 		// mocking every key in the hardcoded set).
-		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything, mock.Anything).
+		mockSvc.On("GetDimensionKeysByDimensionFilter", mock.Anything).
 			Return([]resources.ResourceResponse[string]{
 				{Value: "Environment"},
 				{Value: "ServiceName"},

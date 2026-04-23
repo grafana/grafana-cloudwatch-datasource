@@ -234,20 +234,31 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 		if region == "" {
 			break
 		}
+		accountKey := strings.TrimSpace(req.DependencyValues[AccountIdTableParameter])
 		var rr *resources.ResourceRequest
-		if id := strings.TrimSpace(req.DependencyValues[AccountIdTableParameter]); id != "" {
+		if accountKey != "" {
+			id := accountKey
 			rr = &resources.ResourceRequest{Region: region, AccountId: &id}
 		}
-		svc, err := p.ds.GetListMetricsService(ctx, region)
-		if err != nil {
-			return &schemas.TableParametersValuesResponse{
-				TableParameterValues: result,
-				Errors:               map[string]string{MetricNameTableParameter: err.Error()},
-			}, nil
-		}
-		metricRows, err := svc.GetMetricsByNamespace(ctx, resources.MetricsRequest{
-			ResourceRequest: rr,
-			Namespace:       namespace,
+		names, err := p.ds.getOrSetSchemaMetricNames(region, accountKey, namespace, func() ([]string, error) {
+			svc, svcErr := p.ds.GetListMetricsService(ctx, region)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			metricRows, metricErr := svc.GetMetricsByNamespace(ctx, resources.MetricsRequest{
+				ResourceRequest: rr,
+				Namespace:       namespace,
+			})
+			if metricErr != nil {
+				return nil, metricErr
+			}
+			out := make([]string, 0, len(metricRows))
+			for _, row := range metricRows {
+				if row.Value.Name != "" {
+					out = append(out, row.Value.Name)
+				}
+			}
+			return out, nil
 		})
 		if err != nil {
 			return &schemas.TableParametersValuesResponse{
@@ -255,13 +266,6 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 				Errors:               map[string]string{MetricNameTableParameter: err.Error()},
 			}, nil
 		}
-		names := make([]string, 0, len(metricRows))
-		for _, row := range metricRows {
-			if row.Value.Name != "" {
-				names = append(names, row.Value.Name)
-			}
-		}
-		sort.Strings(names)
 		result[MetricNameTableParameter] = names
 
 	default:
@@ -355,11 +359,6 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 		return nil, fmt.Errorf("%s is a required table parameter", RegionTableParameter)
 	}
 
-	metricName := strings.TrimSpace(req.TableParameters[MetricNameTableParameter])
-	if metricName == "" {
-		return nil, fmt.Errorf("%s is a required table parameter when requesting dimension values", MetricNameTableParameter)
-	}
-
 	var accountId *string
 	if id := req.TableParameters[AccountIdTableParameter]; id != "" {
 		accountId = &id
@@ -395,6 +394,11 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 
 	if len(dimensionCols) == 0 {
 		return &schemas.ColumnValuesResponse{ColumnValues: columnValues}, nil
+	}
+
+	metricName := strings.TrimSpace(req.TableParameters[MetricNameTableParameter])
+	if metricName == "" {
+		return nil, fmt.Errorf("%s is a required table parameter when requesting dimension values", MetricNameTableParameter)
 	}
 
 	service, err := p.ds.GetListMetricsService(ctx, region)
@@ -455,17 +459,32 @@ func (p *SchemaProvider) dimensionColumnsForNamespace(ctx context.Context, regio
 	dimKeyResponses, err := services.GetHardCodedDimensionKeysByNamespace(namespace)
 	if err != nil {
 		// Not a known AWS namespace — query ListMetrics for the custom namespace.
-		svc, svcErr := p.ds.GetListMetricsService(ctx, region)
-		if svcErr != nil {
-			return nil, svcErr
-		}
-		dimKeyResponses, err = svc.GetDimensionKeysByDimensionFilter(ctx, resources.DimensionKeysRequest{
-			ResourceRequest: &resources.ResourceRequest{Region: region, AccountId: accountId},
-			Namespace:       namespace,
-			DimensionFilter: []*resources.Dimension{},
+		accountKey := schemaMetadataAccountKey(accountId)
+		keyNames, keysErr := p.ds.getOrSetSchemaDimensionKeys(region, accountKey, namespace, func() ([]string, error) {
+			svc, svcErr := p.ds.GetListMetricsService(ctx, region)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+			resp, filterErr := svc.GetDimensionKeysByDimensionFilter(ctx, resources.DimensionKeysRequest{
+				ResourceRequest: &resources.ResourceRequest{Region: region, AccountId: accountId},
+				Namespace:       namespace,
+				DimensionFilter: []*resources.Dimension{},
+			})
+			if filterErr != nil {
+				return nil, filterErr
+			}
+			names := make([]string, 0, len(resp))
+			for _, r := range resp {
+				names = append(names, r.Value)
+			}
+			return names, nil
 		})
-		if err != nil {
-			return nil, err
+		if keysErr != nil {
+			return nil, keysErr
+		}
+		dimKeyResponses = make([]resources.ResourceResponse[string], len(keyNames))
+		for i, n := range keyNames {
+			dimKeyResponses[i] = resources.ResourceResponse[string]{Value: n}
 		}
 	}
 	cols := make([]schemas.Column, 0, len(dimKeyResponses))
