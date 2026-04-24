@@ -25,11 +25,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	schemas "github.com/grafana/schemads"
 	"github.com/patrickmn/go-cache"
 )
 
 const (
 	tagValueCacheExpiration = time.Hour * 24
+
+	// schemaMetadataCacheExpiration is the TTL for ListMetrics-backed schema
+	// discovery (custom-namespace metric names and dimension keys). Shorter than
+	// tagValueCache so new metrics and dimensions show up without a long wait.
+	schemaMetadataCacheExpiration = 5 * time.Minute
 
 	// headerFromExpression is used by datasources to identify expression queries
 	headerFromExpression = "X-Grafana-From-Expr"
@@ -58,6 +64,7 @@ type DataSource struct {
 
 	logger                 log.Logger
 	tagValueCache          *cache.Cache
+	schemaMetadataCache    *cache.Cache
 	resourceHandler        backend.CallResourceHandler
 	monitoringAccountCache sync.Map
 }
@@ -99,6 +106,18 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 	return cfg, nil
 }
 
+// DataSourceWithSchema wraps DataSource with schemads support, routing
+// abstractionSchema/* CallResource paths to the schema handler and forwarding
+// all others to the existing HTTP mux. QueryData is inherited from DataSource.
+type DataSourceWithSchema struct {
+	*DataSource
+	*schemas.SchemaDatasource
+}
+
+func (ds *DataSourceWithSchema) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return ds.SchemaDatasource.CallResource(ctx, req, sender)
+}
+
 func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	instanceSettings, err := models.LoadCloudWatchSettings(ctx, settings)
 	if err != nil {
@@ -116,10 +135,21 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		ProxyOpts:         opts.ProxyOptions,
 		AWSConfigProvider: awsauth.NewConfigProvider(),
 		logger:            backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
-		tagValueCache:     cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		tagValueCache:          cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		schemaMetadataCache:    cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
-	return ds, nil
+
+	schemaProvider := NewSchemaProvider(ds)
+	schemaDs := schemas.NewSchemaDatasource(
+		schemaProvider,     // SchemaHandler
+		schemaProvider,     // TablesHandler
+		schemaProvider,     // ColumnsHandler
+		schemaProvider,     // TableParameterValuesHandler
+		schemaProvider,     // ColumnValuesHandler
+		ds.resourceHandler, // forward non-schema routes to the existing HTTP mux
+	)
+	return &DataSourceWithSchema{DataSource: ds, SchemaDatasource: schemaDs}, nil
 }
 
 // instrumentContext adds plugin key-values to the context; later, logger.FromContext(ctx) will provide a logger
@@ -143,7 +173,11 @@ func (ds *DataSource) CallResource(ctx context.Context, req *backend.CallResourc
 }
 
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	req, grafanaSQLRefIDs := ds.normalizeGrafanaSQLRequest(ctx, req)
 	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
+	if len(req.Queries) == 0 {
+		return nil, backend.DownstreamError(fmt.Errorf("no queries to execute: request was empty or all Grafana SQL queries were omitted"))
+	}
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
@@ -186,6 +220,10 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 		fallthrough
 	default:
 		result, err = ds.executeTimeSeriesQuery(ctx, req)
+	}
+
+	if len(grafanaSQLRefIDs) > 0 && result != nil {
+		convertToTabular(result, grafanaSQLRefIDs)
 	}
 
 	return result, err

@@ -393,6 +393,30 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			assert.Equal(t, "${LABEL}|&|${PROP('Dim.LoadBalancer')}", *mdq.Label)
 		})
 
+		t.Run("Query has only multiple wildcard dimensions (schema injection): SEARCH omits quoted dimension names", func(t *testing.T) {
+			query := &models.CloudWatchQuery{
+				Namespace:  "AWS/EC2",
+				MetricName: "CPUUtilization",
+				Dimensions: map[string][]string{
+					"AutoScalingGroupName": {"*"},
+					"ImageId":              {"*"},
+					"InstanceId":           {"*"},
+					"InstanceType":         {"*"},
+				},
+				Period:           300,
+				Expression:       "",
+				MatchExact:       matchExact,
+				Statistic:        "Average",
+				MetricQueryType:  models.MetricQueryTypeSearch,
+				MetricEditorMode: models.MetricEditorModeBuilder,
+			}
+
+			mdq, err := ds.buildMetricDataQuery(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), query)
+			require.NoError(t, err)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization"', 'Average', 300))`, *mdq.Expression)
+			assert.Equal(t, "${LABEL}|&|${PROP('Dim.AutoScalingGroupName')}|&|${PROP('Dim.ImageId')}|&|${PROP('Dim.InstanceId')}|&|${PROP('Dim.InstanceType')}", *mdq.Label)
+		})
+
 		t.Run("query has three dimension values for two given dimension keys, and one value is a star", func(t *testing.T) {
 			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
