@@ -1,5 +1,9 @@
 # Changelog
 
+## 12.8.0
+
+- feat(dsabstraction): add initial support for SQL abstractions in [#513](https://github.com/grafana/grafana-cloudwatch-datasource/pull/513)
+
 ## 12.7.1
 
 - chore(deps): bump github.com/grafana/grafana-aws-sdk from 1.4.3 to 1.4.4 in [#531](https://github.com/grafana/grafana-cloudwatch-datasource/pull/531)
