@@ -58,6 +58,12 @@ func TestMetricsTableNamespace(t *testing.T) {
 	})
 }
 
+func TestIsLogsTable(t *testing.T) {
+	assert.True(t, isLogsTable(LogsTableName))
+	assert.False(t, isLogsTable("metrics|AWS/EC2"))
+	assert.False(t, isLogsTable("logs|something"))
+}
+
 // ---- Tables -----------------------------------------------------------------
 
 func TestSchemaProvider_Tables(t *testing.T) {
@@ -89,6 +95,29 @@ func TestSchemaProvider_Tables(t *testing.T) {
 				paramByName[p.Name] = p
 			}
 
+			if name == LogsTableName {
+				region, ok := paramByName[RegionTableParameter]
+				assert.True(t, ok, "logs table should have region parameter")
+				assert.True(t, region.Root)
+				assert.True(t, region.Required)
+
+				acct, ok := paramByName[AccountIdTableParameter]
+				assert.True(t, ok)
+				assert.False(t, acct.Required)
+				assert.Equal(t, []string{RegionTableParameter}, acct.DependsOn)
+
+				prefix, ok := paramByName[LogGroupNamePrefixTableParameter]
+				assert.True(t, ok)
+				assert.False(t, prefix.Required)
+				assert.Equal(t, []string{RegionTableParameter}, prefix.DependsOn)
+
+				lg, ok := paramByName[LogGroupNameTableParameter]
+				assert.True(t, ok)
+				assert.True(t, lg.Required)
+				assert.Equal(t, []string{RegionTableParameter}, lg.DependsOn)
+				continue
+			}
+
 			region, ok := paramByName[RegionTableParameter]
 			assert.True(t, ok, "table %q should have region parameter", name)
 			assert.True(t, region.Root)
@@ -107,6 +136,17 @@ func TestSchemaProvider_Tables(t *testing.T) {
 			assert.Equal(t, []string{RegionTableParameter}, metric.DependsOn)
 			assert.True(t, metric.Required, "CloudWatch MetricStat.Metric requires MetricName")
 		}
+	})
+
+	t.Run("includes virtual logs table", func(t *testing.T) {
+		found := false
+		for _, name := range resp.Tables {
+			if name == LogsTableName {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "expected %q in Tables()", LogsTableName)
 	})
 
 	t.Run("Tables response does not include per-table columns (columns are fetched separately)", func(t *testing.T) {
@@ -199,6 +239,51 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		assert.True(t, hasTime, "expected time data column")
 		_, hasValue := colNames["value"]
 		assert.True(t, hasValue, "expected value data column")
+	})
+
+	t.Run("logs table requires logGroupName table parameter", func(t *testing.T) {
+		p := newSchemaProviderForTest()
+		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
+			Tables:          []string{LogsTableName},
+			TableParameters: map[string]string{RegionTableParameter: "us-east-1"},
+		})
+		require.NoError(t, err)
+		assert.Contains(t, resp.Errors[LogsTableName], LogGroupNameTableParameter)
+	})
+
+	t.Run("logs table loads columns from GetLogGroupFields", func(t *testing.T) {
+		origNewLogGroupsService := services.NewLogGroupsService
+		t.Cleanup(func() { services.NewLogGroupsService = origNewLogGroupsService })
+
+		mockLogs := &mocks.LogsService{}
+		// LogsService.GetLogGroupFields passes only the request to mock.Called (see mocks.LogsService).
+		mockLogs.On("GetLogGroupFields", mock.MatchedBy(func(r resources.LogGroupFieldsRequest) bool {
+			return r.LogGroupName == "/aws/lambda/foo" && r.Region == "us-east-1"
+		})).Return([]resources.ResourceResponse[resources.LogGroupField]{
+			{Value: resources.LogGroupField{Name: "msg", Percent: 50}},
+			{Value: resources.LogGroupField{Name: "@timestamp", Percent: 100}},
+		}, nil)
+
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+			return mockLogs
+		}
+
+		p := newSchemaProviderForTest()
+		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
+			Tables: []string{LogsTableName},
+			TableParameters: map[string]string{
+				RegionTableParameter:       "us-east-1",
+				LogGroupNameTableParameter: "/aws/lambda/foo",
+			},
+		})
+		require.NoError(t, err)
+		require.Empty(t, resp.Errors)
+		cols := resp.Columns[LogsTableName]
+		require.Len(t, cols, 2)
+		assert.Equal(t, "@timestamp", cols[0].Name)
+		assert.Equal(t, schemas.ColumnTypeTimestamp, cols[0].Type)
+		assert.Equal(t, "msg", cols[1].Name)
+		mockLogs.AssertExpectations(t)
 	})
 
 	t.Run("columns for a namespace table match dimension keys for that namespace", func(t *testing.T) {
@@ -672,6 +757,78 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 		assert.Equal(t, []string{"*", "my-asg"}, resp.ColumnValues["AutoScalingGroupName"])
 		mockSvc.AssertNumberOfCalls(t, "GetDimensionValuesForKeys", 1)
 	})
+
+	t.Run("logs table returns empty column values (no enumeration API)", func(t *testing.T) {
+		p := newSchemaProviderForTest()
+		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
+			Table:           LogsTableName,
+			Columns:         []string{"msg"},
+			TableParameters: map[string]string{RegionTableParameter: "us-east-1"},
+		})
+		require.NoError(t, err)
+		assert.Empty(t, resp.ColumnValues)
+	})
+}
+
+// ---- TableParameterValues — log group names -------------------------------
+
+func TestSchemaProvider_TableParameterValues_LogGroupName(t *testing.T) {
+	t.Run("lists log groups for logs table", func(t *testing.T) {
+		origNewLogGroupsService := services.NewLogGroupsService
+		t.Cleanup(func() { services.NewLogGroupsService = origNewLogGroupsService })
+
+		mockLogs := &mocks.LogsService{}
+		mockLogs.On("GetLogGroups", mock.MatchedBy(func(r resources.LogGroupsRequest) bool {
+			return r.Region == "us-east-1" && r.ListAllLogGroups && r.LogGroupNamePrefix == nil
+		})).Return([]resources.ResourceResponse[resources.LogGroup]{
+			{Value: resources.LogGroup{Name: "/z/group", Arn: "arn:aws:logs:us-east-1:1:log-group:z"}},
+			{Value: resources.LogGroup{Name: "/a/group", Arn: "arn:aws:logs:us-east-1:1:log-group:a"}},
+		}, nil)
+
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+			return mockLogs
+		}
+
+		p := newSchemaProviderForTest()
+		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
+			Table:          LogsTableName,
+			TableParameter: LogGroupNameTableParameter,
+			DependencyValues: map[string]string{
+				RegionTableParameter: "us-east-1",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"/a/group", "/z/group"}, resp.TableParameterValues[LogGroupNameTableParameter])
+		mockLogs.AssertExpectations(t)
+	})
+
+	t.Run("passes logGroupNamePrefix to DescribeLogGroups", func(t *testing.T) {
+		origNewLogGroupsService := services.NewLogGroupsService
+		t.Cleanup(func() { services.NewLogGroupsService = origNewLogGroupsService })
+
+		mockLogs := &mocks.LogsService{}
+		mockLogs.On("GetLogGroups", mock.MatchedBy(func(r resources.LogGroupsRequest) bool {
+			return r.Region == "eu-west-1" && r.LogGroupNamePrefix != nil && *r.LogGroupNamePrefix == "/aws/"
+		})).Return([]resources.ResourceResponse[resources.LogGroup]{
+			{Value: resources.LogGroup{Name: "/aws/lambda/x", Arn: "arn"}},
+		}, nil)
+
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+			return mockLogs
+		}
+
+		p := newSchemaProviderForTest()
+		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
+			Table:          LogsTableName,
+			TableParameter: LogGroupNameTableParameter,
+			DependencyValues: map[string]string{
+				RegionTableParameter:             "eu-west-1",
+				LogGroupNamePrefixTableParameter: "/aws/",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"/aws/lambda/x"}, resp.TableParameterValues[LogGroupNameTableParameter])
+	})
 }
 
 // ---- Schema (full) ----------------------------------------------------------
@@ -712,8 +869,12 @@ func TestSchemaProvider_Schema(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("every table advertises the statistic table hint", func(t *testing.T) {
+	t.Run("every metrics table advertises the statistic table hint", func(t *testing.T) {
 		for _, tbl := range resp.FullSchema.Tables {
+			if isLogsTable(tbl.Name) {
+				assert.Nil(t, tbl.TableHints, "logs table has no metric statistic hint")
+				continue
+			}
 			require.NotEmpty(t, tbl.TableHints, "table %q should have TableHints", tbl.Name)
 			var found bool
 			for _, h := range tbl.TableHints {

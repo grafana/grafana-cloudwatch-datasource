@@ -25,6 +25,16 @@ const (
 	MetricNameTableParameter = "metricName"
 )
 
+// LogsTableName is the schemads table id for CloudWatch Logs Insights (single virtual table).
+const LogsTableName = "logs"
+
+// Logs-specific table parameters (JSON wire names). Log group discovery uses
+// DescribeLogGroups; field discovery uses GetLogGroupFields with logGroupName.
+const (
+	LogGroupNamePrefixTableParameter = "logGroupNamePrefix"
+	LogGroupNameTableParameter       = "logGroupName"
+)
+
 var (
 	dimensionOperators = []schemas.Operator{
 		schemas.OperatorEquals,
@@ -52,14 +62,26 @@ var (
 		{Name: AccountIdTableParameter, DependsOn: []string{RegionTableParameter}, Required: false},
 		{Name: MetricNameTableParameter, DependsOn: []string{RegionTableParameter}, Required: true},
 	}
+
+	logsTableParameters = []schemas.TableParameter{
+		{Name: RegionTableParameter, Root: true, Required: true},
+		{Name: AccountIdTableParameter, DependsOn: []string{RegionTableParameter}, Required: false},
+		{Name: LogGroupNamePrefixTableParameter, DependsOn: []string{RegionTableParameter}, Required: false},
+		{Name: LogGroupNameTableParameter, DependsOn: []string{RegionTableParameter}, Required: true},
+	}
+
+	// Placeholder columns for FullSchema / getAllTables; Columns() replaces these using GetLogGroupFields.
+	logsPlaceholderTimestampColumn = schemas.Column{Name: "@timestamp", Type: schemas.ColumnTypeTimestamp}
+	logsPlaceholderMessageColumn   = schemas.Column{Name: "@message", Type: schemas.ColumnTypeString}
 )
 
+const schemaLogGroupsListLimit int32 = 50
+
 // SchemaProvider implements the schemads SchemaHandler, TablesHandler,
-// ColumnsHandler, and TableParameterValuesHandler interfaces for CloudWatch
-// metrics. Tables are identified as "metrics|<namespace>" (e.g.
-// "metrics|AWS/EC2"); the metric name is the metricName table parameter.
-// Columns are dimension keys. The "metrics|" prefix distinguishes metrics
-// tables from any future table types (e.g. "logs|...").
+// ColumnsHandler, TableParameterValuesHandler, and ColumnValuesHandler for
+// CloudWatch metrics and the virtual LogsTableName logs table.
+// Metrics tables use "metrics|<namespace>"; log fields use table "logs" with
+// logGroupName and optional logGroupNamePrefix parameters.
 type SchemaProvider struct {
 	ds *DataSource
 }
@@ -83,6 +105,35 @@ func metricsTableNamespace(table string) (namespace string, ok bool) {
 		return "", false
 	}
 	return ns, true
+}
+
+// isLogsTable reports whether table identifies the CloudWatch Logs virtual table.
+func isLogsTable(table string) bool {
+	return table == LogsTableName
+}
+
+func logsPlaceholderColumns() []schemas.Column {
+	return []schemas.Column{logsPlaceholderTimestampColumn, logsPlaceholderMessageColumn}
+}
+
+// logsColumnsFromFields maps GetLogGroupFields results to schemads columns.
+func logsColumnsFromFields(rows []resources.ResourceResponse[resources.LogGroupField]) []schemas.Column {
+	cols := make([]schemas.Column, 0, len(rows))
+	for _, row := range rows {
+		name := row.Value.Name
+		col := schemas.Column{Name: name, Operators: dimensionOperators}
+		switch name {
+		case "@timestamp":
+			col.Type = schemas.ColumnTypeTimestamp
+		default:
+			col.Type = schemas.ColumnTypeString
+		}
+		cols = append(cols, col)
+	}
+	sort.Slice(cols, func(i, j int) bool {
+		return cols[i].Name < cols[j].Name
+	})
+	return cols
 }
 
 // Schema implements schemas.SchemaHandler.
@@ -172,9 +223,32 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 		if tableName == "" {
 			continue
 		}
+		if isLogsTable(tableName) {
+			logGroupName := strings.TrimSpace(req.TableParameters[LogGroupNameTableParameter])
+			if logGroupName == "" {
+				errs[tableName] = fmt.Sprintf("%s is required to discover log fields", LogGroupNameTableParameter)
+				continue
+			}
+			service, err := p.ds.GetLogGroupsService(ctx, region)
+			if err != nil {
+				errs[tableName] = err.Error()
+				continue
+			}
+			fieldRows, err := service.GetLogGroupFields(ctx, resources.LogGroupFieldsRequest{
+				ResourceRequest: resources.ResourceRequest{Region: region, AccountId: accountId},
+				LogGroupName:    logGroupName,
+			})
+			if err != nil {
+				errs[tableName] = err.Error()
+				continue
+			}
+			cols[tableName] = logsColumnsFromFields(fieldRows)
+			continue
+		}
+
 		namespace, nsOK := metricsTableNamespace(tableName)
 		if !nsOK {
-			errs[tableName] = fmt.Sprintf("unrecognised table format %q: expected metrics|<namespace>", tableName)
+			errs[tableName] = fmt.Sprintf("unrecognised table format %q: expected metrics|<namespace> or %q", tableName, LogsTableName)
 			continue
 		}
 		dimCols, err := p.dimensionColumnsForNamespace(ctx, region, accountId, namespace)
@@ -220,6 +294,60 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 			accountIds = append(accountIds, ar.Value.Id)
 		}
 		result[AccountIdTableParameter] = accountIds
+
+	case LogGroupNamePrefixTableParameter:
+		// Optional filter for DescribeLogGroups; values are user-typed, not enumerated.
+		return &schemas.TableParametersValuesResponse{TableParameterValues: result}, nil
+
+	case LogGroupNameTableParameter:
+		if req.Table != LogsTableName {
+			break
+		}
+		region := req.DependencyValues[RegionTableParameter]
+		if region == "" {
+			break
+		}
+		accountKey := strings.TrimSpace(req.DependencyValues[AccountIdTableParameter])
+		var accountPtr *string
+		if accountKey != "" {
+			accountPtr = &accountKey
+		}
+		prefixStr := strings.TrimSpace(req.DependencyValues[LogGroupNamePrefixTableParameter])
+		var prefixPtr *string
+		if prefixStr != "" {
+			prefixPtr = &prefixStr
+		}
+		svc, err := p.ds.GetLogGroupsService(ctx, region)
+		if err != nil {
+			return &schemas.TableParametersValuesResponse{
+				TableParameterValues: result,
+				Errors:               map[string]string{LogGroupNameTableParameter: err.Error()},
+			}, nil
+		}
+		lgReq := resources.LogGroupsRequest{
+			ResourceRequest: resources.ResourceRequest{
+				Region:    region,
+				AccountId: accountPtr,
+			},
+			Limit:              schemaLogGroupsListLimit,
+			LogGroupNamePrefix: prefixPtr,
+			ListAllLogGroups:   true,
+		}
+		groups, err := svc.GetLogGroups(ctx, lgReq)
+		if err != nil {
+			return &schemas.TableParametersValuesResponse{
+				TableParameterValues: result,
+				Errors:               map[string]string{LogGroupNameTableParameter: err.Error()},
+			}, nil
+		}
+		names := make([]string, 0, len(groups))
+		for _, g := range groups {
+			if g.Value.Name != "" {
+				names = append(names, g.Value.Name)
+			}
+		}
+		sort.Strings(names)
+		result[LogGroupNameTableParameter] = names
 
 	case MetricNameTableParameter:
 		namespace, nsOK := metricsTableNamespace(req.Table)
@@ -334,6 +462,13 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 		}
 	}
 
+	tables = append(tables, schemas.Table{
+		Name:            LogsTableName,
+		TableParameters: logsTableParameters,
+		TableHints:      nil,
+		Columns:         logsPlaceholderColumns(),
+	})
+
 	sort.Slice(tables, func(i, j int) bool {
 		return tables[i].Name < tables[j].Name
 	})
@@ -349,6 +484,11 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 // API call is made per column, bounded by the datasource's ListMetricsPageLimit.
 func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
 	ctx = instrumentContext(ctx, "schema/columnValues", req.PluginContext)
+	if isLogsTable(req.Table) {
+		// No ListMetrics-equivalent distinct-value API for arbitrary log fields (see plan).
+		return &schemas.ColumnValuesResponse{ColumnValues: make(map[string][]string)}, nil
+	}
+
 	namespace, nsOK := metricsTableNamespace(req.Table)
 	if !nsOK {
 		return nil, fmt.Errorf("unrecognised table format %q: expected metrics|<namespace>", req.Table)
