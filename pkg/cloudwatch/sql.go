@@ -41,9 +41,13 @@ func tabularDimensionCell(s string) *string {
 // input for CloudWatch metric execution, unlike a bad table name where the
 // caller may still rely on native query fields.
 //
-// The second return value is the set of refIDs that were rewritten. Callers
-// must post-process those responses with convertToTabular so the SQL engine
+// The second return value is the set of refIDs rewritten to native CloudWatch metrics
+// queries; callers must post-process those with convertToTabular so the SQL engine
 // receives flat table frames rather than time-series-multi frames.
+//
+// The third return value lists refIDs rewritten to CloudWatch Logs Insights SQL;
+// those responses are already tabular from executeSyncLogQuery and must not go through
+// convertToTabular.
 //
 // MetricStat (MetricQueryTypeSearch + MetricEditorModeBuilder) is always used
 // rather than Metric Insights because:
@@ -61,14 +65,15 @@ func tabularDimensionCell(s string) *string {
 // when the user supplied dimension filters (pushdown): with schema-only wildcards
 // matchExact stays false so SEARCH uses the non-schema form and still returns
 // metrics that only have a subset of the namespace's possible dimensions.
-func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
+func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}, map[string]struct{}) {
 	if req == nil || len(req.Queries) == 0 {
-		return req, nil
+		return req, nil, nil
 	}
 
 	grafanaConfig := req.PluginContext.GrafanaConfig
 	queries := make([]backend.DataQuery, 0, len(req.Queries))
-	grafanaSQLRefIDs := make(map[string]struct{})
+	grafanaSQLMetricsRefIDs := make(map[string]struct{})
+	grafanaSQLLogsRefIDs := make(map[string]struct{})
 	for _, q := range req.Queries {
 		var query schemas.Query
 		if err := json.Unmarshal(q.JSON, &query); err != nil {
@@ -86,6 +91,56 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 		}
 		if !grafanaConfig.FeatureToggles().IsEnabled("dsAbstractionApp") {
 			backend.Logger.Warn("dsAbstractionApp feature toggle is not enabled, skipping grafanaSQL query", "refId", q.RefID)
+			continue
+		}
+
+		if isLogsTable(query.Table) {
+			region := strings.TrimSpace(anyToStr(query.TableParameterValues[RegionTableParameter]))
+			logGroupName := strings.TrimSpace(anyToStr(query.TableParameterValues[LogGroupNameTableParameter]))
+			if region == "" || logGroupName == "" {
+				backend.Logger.Warn("grafanaSQL logs query missing required region or logGroupName table parameter, skipping", "refId", q.RefID, "region", region, "logGroupName", logGroupName)
+				continue
+			}
+
+			accountIdStr, _ := query.TableParameterValues[AccountIdTableParameter].(string)
+			accountIdStr = strings.TrimSpace(accountIdStr)
+
+			sqlStr := buildLogsGrafanaSQLFromSchema(query)
+			sqlLang := dataquery.LogsQueryLanguageSQL
+
+			logsPayload := models.LogsQuery{
+				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					QueryMode:     dataquery.CloudWatchQueryModeLogs,
+					Region:        region,
+					Expression:    utils.Pointer(sqlStr),
+					QueryLanguage: &sqlLang,
+					RefId:         q.RefID,
+					Id:            q.RefID,
+					LogGroups:     []dataquery.LogGroup{{Name: logGroupName}},
+				},
+				GrafanaSqlLogs: true,
+			}
+			if accountIdStr != "" && accountIdStr != "all" {
+				idCopy := accountIdStr
+				logsPayload.SelectedAccountIds = []string{accountIdStr}
+				logsPayload.LogGroups[0].AccountId = &idCopy
+			}
+
+			jsonBytes, err := json.Marshal(logsPayload)
+			if err != nil {
+				backend.Logger.Warn("failed to marshal normalised grafanaSQL logs query, skipping", "refId", q.RefID, "error", fmt.Sprintf("%v", err))
+				continue
+			}
+
+			grafanaSQLLogsRefIDs[q.RefID] = struct{}{}
+			queries = append(queries, backend.DataQuery{
+				RefID:         q.RefID,
+				QueryType:     q.QueryType,
+				MaxDataPoints: q.MaxDataPoints,
+				Interval:      q.Interval,
+				TimeRange:     q.TimeRange,
+				JSON:          jsonBytes,
+			})
 			continue
 		}
 
@@ -157,7 +212,7 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 			continue
 		}
 
-		grafanaSQLRefIDs[q.RefID] = struct{}{}
+		grafanaSQLMetricsRefIDs[q.RefID] = struct{}{}
 		queries = append(queries, backend.DataQuery{
 			RefID:         q.RefID,
 			QueryType:     q.QueryType,
@@ -172,7 +227,36 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 		PluginContext: req.PluginContext,
 		Headers:       req.Headers,
 		Queries:       queries,
-	}, grafanaSQLRefIDs
+	}, grafanaSQLMetricsRefIDs, grafanaSQLLogsRefIDs
+}
+
+// buildLogsGrafanaSQLFromSchema builds OpenSearch SQL for CloudWatch Logs per:
+// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_SQL.html
+//
+// Validated against that page: SELECT/FROM/LIMIT are listed as supported; multi–log-group
+// source uses logGroups(logGroupIdentifier: ['…']) inside backticks (same doc “Query scope”
+// example). Fields with special characters (e.g. @timestamp, @message) must be backtick-quoted
+// (“Analyzing log data…” / same SQL page “Restrictions”). The $__logGroups macro is expanded
+// in expandLogGroupsMacro to that logGroups(...) form before StartQuery.
+func buildLogsGrafanaSQLFromSchema(query schemas.Query) string {
+	var sel string
+	if len(query.Columns) == 0 {
+		sel = "*"
+	} else {
+		parts := make([]string, len(query.Columns))
+		for i, c := range query.Columns {
+			parts[i] = "`" + strings.ReplaceAll(c, "`", "``") + "`"
+		}
+		sel = strings.Join(parts, ", ")
+	}
+	var b strings.Builder
+	b.WriteString("SELECT ")
+	b.WriteString(sel)
+	b.WriteString(" FROM `$__logGroups`")
+	if query.Limit != nil && *query.Limit >= 0 {
+		fmt.Fprintf(&b, " LIMIT %d", *query.Limit)
+	}
+	return b.String()
 }
 
 // applyFilters translates schemads ColumnFilter predicates into a CloudWatch

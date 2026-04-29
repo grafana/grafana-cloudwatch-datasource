@@ -364,7 +364,8 @@ func expandLogGroupsMacro(queryLanguage dataquery.LogsQueryLanguage, queryString
 
 	quoted := make([]string, len(logGroupIdentifiers))
 	for i, id := range logGroupIdentifiers {
-		quoted[i] = fmt.Sprintf("'%s'", id)
+		escaped := strings.ReplaceAll(id, "'", "''")
+		quoted[i] = fmt.Sprintf("'%s'", escaped)
 	}
 	replacement := fmt.Sprintf("logGroups(logGroupIdentifier: [%s])", strings.Join(quoted, ", "))
 	return strings.Replace(queryString, logGroupsMacro, replacement, 1), nil

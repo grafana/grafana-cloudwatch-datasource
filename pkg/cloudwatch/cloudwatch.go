@@ -53,8 +53,9 @@ const (
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
-	Type     string             `json:"type,omitempty"`
-	LogsMode dataquery.LogsMode `json:"logsMode,omitempty"`
+	Type           string             `json:"type,omitempty"`
+	LogsMode       dataquery.LogsMode `json:"logsMode,omitempty"`
+	GrafanaSqlLogs bool               `json:"grafanaSqlLogs,omitempty"`
 }
 
 type DataSource struct {
@@ -132,11 +133,11 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 	ds := &DataSource{
 		Settings: instanceSettings,
 		// this is used to build a custom dialer when secure socks proxy is enabled
-		ProxyOpts:         opts.ProxyOptions,
-		AWSConfigProvider: awsauth.NewConfigProvider(),
-		logger:            backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
-		tagValueCache:          cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
-		schemaMetadataCache:    cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
+		ProxyOpts:           opts.ProxyOptions,
+		AWSConfigProvider:   awsauth.NewConfigProvider(),
+		logger:              backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
+		tagValueCache:       cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		schemaMetadataCache: cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 
@@ -173,7 +174,7 @@ func (ds *DataSource) CallResource(ctx context.Context, req *backend.CallResourc
 }
 
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	req, grafanaSQLRefIDs := ds.normalizeGrafanaSQLRequest(ctx, req)
+	req, grafanaSQLMetricsRefIDs, _ := ds.normalizeGrafanaSQLRequest(ctx, req)
 	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
 	if len(req.Queries) == 0 {
 		return nil, backend.DownstreamError(fmt.Errorf("no queries to execute: request was empty or all Grafana SQL queries were omitted"))
@@ -199,7 +200,7 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 	isLogInsightsQuery := queryMode == queryModeLogs && (model.LogsMode == "" || model.LogsMode == dataquery.LogsModeInsights)
 
-	isSyncLogQuery := isLogInsightsQuery && ((fromAlert || fromExpression) || fromPublicDashboard)
+	isSyncLogQuery := isLogInsightsQuery && ((fromAlert || fromExpression) || fromPublicDashboard || model.GrafanaSqlLogs)
 
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, ds, req)
@@ -222,8 +223,8 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 		result, err = ds.executeTimeSeriesQuery(ctx, req)
 	}
 
-	if len(grafanaSQLRefIDs) > 0 && result != nil {
-		convertToTabular(result, grafanaSQLRefIDs)
+	if len(grafanaSQLMetricsRefIDs) > 0 && result != nil {
+		convertToTabular(result, grafanaSQLMetricsRefIDs)
 	}
 
 	return result, err

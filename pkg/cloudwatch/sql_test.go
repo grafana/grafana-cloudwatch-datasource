@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/kinds/dataquery"
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
 )
 
@@ -42,48 +44,44 @@ func grafanaSQLQueryJSON(table string, extra map[string]interface{}) []byte {
 	return b
 }
 
-// unmarshalNormalized decodes a normalised query JSON into a plain map for
-// assertion-friendly access.
-func unmarshalNormalized(t *testing.T, q backend.DataQuery) map[string]interface{} {
+// requireNormalizedMetricsDataQuery decodes normalised Grafana SQL → CloudWatch metrics query JSON.
+func requireNormalizedMetricsDataQuery(t *testing.T, q backend.DataQuery) models.MetricsDataQuery {
 	t.Helper()
-	var m map[string]interface{}
-	require.NoError(t, json.Unmarshal(q.JSON, &m))
-	return m
+	var mdq models.MetricsDataQuery
+	require.NoError(t, json.Unmarshal(q.JSON, &mdq))
+	return mdq
+}
+
+// requireNormalizedLogsQuery decodes normalised Grafana SQL → CloudWatch Logs query JSON.
+func requireNormalizedLogsQuery(t *testing.T, q backend.DataQuery) models.LogsQuery {
+	t.Helper()
+	var lq models.LogsQuery
+	require.NoError(t, json.Unmarshal(q.JSON, &lq))
+	return lq
+}
+
+// dimensionValuesByName flattens unmarshaled dimensions for assertions.
+func dimensionValuesByName(mdq models.MetricsDataQuery) map[string][]string {
+	if mdq.Dimensions == nil {
+		return map[string][]string{}
+	}
+	out := make(map[string][]string, len(*mdq.Dimensions))
+	for k, v := range *mdq.Dimensions {
+		switch {
+		case len(v.ArrayOfString) > 0:
+			out[k] = append([]string(nil), v.ArrayOfString...)
+		case v.String != nil:
+			out[k] = []string{*v.String}
+		}
+	}
+	return out
 }
 
 // normalizeGrafanaSQLRequestUnderTest runs grafanaSQL normalization with a test datasource
 // so schema-based wildcard dimension injection can resolve namespace keys.
-func normalizeGrafanaSQLRequestUnderTest(req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
+func normalizeGrafanaSQLRequestUnderTest(req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}, map[string]struct{}) {
 	ds := newTestDatasource()
 	return ds.normalizeGrafanaSQLRequest(context.Background(), req)
-}
-
-// dimensionsFromMap extracts the dimensions field as map[string][]string from
-// the normalised query map returned by unmarshalNormalized.
-func dimensionsFromMap(t *testing.T, m map[string]interface{}) map[string][]string {
-	t.Helper()
-	raw, ok := m["dimensions"]
-	if !ok {
-		return map[string][]string{}
-	}
-	rawMap, ok := raw.(map[string]interface{})
-	if !ok {
-		t.Fatalf("dimensions is not a map: %T", raw)
-	}
-	result := make(map[string][]string, len(rawMap))
-	for k, v := range rawMap {
-		switch vt := v.(type) {
-		case []interface{}:
-			strs := make([]string, len(vt))
-			for i, elem := range vt {
-				strs[i], _ = elem.(string)
-			}
-			result[k] = strs
-		case string:
-			result[k] = []string{vt}
-		}
-	}
-	return result
 }
 
 // ---- normalizeGrafanaSQLRequest — pass-through and gating ----
@@ -95,7 +93,7 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 		assert.NotContains(t, refIDs, "A")
@@ -107,13 +105,13 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 	})
 
 	t.Run("nil request returns nil", func(t *testing.T) {
-		out, _ := normalizeGrafanaSQLRequestUnderTest(nil)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(nil)
 		assert.Nil(t, out)
 	})
 
@@ -122,7 +120,7 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		assert.Empty(t, out.Queries)
 	})
 }
@@ -134,7 +132,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", nil)},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		assert.Empty(t, out.Queries)
 	})
 
@@ -149,7 +147,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 				{RefID: "B", JSON: nativeJSON},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, "B", out.Queries[0].RefID)
 	})
@@ -208,17 +206,20 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, timeSeriesQuery, m["type"])
-		assert.Equal(t, "AWS/EC2", m["namespace"])
-		assert.Equal(t, "CPUUtilization", m["metricName"])
-		assert.Equal(t, "us-east-1", m[RegionTableParameter])
-		assert.Equal(t, "Average", m["statistic"], "should default to Average")
-		assert.Equal(t, false, m["matchExact"], "schema-only wildcards use non-schema SEARCH so partial-dimension series are included")
-		dims := dimensionsFromMap(t, m)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		assert.Equal(t, timeSeriesQuery, mdq.Type)
+		assert.Equal(t, "AWS/EC2", mdq.Namespace)
+		require.NotNil(t, mdq.MetricName)
+		assert.Equal(t, "CPUUtilization", *mdq.MetricName)
+		assert.Equal(t, "us-east-1", mdq.Region)
+		require.NotNil(t, mdq.Statistic)
+		assert.Equal(t, "Average", *mdq.Statistic, "should default to Average")
+		require.NotNil(t, mdq.MatchExact)
+		assert.False(t, *mdq.MatchExact, "schema-only wildcards use non-schema SEARCH so partial-dimension series are included")
+		dims := dimensionValuesByName(mdq)
 		for _, k := range []string{"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"} {
 			assert.Equal(t, []string{"*"}, dims[k], "dimension %q", k)
 		}
@@ -239,14 +240,16 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, "AWS/ApplicationELB", m["namespace"])
-		assert.Equal(t, "ActiveConnectionCount", m["metricName"])
-		assert.Equal(t, "eu-west-1", m[RegionTableParameter])
-		assert.Equal(t, "111122223333", m[AccountIdTableParameter])
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		assert.Equal(t, "AWS/ApplicationELB", mdq.Namespace)
+		require.NotNil(t, mdq.MetricName)
+		assert.Equal(t, "ActiveConnectionCount", *mdq.MetricName)
+		assert.Equal(t, "eu-west-1", mdq.Region)
+		require.NotNil(t, mdq.AccountId)
+		assert.Equal(t, "111122223333", *mdq.AccountId)
 		assert.Equal(t, "myRef", out.Queries[0].RefID)
 		assert.Equal(t, int64(500), out.Queries[0].MaxDataPoints)
 	})
@@ -260,7 +263,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.NotContains(t, refIDs, "A")
 		var q schemas.Query
@@ -281,12 +284,13 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Contains(t, refIDs, "A")
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, "Custom.App", m["namespace"])
-		assert.Equal(t, "Invocations", m["metricName"])
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		assert.Equal(t, "Custom.App", mdq.Namespace)
+		require.NotNil(t, mdq.MetricName)
+		assert.Equal(t, "Invocations", *mdq.MetricName)
 	})
 
 	t.Run("passes through unchanged when table has no metrics prefix", func(t *testing.T) {
@@ -295,7 +299,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 		assert.NotContains(t, refIDs, "A")
@@ -312,7 +316,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				{RefID: "B", JSON: nativeJSON},
 			},
 		}
-		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 2)
 		assert.Contains(t, refIDs, "A")
 		assert.NotContains(t, refIDs, "B")
@@ -327,12 +331,86 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		_, hasAccountId := m[AccountIdTableParameter]
-		assert.False(t, hasAccountId, "accountId should not be present when not specified")
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		assert.Nil(t, mdq.AccountId, "accountId should not be present when not specified")
 	})
 
+}
+
+// ---- normalizeGrafanaSQLRequest — CloudWatch Logs (Grafana SQL) ----
+
+func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
+	t.Run("normalises virtual logs table to Logs Insights SQL payload", func(t *testing.T) {
+		lim := int64(100)
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:       "us-east-1",
+						LogGroupNameTableParameter: "/aws/lambda/foo",
+					},
+					"limit":   &lim,
+					"columns": []string{"@timestamp", "@message"},
+				})},
+			},
+		}
+		out, metricsRef, logsRef := normalizeGrafanaSQLRequestUnderTest(req)
+		require.Len(t, out.Queries, 1)
+		assert.NotContains(t, metricsRef, "L")
+		assert.Contains(t, logsRef, "L")
+
+		lq := requireNormalizedLogsQuery(t, out.Queries[0])
+		assert.Equal(t, dataquery.CloudWatchQueryModeLogs, lq.QueryMode)
+		assert.True(t, lq.GrafanaSqlLogs)
+		require.NotNil(t, lq.QueryLanguage)
+		assert.Equal(t, dataquery.LogsQueryLanguageSQL, *lq.QueryLanguage)
+		assert.Equal(t, "us-east-1", lq.Region)
+		require.NotNil(t, lq.Expression)
+		assert.Equal(t, "SELECT `@timestamp`, `@message` FROM `$__logGroups` LIMIT 100", *lq.Expression)
+
+		require.Len(t, lq.LogGroups, 1)
+		assert.Equal(t, "/aws/lambda/foo", lq.LogGroups[0].Name)
+	})
+
+	t.Run("drops logs query when logGroupName is missing", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter: "us-east-1",
+					},
+				})},
+			},
+		}
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		assert.Empty(t, out.Queries)
+	})
+
+	t.Run("sets selectedAccountIds when accountId table parameter is set", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:       "us-east-1",
+						LogGroupNameTableParameter: "/g",
+						AccountIdTableParameter:    "123456789012",
+					},
+				})},
+			},
+		}
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		require.Len(t, out.Queries, 1)
+		lq := requireNormalizedLogsQuery(t, out.Queries[0])
+		require.Len(t, lq.SelectedAccountIds, 1)
+		assert.Equal(t, "123456789012", lq.SelectedAccountIds[0])
+		require.Len(t, lq.LogGroups, 1)
+		require.NotNil(t, lq.LogGroups[0].AccountId)
+		assert.Equal(t, "123456789012", *lq.LogGroups[0].AccountId)
+	})
 }
 
 // ---- normalizeGrafanaSQLRequest — statistic table hint ----
@@ -348,13 +426,14 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, "Sum", m["statistic"])
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		require.NotNil(t, mdq.Statistic)
+		assert.Equal(t, "Sum", *mdq.Statistic)
 
-		dims := dimensionsFromMap(t, m)
+		dims := dimensionValuesByName(mdq)
 		_, hasStatistic := dims["statistic"]
 		assert.False(t, hasStatistic, "statistic should not appear in dimensions")
 	})
@@ -368,9 +447,10 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, "Average", m["statistic"])
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		require.NotNil(t, mdq.Statistic)
+		assert.Equal(t, "Average", *mdq.Statistic)
 	})
 
 	t.Run("extended statistic (p99) is accepted via table hint", func(t *testing.T) {
@@ -383,9 +463,10 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, "p99", m["statistic"])
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		require.NotNil(t, mdq.Statistic)
+		assert.Equal(t, "p99", *mdq.Statistic)
 	})
 }
 
@@ -409,9 +490,9 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		dims := dimensionsFromMap(t, m)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		dims := dimensionValuesByName(mdq)
 		assert.Equal(t, []string{"i-12345"}, dims["InstanceId"])
 	})
 
@@ -432,9 +513,9 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		dims := dimensionsFromMap(t, m)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		dims := dimensionValuesByName(mdq)
 		assert.ElementsMatch(t, []string{"i-11111", "i-22222"}, dims["InstanceId"])
 	})
 
@@ -462,12 +543,13 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		dims := dimensionsFromMap(t, m)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		dims := dimensionValuesByName(mdq)
 		assert.Equal(t, []string{"i-abc"}, dims["InstanceId"])
 		assert.Equal(t, []string{"my-asg"}, dims["AutoScalingGroupName"])
-		assert.Equal(t, "Sum", m["statistic"])
+		require.NotNil(t, mdq.Statistic)
+		assert.Equal(t, "Sum", *mdq.Statistic)
 		_, hasStatisticDim := dims["statistic"]
 		assert.False(t, hasStatisticDim, "statistic should not appear as a dimension")
 	})
@@ -489,13 +571,14 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		dims := dimensionsFromMap(t, m)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		dims := dimensionValuesByName(mdq)
 		for _, k := range []string{"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"} {
 			assert.Equal(t, []string{"*"}, dims[k], "dimension %q", k)
 		}
-		assert.Equal(t, false, m["matchExact"])
+		require.NotNil(t, mdq.MatchExact)
+		assert.False(t, *mdq.MatchExact)
 	})
 
 	t.Run("empty filter value is ignored then schema wildcards apply", func(t *testing.T) {
@@ -515,11 +598,12 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		dims := dimensionsFromMap(t, m)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		dims := dimensionValuesByName(mdq)
 		assert.Len(t, dims, 4)
-		assert.Equal(t, false, m["matchExact"])
+		require.NotNil(t, mdq.MatchExact)
+		assert.False(t, *mdq.MatchExact)
 	})
 
 	t.Run("null/missing filters inject schema wildcard dimensions", func(t *testing.T) {
@@ -532,14 +616,15 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		dims := dimensionsFromMap(t, m)
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		dims := dimensionValuesByName(mdq)
 		for _, k := range []string{"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"} {
 			assert.Equal(t, []string{"*"}, dims[k], "dimension %q", k)
 		}
 		assert.Len(t, dims, 4)
-		assert.Equal(t, false, m["matchExact"])
+		require.NotNil(t, mdq.MatchExact)
+		assert.False(t, *mdq.MatchExact)
 	})
 }
 
@@ -555,9 +640,10 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, false, m["matchExact"], "schema-only wildcards: use non-schema SEARCH for partial-dimension series")
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		require.NotNil(t, mdq.MatchExact)
+		assert.False(t, *mdq.MatchExact, "schema-only wildcards: use non-schema SEARCH for partial-dimension series")
 	})
 
 	t.Run("matchExact is true when dimension filters are present", func(t *testing.T) {
@@ -577,9 +663,10 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, true, m["matchExact"], "dimension filters present → matchExact should be true")
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		require.NotNil(t, mdq.MatchExact)
+		assert.True(t, *mdq.MatchExact, "dimension filters present → matchExact should be true")
 	})
 
 	t.Run("matchExact is false when only statistic hint is set (schema wildcards, no user dimension filters)", func(t *testing.T) {
@@ -592,9 +679,10 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		m := unmarshalNormalized(t, out.Queries[0])
-		assert.Equal(t, false, m["matchExact"], "statistic hint is not a dimension filter")
+		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		require.NotNil(t, mdq.MatchExact)
+		assert.False(t, *mdq.MatchExact, "statistic hint is not a dimension filter")
 	})
 }
 
