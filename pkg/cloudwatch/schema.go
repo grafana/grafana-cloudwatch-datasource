@@ -509,7 +509,7 @@ func (p *SchemaProvider) getAllTables(ctx context.Context) ([]schemas.Table, map
 func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
 	ctx = instrumentContext(ctx, "schema/columnValues", req.PluginContext)
 	if isLogsTable(req.Table) {
-		// No ListMetrics-equivalent distinct-value API for arbitrary log fields (see plan).
+		// No ListMetrics-equivalent distinct-value API for arbitrary log fields.
 		return &schemas.ColumnValuesResponse{ColumnValues: make(map[string][]string)}, nil
 	}
 

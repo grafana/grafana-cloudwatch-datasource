@@ -300,36 +300,19 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		mockLogs.AssertExpectations(t)
 	})
 
-	t.Run("logs table loads columns using logGroupArn when name omitted", func(t *testing.T) {
-		origNewLogGroupsService := services.NewLogGroupsService
-		t.Cleanup(func() { services.NewLogGroupsService = origNewLogGroupsService })
-
+	t.Run("logs table reports error when logGroup is bare ARN only", func(t *testing.T) {
 		arn := "arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/foo"
-		mockLogs := &mocks.LogsService{}
-		mockLogs.On("GetLogGroupFields", mock.MatchedBy(func(r resources.LogGroupFieldsRequest) bool {
-			return r.LogGroupName == "/aws/lambda/foo" && r.Region == "us-east-1" && r.AccountId != nil && *r.AccountId == "111111111111"
-		})).Return([]resources.ResourceResponse[resources.LogGroupField]{
-			{Value: resources.LogGroupField{Name: "@timestamp", Percent: 100}},
-		}, nil)
-
-		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
-			return mockLogs
-		}
-
 		p := newSchemaProviderForTest()
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
 			Tables: []string{LogsTableName},
 			TableParameters: map[string]string{
-				RegionTableParameter:     "us-east-1",
-				AccountIdTableParameter:  "111111111111",
-				LogGroupTableParameter:   arn,
+				RegionTableParameter:    "us-east-1",
+				AccountIdTableParameter: "111111111111",
+				LogGroupTableParameter:  arn,
 			},
 		})
 		require.NoError(t, err)
-		require.Empty(t, resp.Errors)
-		require.Len(t, resp.Columns[LogsTableName], 1)
-		assert.Equal(t, "@timestamp", resp.Columns[LogsTableName][0].Name)
-		mockLogs.AssertExpectations(t)
+		require.Contains(t, resp.Errors, LogsTableName)
 	})
 
 	t.Run("columns for a namespace table match dimension keys for that namespace", func(t *testing.T) {

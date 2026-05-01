@@ -36,10 +36,9 @@ func tabularDimensionCell(s string) *string {
 // through unchanged.
 //
 // When grafanaSQL cannot be applied (GrafanaConfig missing, dsAbstractionApp
-// disabled, or unrecoverable marshal failure where noted below), those queries
-// are omitted rather than passed through: the raw grafanaSQL JSON is not valid
-// input for CloudWatch metric execution, unlike a bad table name where the
-// caller may still rely on native query fields.
+// disabled, invalid table or required parameters, or marshal failure), those
+// queries are omitted: the raw grafanaSQL JSON is not valid input for native
+// CloudWatch metrics or logs execution.
 //
 // The second return value is the set of refIDs rewritten to native CloudWatch metrics
 // queries; callers must post-process those with convertToTabular so the SQL engine
@@ -81,6 +80,142 @@ func statisticFromGrafanaSQLTableHints(q schemas.Query) string {
 	return "Average"
 }
 
+// normalizeGrafanaSQLLogsDataQuery builds native CloudWatch Logs JSON from a
+// Grafana SQL schema query for the virtual logs table. ok is false when the
+// query must be omitted (missing or invalid parameters, or marshal failure).
+func normalizeGrafanaSQLLogsDataQuery(q backend.DataQuery, query schemas.Query) (backend.DataQuery, bool) {
+	region := strings.TrimSpace(anyToStr(query.TableParameterValues[RegionTableParameter]))
+	accountIdStr := strings.TrimSpace(anyToStr(query.TableParameterValues[AccountIdTableParameter]))
+	logGroupRaw := strings.TrimSpace(anyToStr(query.TableParameterValues[LogGroupTableParameter]))
+	logGroupName, logGroupArn, lgOk := ParseLogGroupTableParameter(logGroupRaw)
+
+	if region == "" || accountIdStr == "" {
+		backend.Logger.Warn("grafanaSQL logs query missing required region or accountId table parameter, skipping", "refId", q.RefID, "region", region, "accountId", accountIdStr)
+		return backend.DataQuery{}, false
+	}
+	if !lgOk {
+		backend.Logger.Warn("grafanaSQL logs query requires valid logGroup table parameter, skipping", "refId", q.RefID)
+		return backend.DataQuery{}, false
+	}
+
+	lg := dataquery.LogGroup{Name: logGroupName}
+	if logGroupArn != "" {
+		lg.Arn = strings.TrimSuffix(logGroupArn, "*")
+	}
+
+	sqlStr := buildLogsGrafanaSQLFromSchema(query)
+	sqlLang := dataquery.LogsQueryLanguageSQL
+
+	logsPayload := models.LogsQuery{
+		CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+			QueryMode:     dataquery.CloudWatchQueryModeLogs,
+			Region:        region,
+			Expression:    utils.Pointer(sqlStr),
+			QueryLanguage: &sqlLang,
+			RefId:         q.RefID,
+			Id:            q.RefID,
+			LogGroups:     []dataquery.LogGroup{lg},
+		},
+		GrafanaSqlLogs: true,
+	}
+	if accountIdStr != "" && accountIdStr != LogsAccountSelfSentinel && accountIdStr != "all" {
+		idCopy := accountIdStr
+		logsPayload.SelectedAccountIds = []string{accountIdStr}
+		logsPayload.LogGroups[0].AccountId = &idCopy
+	}
+
+	jsonBytes, err := json.Marshal(logsPayload)
+	if err != nil {
+		backend.Logger.Warn("failed to marshal normalised grafanaSQL logs query, skipping", "refId", q.RefID, "error", fmt.Sprintf("%v", err))
+		return backend.DataQuery{}, false
+	}
+
+	return backend.DataQuery{
+		RefID:         q.RefID,
+		QueryType:     q.QueryType,
+		MaxDataPoints: q.MaxDataPoints,
+		Interval:      q.Interval,
+		TimeRange:     q.TimeRange,
+		JSON:          jsonBytes,
+	}, true
+}
+
+// normalizeGrafanaSQLMetricsDataQuery builds native CloudWatch metrics JSON from
+// a Grafana SQL schema query for metrics|<namespace>. ok is false when the query
+// must be omitted (invalid table, missing metric name, or marshal failure).
+func (ds *DataSource) normalizeGrafanaSQLMetricsDataQuery(ctx context.Context, q backend.DataQuery, query schemas.Query) (backend.DataQuery, bool) {
+	namespace, nsOK := metricsTableNamespace(query.Table)
+	if !nsOK || namespace == "" {
+		backend.Logger.Warn("grafanaSQL query has unrecognised table format, skipping", "refId", q.RefID, "table", query.Table)
+		return backend.DataQuery{}, false
+	}
+
+	metricName, _ := query.TableParameterValues[MetricNameTableParameter].(string)
+	metricName = strings.TrimSpace(metricName)
+	if metricName == "" {
+		backend.Logger.Warn("grafanaSQL query missing required metricName table parameter, skipping", "refId", q.RefID, "namespace", namespace)
+		return backend.DataQuery{}, false
+	}
+
+	dimensions := applyFilters(query.Filters)
+	matchExact := len(dimensions) > 0
+
+	statistic := statisticFromGrafanaSQLTableHints(query)
+
+	region, _ := query.TableParameterValues[RegionTableParameter].(string)
+	accountIdStr, _ := query.TableParameterValues[AccountIdTableParameter].(string)
+	var accountIdPtr *string
+	if accountIdStr != "" {
+		accountIdPtr = &accountIdStr
+	}
+
+	if len(dimensions) == 0 && ds != nil {
+		keys, err := ds.dimensionKeysForGrafanaSQLWildcard(ctx, region, accountIdPtr, namespace)
+		if err != nil {
+			backend.Logger.Warn("grafanaSQL: could not resolve dimension keys for wildcard injection; using dimensionless query", "refId", q.RefID, "namespace", namespace, "error", err.Error())
+		} else {
+			for _, k := range keys {
+				dimensions[k] = []string{"*"}
+			}
+		}
+	}
+
+	dims := make(dataquery.Dimensions, len(dimensions))
+	for k, vals := range dimensions {
+		dims[k] = dataquery.StringOrArrayOfString{ArrayOfString: vals}
+	}
+
+	normalized := models.MetricsDataQuery{
+		Type: timeSeriesQuery,
+		CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
+			Region:     region,
+			Namespace:  namespace,
+			Statistic:  &statistic,
+			Dimensions: &dims,
+			MatchExact: utils.Pointer(matchExact),
+		},
+	}
+	normalized.MetricName = &metricName
+	if accountIdStr != "" {
+		normalized.AccountId = &accountIdStr
+	}
+
+	jsonBytes, err := json.Marshal(normalized)
+	if err != nil {
+		backend.Logger.Warn("failed to marshal normalised grafanaSQL query, skipping", "refId", q.RefID, "error", fmt.Sprintf("%v", err))
+		return backend.DataQuery{}, false
+	}
+
+	return backend.DataQuery{
+		RefID:         q.RefID,
+		QueryType:     q.QueryType,
+		MaxDataPoints: q.MaxDataPoints,
+		Interval:      q.Interval,
+		TimeRange:     q.TimeRange,
+		JSON:          jsonBytes,
+	}, true
+}
+
 func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
 	if req == nil || len(req.Queries) == 0 {
 		return req, nil
@@ -110,137 +245,16 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 		}
 
 		if isLogsTable(query.Table) {
-			region := strings.TrimSpace(anyToStr(query.TableParameterValues[RegionTableParameter]))
-			accountIdStr := strings.TrimSpace(anyToStr(query.TableParameterValues[AccountIdTableParameter]))
-			logGroupRaw := strings.TrimSpace(anyToStr(query.TableParameterValues[LogGroupTableParameter]))
-			logGroupName, logGroupArn, lgOk := ParseLogGroupTableParameter(logGroupRaw)
-
-			if region == "" || accountIdStr == "" {
-				backend.Logger.Warn("grafanaSQL logs query missing required region or accountId table parameter, skipping", "refId", q.RefID, "region", region, "accountId", accountIdStr)
-				continue
+			if out, ok := normalizeGrafanaSQLLogsDataQuery(q, query); ok {
+				queries = append(queries, out)
 			}
-			if !lgOk {
-				backend.Logger.Warn("grafanaSQL logs query requires valid logGroup table parameter, skipping", "refId", q.RefID)
-				continue
-			}
-
-			lg := dataquery.LogGroup{Name: logGroupName}
-			if logGroupArn != "" {
-				lg.Arn = strings.TrimSuffix(logGroupArn, "*")
-			}
-
-			sqlStr := buildLogsGrafanaSQLFromSchema(query)
-			sqlLang := dataquery.LogsQueryLanguageSQL
-
-			logsPayload := models.LogsQuery{
-				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					QueryMode:     dataquery.CloudWatchQueryModeLogs,
-					Region:        region,
-					Expression:    utils.Pointer(sqlStr),
-					QueryLanguage: &sqlLang,
-					RefId:         q.RefID,
-					Id:            q.RefID,
-					LogGroups:     []dataquery.LogGroup{lg},
-				},
-				GrafanaSqlLogs: true,
-			}
-			if accountIdStr != "" && accountIdStr != LogsAccountSelfSentinel && accountIdStr != "all" {
-				idCopy := accountIdStr
-				logsPayload.SelectedAccountIds = []string{accountIdStr}
-				logsPayload.LogGroups[0].AccountId = &idCopy
-			}
-
-			jsonBytes, err := json.Marshal(logsPayload)
-			if err != nil {
-				backend.Logger.Warn("failed to marshal normalised grafanaSQL logs query, skipping", "refId", q.RefID, "error", fmt.Sprintf("%v", err))
-				continue
-			}
-
-			queries = append(queries, backend.DataQuery{
-				RefID:         q.RefID,
-				QueryType:     q.QueryType,
-				MaxDataPoints: q.MaxDataPoints,
-				Interval:      q.Interval,
-				TimeRange:     q.TimeRange,
-				JSON:          jsonBytes,
-			})
 			continue
 		}
 
-		namespace, nsOK := metricsTableNamespace(query.Table)
-		if !nsOK || namespace == "" {
-			backend.Logger.Warn("grafanaSQL query has unrecognised table format, skipping", "refId", q.RefID, "table", query.Table)
-			queries = append(queries, q)
-			continue
+		if out, ok := ds.normalizeGrafanaSQLMetricsDataQuery(ctx, q, query); ok {
+			grafanaSQLMetricsRefIDs[q.RefID] = struct{}{}
+			queries = append(queries, out)
 		}
-
-		metricName, _ := query.TableParameterValues[MetricNameTableParameter].(string)
-		metricName = strings.TrimSpace(metricName)
-		if metricName == "" {
-			backend.Logger.Warn("grafanaSQL query missing required metricName table parameter, skipping", "refId", q.RefID, "namespace", namespace)
-			queries = append(queries, q)
-			continue
-		}
-
-		dimensions := applyFilters(query.Filters)
-		matchExact := len(dimensions) > 0
-
-		statistic := statisticFromGrafanaSQLTableHints(query)
-
-		region, _ := query.TableParameterValues[RegionTableParameter].(string)
-		accountIdStr, _ := query.TableParameterValues[AccountIdTableParameter].(string)
-		var accountIdPtr *string
-		if accountIdStr != "" {
-			accountIdPtr = &accountIdStr
-		}
-
-		if len(dimensions) == 0 && ds != nil {
-			keys, err := ds.dimensionKeysForGrafanaSQLWildcard(ctx, region, accountIdPtr, namespace)
-			if err != nil {
-				backend.Logger.Warn("grafanaSQL: could not resolve dimension keys for wildcard injection; using dimensionless query", "refId", q.RefID, "namespace", namespace, "error", err.Error())
-			} else {
-				for _, k := range keys {
-					dimensions[k] = []string{"*"}
-				}
-			}
-		}
-
-		dims := make(dataquery.Dimensions, len(dimensions))
-		for k, vals := range dimensions {
-			dims[k] = dataquery.StringOrArrayOfString{ArrayOfString: vals}
-		}
-
-		normalized := models.MetricsDataQuery{
-			Type: timeSeriesQuery,
-			CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
-				Region:     region,
-				Namespace:  namespace,
-				Statistic:  &statistic,
-				Dimensions: &dims,
-				MatchExact: utils.Pointer(matchExact),
-			},
-		}
-		normalized.MetricName = &metricName
-		if accountIdStr != "" {
-			normalized.AccountId = &accountIdStr
-		}
-
-		jsonBytes, err := json.Marshal(normalized)
-		if err != nil {
-			backend.Logger.Warn("failed to marshal normalised grafanaSQL query, skipping", "refId", q.RefID, "error", fmt.Sprintf("%v", err))
-			queries = append(queries, q)
-			continue
-		}
-
-		grafanaSQLMetricsRefIDs[q.RefID] = struct{}{}
-		queries = append(queries, backend.DataQuery{
-			RefID:         q.RefID,
-			QueryType:     q.QueryType,
-			MaxDataPoints: q.MaxDataPoints,
-			Interval:      q.Interval,
-			TimeRange:     q.TimeRange,
-			JSON:          jsonBytes,
-		})
 	}
 
 	return &backend.QueryDataRequest{

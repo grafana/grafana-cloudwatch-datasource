@@ -257,7 +257,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 
 	})
 
-	t.Run("custom namespace without metricName is not rewritten", func(t *testing.T) {
+	t.Run("custom namespace without metricName is omitted", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
@@ -267,12 +267,8 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 			},
 		}
 		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
-		require.Len(t, out.Queries, 1)
+		assert.Empty(t, out.Queries)
 		assert.NotContains(t, refIDs, "A")
-		var q schemas.Query
-		require.NoError(t, json.Unmarshal(out.Queries[0].JSON, &q))
-		assert.True(t, q.GrafanaSql)
-		assert.Equal(t, "metrics|Custom.App", q.Table)
 	})
 
 	t.Run("custom namespace with metricName is normalised", func(t *testing.T) {
@@ -296,15 +292,14 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		assert.Equal(t, "Invocations", *mdq.MetricName)
 	})
 
-	t.Run("passes through unchanged when table has no metrics prefix", func(t *testing.T) {
+	t.Run("omits grafanaSQL query when table is neither logs nor metrics|<namespace>", func(t *testing.T) {
 		qJSON := grafanaSQLQueryJSON("logs|/aws/lambda/fn", nil)
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
 		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
-		require.Len(t, out.Queries, 1)
-		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
+		assert.Empty(t, out.Queries)
 		assert.NotContains(t, refIDs, "A")
 	})
 
@@ -409,7 +404,29 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 		assert.Empty(t, out.Queries)
 	})
 
-	t.Run("normalises logs query with bare ARN in logGroup", func(t *testing.T) {
+	t.Run("normalises logs query with name and ARN in logGroup", func(t *testing.T) {
+		arn := "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/foo"
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:    "us-east-1",
+						AccountIdTableParameter: "123456789012",
+						LogGroupTableParameter:  FormatLogGroupTableParameter("/aws/lambda/foo", arn),
+					},
+				})},
+			},
+		}
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		require.Len(t, out.Queries, 1)
+		lq := requireNormalizedLogsQuery(t, out.Queries[0])
+		require.Len(t, lq.LogGroups, 1)
+		assert.Equal(t, "/aws/lambda/foo", lq.LogGroups[0].Name)
+		assert.Equal(t, arn, lq.LogGroups[0].Arn)
+	})
+
+	t.Run("drops logs query when logGroup is bare ARN only", func(t *testing.T) {
 		arn := "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/foo"
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
@@ -424,11 +441,7 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			},
 		}
 		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
-		require.Len(t, out.Queries, 1)
-		lq := requireNormalizedLogsQuery(t, out.Queries[0])
-		require.Len(t, lq.LogGroups, 1)
-		assert.Equal(t, "/aws/lambda/foo", lq.LogGroups[0].Name)
-		assert.Equal(t, arn, lq.LogGroups[0].Arn)
+		assert.Empty(t, out.Queries)
 	})
 
 	t.Run("sets selectedAccountIds when accountId table parameter is set", func(t *testing.T) {

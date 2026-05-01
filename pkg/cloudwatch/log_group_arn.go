@@ -21,60 +21,29 @@ func FormatLogGroupTableParameter(name, arn string) string {
 }
 
 // ParseLogGroupTableParameter decodes LogGroupTableParameter values produced by
-// FormatLogGroupTableParameter, or a bare log group name, or a bare log group ARN.
+// FormatLogGroupTableParameter (name|arn), or a bare log group name. A bare log
+// group ARN alone is invalid — the name must be provided by the caller.
 func ParseLogGroupTableParameter(v string) (name, arn string, ok bool) {
 	v = strings.TrimSpace(v)
 	if v == "" {
 		return "", "", false
 	}
-	sep := LogGroupTableParameterSeparator
-	if strings.Contains(v, sep) {
-		parts := strings.SplitN(v, sep, 2)
+	if strings.Contains(v, LogGroupTableParameterSeparator) {
+		parts := strings.SplitN(v, LogGroupTableParameterSeparator, 2)
 		name = strings.TrimSpace(parts[0])
 		arn = strings.TrimSpace(parts[1])
 		if name == "" && arn == "" {
 			return "", "", false
 		}
 	} else if strings.HasPrefix(v, "arn:") {
-		arn = v
+		return "", "", false
 	} else {
 		name = v
-	}
-	if name == "" && arn != "" {
-		var nok bool
-		name, nok = LogGroupNameFromARN(arn)
-		if !nok {
-			return "", "", false
-		}
 	}
 	if name == "" {
 		return "", "", false
 	}
 	return name, arn, true
-}
-
-// LogGroupNameFromARN extracts the log group name segment from a standard
-// CloudWatch Logs group ARN (…:log-group:name or …:log-group:name:*).
-// Log stream ARNs and other shapes are rejected.
-func LogGroupNameFromARN(arn string) (string, bool) {
-	arn = strings.TrimSpace(arn)
-	if arn == "" {
-		return "", false
-	}
-	const sep = ":log-group:"
-	i := strings.Index(arn, sep)
-	if i < 0 {
-		return "", false
-	}
-	name := arn[i+len(sep):]
-	if strings.Contains(name, ":log-stream:") {
-		return "", false
-	}
-	name = strings.TrimSuffix(name, ":*")
-	if name == "" {
-		return "", false
-	}
-	return name, true
 }
 
 // logsTableAccountIDForAPI maps table parameter accountId to the pointer passed
@@ -85,6 +54,5 @@ func logsTableAccountIDForAPI(accountKey string) *string {
 	if accountKey == "" || accountKey == LogsAccountSelfSentinel {
 		return nil
 	}
-	s := accountKey
-	return &s
+	return &accountKey
 }
