@@ -30,9 +30,11 @@ const LogsTableName = "logs"
 
 // Logs-specific table parameters (JSON wire names). Log group discovery uses
 // DescribeLogGroups; field discovery uses GetLogGroupFields with logGroupName.
+// LogGroupTableParameter carries name+ARN (see FormatLogGroupTableParameter).
+// LogsAccountSelfSentinel is defined in log_group_arn.go.
 const (
 	LogGroupNamePrefixTableParameter = "logGroupNamePrefix"
-	LogGroupNameTableParameter       = "logGroupName"
+	LogGroupTableParameter           = "logGroup"
 )
 
 var (
@@ -65,9 +67,9 @@ var (
 
 	logsTableParameters = []schemas.TableParameter{
 		{Name: RegionTableParameter, Root: true, Required: true},
-		{Name: AccountIdTableParameter, DependsOn: []string{RegionTableParameter}, Required: false},
-		{Name: LogGroupNamePrefixTableParameter, DependsOn: []string{RegionTableParameter}, Required: false},
-		{Name: LogGroupNameTableParameter, DependsOn: []string{RegionTableParameter}, Required: true},
+		{Name: AccountIdTableParameter, DependsOn: []string{RegionTableParameter}, Required: true},
+		{Name: LogGroupNamePrefixTableParameter, DependsOn: []string{RegionTableParameter, AccountIdTableParameter}, Required: false},
+		{Name: LogGroupTableParameter, DependsOn: []string{RegionTableParameter, AccountIdTableParameter}, Required: false},
 	}
 
 	// Placeholder columns for FullSchema / getAllTables; Columns() replaces these using GetLogGroupFields.
@@ -81,7 +83,7 @@ const schemaLogGroupsListLimit int32 = 50
 // ColumnsHandler, TableParameterValuesHandler, and ColumnValuesHandler for
 // CloudWatch metrics and the virtual LogsTableName logs table.
 // Metrics tables use "metrics|<namespace>"; log fields use table "logs" with
-// logGroupName and optional logGroupNamePrefix parameters.
+// logGroup and optional logGroupNamePrefix parameters.
 type SchemaProvider struct {
 	ds *DataSource
 }
@@ -224,9 +226,15 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 			continue
 		}
 		if isLogsTable(tableName) {
-			logGroupName := strings.TrimSpace(req.TableParameters[LogGroupNameTableParameter])
-			if logGroupName == "" {
-				errs[tableName] = fmt.Sprintf("%s is required to discover log fields", LogGroupNameTableParameter)
+			accountKey := strings.TrimSpace(req.TableParameters[AccountIdTableParameter])
+			if accountKey == "" {
+				errs[tableName] = fmt.Sprintf("%s is required to discover log fields", AccountIdTableParameter)
+				continue
+			}
+			apiAccountID := logsTableAccountIDForAPI(accountKey)
+			logGroupName, _, parseOk := ParseLogGroupTableParameter(req.TableParameters[LogGroupTableParameter])
+			if !parseOk {
+				errs[tableName] = fmt.Sprintf("%s is required for log field discovery", LogGroupTableParameter)
 				continue
 			}
 			service, err := p.ds.GetLogGroupsService(ctx, region)
@@ -235,7 +243,7 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 				continue
 			}
 			fieldRows, err := service.GetLogGroupFields(ctx, resources.LogGroupFieldsRequest{
-				ResourceRequest: resources.ResourceRequest{Region: region, AccountId: accountId},
+				ResourceRequest: resources.ResourceRequest{Region: region, AccountId: apiAccountID},
 				LogGroupName:    logGroupName,
 			})
 			if err != nil {
@@ -285,7 +293,19 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 		}
 		accountResponses, err := service.GetAccountsForCurrentUserOrRole(ctx)
 		if err != nil || len(accountResponses) == 0 {
-			// Not a monitoring account or access denied — return empty, not an error.
+			if req.Table == LogsTableName {
+				result[AccountIdTableParameter] = []string{LogsAccountSelfSentinel}
+			}
+			break
+		}
+		if req.Table == LogsTableName {
+			accountIds := make([]string, 0, len(accountResponses)+2)
+			accountIds = append(accountIds, LogsAccountSelfSentinel)
+			accountIds = append(accountIds, "all")
+			for _, ar := range accountResponses {
+				accountIds = append(accountIds, ar.Value.Id)
+			}
+			result[AccountIdTableParameter] = accountIds
 			break
 		}
 		accountIds := make([]string, 0, len(accountResponses)+1)
@@ -299,7 +319,7 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 		// Optional filter for DescribeLogGroups; values are user-typed, not enumerated.
 		return &schemas.TableParametersValuesResponse{TableParameterValues: result}, nil
 
-	case LogGroupNameTableParameter:
+	case LogGroupTableParameter:
 		if req.Table != LogsTableName {
 			break
 		}
@@ -308,10 +328,13 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 			break
 		}
 		accountKey := strings.TrimSpace(req.DependencyValues[AccountIdTableParameter])
-		var accountPtr *string
-		if accountKey != "" {
-			accountPtr = &accountKey
+		if accountKey == "" {
+			return &schemas.TableParametersValuesResponse{
+				TableParameterValues: result,
+				Errors:               map[string]string{LogGroupTableParameter: fmt.Sprintf("%s is required", AccountIdTableParameter)},
+			}, nil
 		}
+		accountPtr := logsTableAccountIDForAPI(accountKey)
 		prefixStr := strings.TrimSpace(req.DependencyValues[LogGroupNamePrefixTableParameter])
 		var prefixPtr *string
 		if prefixStr != "" {
@@ -321,7 +344,7 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 		if err != nil {
 			return &schemas.TableParametersValuesResponse{
 				TableParameterValues: result,
-				Errors:               map[string]string{LogGroupNameTableParameter: err.Error()},
+				Errors:               map[string]string{LogGroupTableParameter: err.Error()},
 			}, nil
 		}
 		lgReq := resources.LogGroupsRequest{
@@ -337,17 +360,18 @@ func (p *SchemaProvider) TableParameterValues(ctx context.Context, req *schemas.
 		if err != nil {
 			return &schemas.TableParametersValuesResponse{
 				TableParameterValues: result,
-				Errors:               map[string]string{LogGroupNameTableParameter: err.Error()},
+				Errors:               map[string]string{LogGroupTableParameter: err.Error()},
 			}, nil
 		}
-		names := make([]string, 0, len(groups))
+		combined := make([]string, 0, len(groups))
 		for _, g := range groups {
-			if g.Value.Name != "" {
-				names = append(names, g.Value.Name)
+			if g.Value.Name == "" {
+				continue
 			}
+			combined = append(combined, FormatLogGroupTableParameter(g.Value.Name, g.Value.Arn))
 		}
-		sort.Strings(names)
-		result[LogGroupNameTableParameter] = names
+		sort.Strings(combined)
+		result[LogGroupTableParameter] = combined
 
 	case MetricNameTableParameter:
 		namespace, nsOK := metricsTableNamespace(req.Table)

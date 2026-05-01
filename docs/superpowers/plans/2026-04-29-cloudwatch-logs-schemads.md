@@ -8,6 +8,18 @@
 
 **Tech Stack:** Go (`github.com/grafana/schemads`), AWS SDK v2 `cloudwatchlogs`, existing `pkg/cloudwatch/services/log_groups.go`, `resource_handler.go`, `sql.go`, `log_actions.go`.
 
+### Current logs table contract (schemads + Grafana SQL)
+
+These rules match `pkg/cloudwatch/schema.go`, `log_group_arn.go`, and `sql.go` (required-chain validation in schemads requires `accountId` to be **required** before `logGroupName` may depend on it):
+
+- **Table id:** `logs`.
+- **`region`:** required (root parameter).
+- **`accountId`:** required. Enumeration lists `self`, then `all` (when linked accounts exist), then linked account ids. Literal **`self`** means the datasource’s own account: it is **not** sent on AWS `ResourceRequest.AccountId` (same-account). Use **`self`** when the account picker would otherwise be empty (non–monitoring-account stacks).
+- **`logGroupNamePrefix`:** optional; depends on `region` and `accountId`. Passed into `DescribeLogGroups` after mapping `self` → nil account filter.
+- **`logGroupName`:** optional in the schema wire model; **either** `logGroupName` **or** `logGroupArn` must be set for **Columns** (field discovery) and for **Grafana SQL** execution. Depends on `region` and `accountId`.
+- **`logGroupArn`:** optional; same dependency chain as `logGroupName`. When present without a name, the plugin derives the log group name from the ARN for `GetLogGroupFields` and for the normalized `LogGroups[0].Name`. If both name and ARN are set, the normalized query keeps **both** (ARN wins for the `arn` field on `LogGroup`; name is still required for SQL path unless derived from ARN).
+- **Grafana SQL:** `normalizeGrafanaSQLRequest` skips the query unless `region`, `accountId`, and at least one of `logGroupName` / `logGroupArn` are present. `SelectedAccountIds` and per–log-group `AccountId` are set only for a concrete 12-digit account id; omitted for `self`, `all`, or empty.
+
 ---
 
 ## Preconditions and product alignment
@@ -23,7 +35,7 @@ Two viable shapes appear in comparable implementations: CloudWatch **metrics** s
 
 ### Option A — Single virtual table + table parameters
 
-**Shape:** One table id, e.g. `logs`, with **required** `TableParameters`: `region`, optional `accountId`, and **log group** (name or ARN) selected via `TableParameterValues` / UI dependency chain—same **mental model as** `metrics|<namespace>` + `metricName`.
+**Shape:** One table id, e.g. `logs`, with **required** `TableParameters`: `region`, **`accountId` (required)**, optional `logGroupNamePrefix`, and **log group identity** via optional `logGroupName` and/or `logGroupArn` (at least one required at query / column-discovery time)—same **mental model as** `metrics|<namespace>` + `metricName`, with a stricter account chain for schemads validation.
 
 **Pros**
 
@@ -96,11 +108,11 @@ Hybrid approaches (e.g. Option B only for a filtered subset, or Option A with op
 
 **How to expose it in schemads**
 
-1. **Optional table parameter** — Add something like `logGroupNamePrefix` to the logs table’s `TableParameters` in [`pkg/cloudwatch/schema.go`](pkg/cloudwatch/schema.go): `Required: false`, `DependsOn: [region]` (and optionally `accountId` if you want ordering after account selection). Same pattern as `RegionTableParameter` → `AccountIdTableParameter` → `MetricNameTableParameter` for metrics.
+1. **Optional table parameter** — `logGroupNamePrefix` on the logs table: `Required: false`, `DependsOn: [region, accountId]` so listing stays account-scoped. Same ordering idea as `RegionTableParameter` → `AccountIdTableParameter` → metrics parameters.
 
 2. **Thread into AWS calls** — In `TableParameterValues` when resolving values for the log group identifier parameter, read `req.TableParameters["logGroupNamePrefix"]` (exact key matches your constant) and set [`resources.LogGroupsRequest.LogGroupNamePrefix`](pkg/cloudwatch/models/resources/resource_request.go) before calling `GetLogGroups`.
 
-3. **Cache keys** — Include the prefix (or a sentinel for “empty”) in cache keys for listed log group names so cached lists are not mixed across prefixes.
+3. **Cache scope** — With **schemads v0.1.0+**, `abstractionSchema/*` responses are keyed per datasource/user scope by the library’s cache; distinct prefixes yield distinct discovery requests. Plugin-side `schemaMetadataCache` applies only to ListMetrics-backed paths, not logs discovery.
 
 4. **Option B (`Tables()` lists many ids)** — Prefix becomes important to keep responses bounded: either **require** a non-empty prefix before listing “tables,” or **document** that full enumeration is only available with prefix empty and may paginate slowly (product decision).
 
@@ -117,7 +129,7 @@ Hybrid approaches (e.g. Option B only for a filtered subset, or Option A with op
 | Responsibility | Files |
 |----------------|--------|
 | Logs table id + parameter constants; dispatch in schema handlers | Modify: `pkg/cloudwatch/schema.go` |
-| Cache keys + TTL helpers for log group field lists (and optionally log group name lists) | Modify: `pkg/cloudwatch/schema_cache.go` (or extend existing cache usage in `DataSource`) |
+| Cache keys + TTL for ListMetrics-backed discovery only | Modify: `pkg/cloudwatch/schema_cache.go`; logs CallResource responses cached by **schemads ≥v0.1.0** (`DefaultOptions`), not duplicated here |
 | Tests for logs schema paths | Modify: `pkg/cloudwatch/schema_test.go`, `pkg/cloudwatch/schema_cache_test.go` |
 | Grafana SQL → `CloudWatchLogsQuery` rewrite | Modify: `pkg/cloudwatch/sql.go`; tests in `pkg/cloudwatch/sql_test.go` |
 | Ensure rewritten logs queries reach `executeLogActions` | Modify: `pkg/cloudwatch/cloudwatch.go` (`QueryData` routing), possibly `pkg/cloudwatch/log_actions.go` if unmarshalling needs new fields |
@@ -140,13 +152,13 @@ Hybrid approaches (e.g. Option B only for a filtered subset, or Option A with op
 ### Task 2: Include the logs table in `getAllTables`
 
 - [ ] Append one `schemas.Table` for `logs` with:
-  - `TableParameters`: `[region, accountId?, optional logGroupNamePrefix, logGroupArn or logGroupName]` — mirror metrics’ dependency chain; include **optional prefix** per [Prefix filtering in the schema](#prefix-filtering-in-the-schema).
+  - `TableParameters`: `[region, accountId (required), optional logGroupNamePrefix, optional logGroupName, optional logGroupArn]` — `logGroupName` / `logGroupArn` depend on `region` + `accountId`; include **optional prefix** per [Prefix filtering in the schema](#prefix-filtering-in-the-schema). Callers must supply at least one of name or ARN for execution/discovery.
   - `TableHints`: empty or document future hints (e.g. query language); do not invent hints until SQL mapping exists.
   - `Columns`: **either** omit concrete columns at full-schema time **or** supply a minimal static set (`@timestamp`, `@message` / `message`) plus note that full discovery requires `TableParameterValues` for region + log group. Prefer matching metrics: lightweight placeholders in `Schema()`, richer columns in `Columns()` when params are present.
 
 ### Task 3: `Columns()` for logs
 
-- [ ] When `req.Tables` contains `logs`, read `region` and optional `accountId` from `req.TableParameters`; require log group identifier.
+- [ ] When `req.Tables` contains `logs`, read `region` and **required** `accountId` from `req.TableParameters`; require **either** `logGroupName` **or** `logGroupArn` (derive name from ARN when name is omitted).
 - [ ] Call existing `LogGroupsService.GetLogGroupFields` with `resources.LogGroupFieldsRequest` (same shapes as `LogGroupFieldsHandler`).
 - [ ] Map each returned field to `schemas.Column`: default `ColumnTypeString` unless you map known system fields (`@timestamp` → timestamp).
 - [ ] Return per-table errors in `Errors` map on API failure (same pattern as metrics namespaces).
@@ -163,7 +175,7 @@ Hybrid approaches (e.g. Option B only for a filtered subset, or Option A with op
 ### Task 6: Tests
 
 - [ ] Extend `schema_test.go` with table-router tests: `Columns` for `logs` calls mocked `GetLogGroupFields`.
-- [ ] Extend `schema_cache_test.go` if new cache keys are introduced for field lists.
+- [ ] Extend `schema_cache_test.go` for **metrics** ListMetrics cache behaviour if needed; logs discovery caching is covered by **schemads** response cache (v0.1.0+), not plugin tests.
 
 **Verification:** `go test ./pkg/cloudwatch/ -run Schema -count=1` (adjust pattern); manual CallResource against `abstractionSchema/*` routes if integration harness exists.
 
@@ -178,7 +190,7 @@ Hybrid approaches (e.g. Option B only for a filtered subset, or Option A with op
 **Files:** `pkg/cloudwatch/sql.go`, `pkg/cloudwatch/sql_test.go`
 
 - [ ] After unmarshalling `schemas.Query`, branch: if `isLogsTable(query.Table)` then **do not** require `metricsTableNamespace`.
-- [ ] Extract `region`, optional `accountId`, log group id from `TableParameterValues`.
+- [ ] Extract `region`, **required** `accountId`, and log group identity (`logGroupName` and/or `logGroupArn`) from `TableParameterValues`; require at least one of name or ARN; map `self` / `all` per [Current logs table contract](#current-logs-table-contract-schemads--grafana-sql).
 - [ ] Map `query.Filters` to a Logs Insights SQL fragment or to fields on `models.LogsQuery`—**this requires the agreed SQL semantics** (e.g. `WHERE` → `filter` in Insights SQL, `LIMIT`, time range from request `TimeRange`, not from SQL alone).
 - [ ] Set `queryMode: logs`, `queryLanguage: SQL`, `expression` to the final string expected by `buildFinalQueryString` / `StartQuery` (reuse helpers in `log_actions.go` where possible).
 - [ ] Register refID in `grafanaSQLRefIDs` if tabular post-processing applies; confirm whether `convertToTabular` is metrics-only or must be skipped for logs frames.
@@ -200,10 +212,10 @@ Hybrid approaches (e.g. Option B only for a filtered subset, or Option A with op
 
 ## Phase 3: Operational concerns
 
-- [ ] **Rate limits:** `DescribeLogGroups` and `GetLogGroupFields` can throttle; reuse caching patterns from `getOrSetSchemaDimensionKeys` with distinct key prefixes for logs.
-- [ ] **Cross-account:** Same as UI: pass `accountId` into resource requests when present.
-- [ ] **IAM:** Document required permissions (`logs:DescribeLogGroups`, `logs:GetLogGroupFields`, `logs:StartQuery`, etc.) in plugin docs if not already complete.
-- [ ] **Feature toggle:** Keep logs schemads + SQL behind `dsAbstractionApp` until product says otherwise (consistent with metrics).
+- [x] **Rate limits:** `DescribeLogGroups` and `GetLogGroupFields` can throttle; **schemads v0.1.0+** caches `CallResource` responses for schema endpoints by default (`NewSchemaDatasource` → `DefaultOptions`). Plugin `schemaMetadataCache` remains for ListMetrics-backed metric/dimension discovery (not logs-only duplication).
+- [x] **Cross-account:** Same as UI: pass `accountId` into resource requests when present.
+- [x] **IAM:** Document required permissions (`logs:DescribeLogGroups`, `logs:GetLogGroupFields`, `logs:StartQuery`, etc.) in plugin docs if not already complete.
+- [x] **Feature toggle:** Keep logs schemads + SQL behind `dsAbstractionApp` until product says otherwise (consistent with metrics).
 
 ---
 

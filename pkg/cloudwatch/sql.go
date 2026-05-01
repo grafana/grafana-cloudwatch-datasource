@@ -43,11 +43,9 @@ func tabularDimensionCell(s string) *string {
 //
 // The second return value is the set of refIDs rewritten to native CloudWatch metrics
 // queries; callers must post-process those with convertToTabular so the SQL engine
-// receives flat table frames rather than time-series-multi frames.
-//
-// The third return value lists refIDs rewritten to CloudWatch Logs Insights SQL;
-// those responses are already tabular from executeSyncLogQuery and must not go through
-// convertToTabular.
+// receives flat table frames rather than time-series-multi frames. Grafana SQL logs
+// refIDs are not included: those responses are already tabular from
+// executeSyncLogQuery and must not go through convertToTabular.
 //
 // MetricStat (MetricQueryTypeSearch + MetricEditorModeBuilder) is always used
 // rather than Metric Insights because:
@@ -65,15 +63,32 @@ func tabularDimensionCell(s string) *string {
 // when the user supplied dimension filters (pushdown): with schema-only wildcards
 // matchExact stays false so SEARCH uses the non-schema form and still returns
 // metrics that only have a subset of the namespace's possible dimensions.
-func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}, map[string]struct{}) {
+
+// statisticFromGrafanaSQLTableHints reads the metric statistic from schemads
+// TableHintValues (FOR statistic …). Hint keys are matched case-insensitively to
+// the statistic hint name. Defaults to Average when unset so normalized metrics JSON
+// always includes a non-empty statistic for ParseMetricDataQueries.
+func statisticFromGrafanaSQLTableHints(q schemas.Query) string {
+	if q.TableHintValues != nil {
+		for k, v := range q.TableHintValues {
+			if strings.EqualFold(k, statisticTableHint.Name) {
+				if s := strings.TrimSpace(v); s != "" {
+					return s
+				}
+			}
+		}
+	}
+	return "Average"
+}
+
+func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
 	if req == nil || len(req.Queries) == 0 {
-		return req, nil, nil
+		return req, nil
 	}
 
 	grafanaConfig := req.PluginContext.GrafanaConfig
 	queries := make([]backend.DataQuery, 0, len(req.Queries))
 	grafanaSQLMetricsRefIDs := make(map[string]struct{})
-	grafanaSQLLogsRefIDs := make(map[string]struct{})
 	for _, q := range req.Queries {
 		var query schemas.Query
 		if err := json.Unmarshal(q.JSON, &query); err != nil {
@@ -96,14 +111,23 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 
 		if isLogsTable(query.Table) {
 			region := strings.TrimSpace(anyToStr(query.TableParameterValues[RegionTableParameter]))
-			logGroupName := strings.TrimSpace(anyToStr(query.TableParameterValues[LogGroupNameTableParameter]))
-			if region == "" || logGroupName == "" {
-				backend.Logger.Warn("grafanaSQL logs query missing required region or logGroupName table parameter, skipping", "refId", q.RefID, "region", region, "logGroupName", logGroupName)
+			accountIdStr := strings.TrimSpace(anyToStr(query.TableParameterValues[AccountIdTableParameter]))
+			logGroupRaw := strings.TrimSpace(anyToStr(query.TableParameterValues[LogGroupTableParameter]))
+			logGroupName, logGroupArn, lgOk := ParseLogGroupTableParameter(logGroupRaw)
+
+			if region == "" || accountIdStr == "" {
+				backend.Logger.Warn("grafanaSQL logs query missing required region or accountId table parameter, skipping", "refId", q.RefID, "region", region, "accountId", accountIdStr)
+				continue
+			}
+			if !lgOk {
+				backend.Logger.Warn("grafanaSQL logs query requires valid logGroup table parameter, skipping", "refId", q.RefID)
 				continue
 			}
 
-			accountIdStr, _ := query.TableParameterValues[AccountIdTableParameter].(string)
-			accountIdStr = strings.TrimSpace(accountIdStr)
+			lg := dataquery.LogGroup{Name: logGroupName}
+			if logGroupArn != "" {
+				lg.Arn = strings.TrimSuffix(logGroupArn, "*")
+			}
 
 			sqlStr := buildLogsGrafanaSQLFromSchema(query)
 			sqlLang := dataquery.LogsQueryLanguageSQL
@@ -116,11 +140,11 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 					QueryLanguage: &sqlLang,
 					RefId:         q.RefID,
 					Id:            q.RefID,
-					LogGroups:     []dataquery.LogGroup{{Name: logGroupName}},
+					LogGroups:     []dataquery.LogGroup{lg},
 				},
 				GrafanaSqlLogs: true,
 			}
-			if accountIdStr != "" && accountIdStr != "all" {
+			if accountIdStr != "" && accountIdStr != LogsAccountSelfSentinel && accountIdStr != "all" {
 				idCopy := accountIdStr
 				logsPayload.SelectedAccountIds = []string{accountIdStr}
 				logsPayload.LogGroups[0].AccountId = &idCopy
@@ -132,7 +156,6 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 				continue
 			}
 
-			grafanaSQLLogsRefIDs[q.RefID] = struct{}{}
 			queries = append(queries, backend.DataQuery{
 				RefID:         q.RefID,
 				QueryType:     q.QueryType,
@@ -162,10 +185,7 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 		dimensions := applyFilters(query.Filters)
 		matchExact := len(dimensions) > 0
 
-		statistic := strings.TrimSpace(query.TableHintValues[StatisticTableHintValueKey])
-		if statistic == "" {
-			statistic = "Average"
-		}
+		statistic := statisticFromGrafanaSQLTableHints(query)
 
 		region, _ := query.TableParameterValues[RegionTableParameter].(string)
 		accountIdStr, _ := query.TableParameterValues[AccountIdTableParameter].(string)
@@ -227,17 +247,11 @@ func (ds *DataSource) normalizeGrafanaSQLRequest(ctx context.Context, req *backe
 		PluginContext: req.PluginContext,
 		Headers:       req.Headers,
 		Queries:       queries,
-	}, grafanaSQLMetricsRefIDs, grafanaSQLLogsRefIDs
+	}, grafanaSQLMetricsRefIDs
 }
 
 // buildLogsGrafanaSQLFromSchema builds OpenSearch SQL for CloudWatch Logs per:
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_SQL.html
-//
-// Validated against that page: SELECT/FROM/LIMIT are listed as supported; multi–log-group
-// source uses logGroups(logGroupIdentifier: ['…']) inside backticks (same doc “Query scope”
-// example). Fields with special characters (e.g. @timestamp, @message) must be backtick-quoted
-// (“Analyzing log data…” / same SQL page “Restrictions”). The $__logGroups macro is expanded
-// in expandLogGroupsMacro to that logGroups(...) form before StartQuery.
 func buildLogsGrafanaSQLFromSchema(query schemas.Query) string {
 	var sel string
 	if len(query.Columns) == 0 {

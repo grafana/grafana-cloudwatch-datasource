@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	schemas "github.com/grafana/schemads"
@@ -79,7 +80,7 @@ func dimensionValuesByName(mdq models.MetricsDataQuery) map[string][]string {
 
 // normalizeGrafanaSQLRequestUnderTest runs grafanaSQL normalization with a test datasource
 // so schema-based wildcard dimension injection can resolve namespace keys.
-func normalizeGrafanaSQLRequestUnderTest(req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}, map[string]struct{}) {
+func normalizeGrafanaSQLRequestUnderTest(req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]struct{}) {
 	ds := newTestDatasource()
 	return ds.normalizeGrafanaSQLRequest(context.Background(), req)
 }
@@ -93,7 +94,7 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 		assert.NotContains(t, refIDs, "A")
@@ -105,13 +106,13 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 	})
 
 	t.Run("nil request returns nil", func(t *testing.T) {
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(nil)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(nil)
 		assert.Nil(t, out)
 	})
 
@@ -120,7 +121,7 @@ func TestNormalizeGrafanaSQLRequest_NonGrafanaSQL(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		assert.Empty(t, out.Queries)
 	})
 }
@@ -132,7 +133,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", nil)},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		assert.Empty(t, out.Queries)
 	})
 
@@ -147,7 +148,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 				{RefID: "B", JSON: nativeJSON},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, "B", out.Queries[0].RefID)
 	})
@@ -206,7 +207,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
@@ -240,7 +241,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
@@ -252,6 +253,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 		assert.Equal(t, "111122223333", *mdq.AccountId)
 		assert.Equal(t, "myRef", out.Queries[0].RefID)
 		assert.Equal(t, int64(500), out.Queries[0].MaxDataPoints)
+
 	})
 
 	t.Run("custom namespace without metricName is not rewritten", func(t *testing.T) {
@@ -263,7 +265,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.NotContains(t, refIDs, "A")
 		var q schemas.Query
@@ -284,7 +286,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Contains(t, refIDs, "A")
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
@@ -299,7 +301,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries:       []backend.DataQuery{{RefID: "A", JSON: qJSON}},
 		}
-		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.Equal(t, string(qJSON), string(out.Queries[0].JSON))
 		assert.NotContains(t, refIDs, "A")
@@ -316,7 +318,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				{RefID: "B", JSON: nativeJSON},
 			},
 		}
-		out, refIDs, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, refIDs := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 2)
 		assert.Contains(t, refIDs, "A")
 		assert.NotContains(t, refIDs, "B")
@@ -331,7 +333,7 @@ func TestNormalizeGrafanaSQLRequest_Normalization(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		assert.Nil(t, mdq.AccountId, "accountId should not be present when not specified")
 	})
@@ -348,18 +350,18 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:       "us-east-1",
-						LogGroupNameTableParameter: "/aws/lambda/foo",
+						RegionTableParameter:      "us-east-1",
+						AccountIdTableParameter:   LogsAccountSelfSentinel,
+						LogGroupTableParameter:    FormatLogGroupTableParameter("/aws/lambda/foo", ""),
 					},
 					"limit":   &lim,
 					"columns": []string{"@timestamp", "@message"},
 				})},
 			},
 		}
-		out, metricsRef, logsRef := normalizeGrafanaSQLRequestUnderTest(req)
+		out, metricsRef := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		assert.NotContains(t, metricsRef, "L")
-		assert.Contains(t, logsRef, "L")
 
 		lq := requireNormalizedLogsQuery(t, out.Queries[0])
 		assert.Equal(t, dataquery.CloudWatchQueryModeLogs, lq.QueryMode)
@@ -374,19 +376,58 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 		assert.Equal(t, "/aws/lambda/foo", lq.LogGroups[0].Name)
 	})
 
-	t.Run("drops logs query when logGroupName is missing", func(t *testing.T) {
+	t.Run("drops logs query when logGroup is missing", func(t *testing.T) {
 		req := &backend.QueryDataRequest{
 			PluginContext: pluginCtxWithFeatureToggle(),
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter: "us-east-1",
+						RegionTableParameter:      "us-east-1",
+						AccountIdTableParameter:   LogsAccountSelfSentinel,
 					},
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		assert.Empty(t, out.Queries)
+	})
+
+	t.Run("drops logs query when accountId is missing", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:    "us-east-1",
+						LogGroupTableParameter: FormatLogGroupTableParameter("/g", ""),
+					},
+				})},
+			},
+		}
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		assert.Empty(t, out.Queries)
+	})
+
+	t.Run("normalises logs query with bare ARN in logGroup", func(t *testing.T) {
+		arn := "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/foo"
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:     "us-east-1",
+						AccountIdTableParameter:  "123456789012",
+						LogGroupTableParameter:   arn,
+					},
+				})},
+			},
+		}
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		require.Len(t, out.Queries, 1)
+		lq := requireNormalizedLogsQuery(t, out.Queries[0])
+		require.Len(t, lq.LogGroups, 1)
+		assert.Equal(t, "/aws/lambda/foo", lq.LogGroups[0].Name)
+		assert.Equal(t, arn, lq.LogGroups[0].Arn)
 	})
 
 	t.Run("sets selectedAccountIds when accountId table parameter is set", func(t *testing.T) {
@@ -395,14 +436,14 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:       "us-east-1",
-						LogGroupNameTableParameter: "/g",
-						AccountIdTableParameter:    "123456789012",
+						RegionTableParameter:     "us-east-1",
+						AccountIdTableParameter:  "123456789012",
+						LogGroupTableParameter:   FormatLogGroupTableParameter("/g", ""),
 					},
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 		lq := requireNormalizedLogsQuery(t, out.Queries[0])
 		require.Len(t, lq.SelectedAccountIds, 1)
@@ -410,6 +451,46 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 		require.Len(t, lq.LogGroups, 1)
 		require.NotNil(t, lq.LogGroups[0].AccountId)
 		assert.Equal(t, "123456789012", *lq.LogGroups[0].AccountId)
+	})
+
+	t.Run("omits selectedAccountIds for self account sentinel", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:     "us-east-1",
+						AccountIdTableParameter:  LogsAccountSelfSentinel,
+						LogGroupTableParameter:   FormatLogGroupTableParameter("/g", ""),
+					},
+				})},
+			},
+		}
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		require.Len(t, out.Queries, 1)
+		lq := requireNormalizedLogsQuery(t, out.Queries[0])
+		assert.Empty(t, lq.SelectedAccountIds)
+		assert.Nil(t, lq.LogGroups[0].AccountId)
+	})
+
+	t.Run("omits selectedAccountIds when accountId is all", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{
+						RegionTableParameter:     "us-east-1",
+						AccountIdTableParameter:  "all",
+						LogGroupTableParameter:   FormatLogGroupTableParameter("/g", ""),
+					},
+				})},
+			},
+		}
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		require.Len(t, out.Queries, 1)
+		lq := requireNormalizedLogsQuery(t, out.Queries[0])
+		assert.Empty(t, lq.SelectedAccountIds)
+		assert.Nil(t, lq.LogGroups[0].AccountId)
 	})
 }
 
@@ -426,7 +507,7 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		require.Len(t, out.Queries, 1)
 
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
@@ -447,7 +528,7 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		require.NotNil(t, mdq.Statistic)
 		assert.Equal(t, "Average", *mdq.Statistic)
@@ -463,11 +544,49 @@ func TestNormalizeGrafanaSQLRequest_StatisticTableHint(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		require.NotNil(t, mdq.Statistic)
 		assert.Equal(t, "p99", *mdq.Statistic)
 	})
+
+	t.Run("non-canonical statistic hint key still sets statistic field", func(t *testing.T) {
+		req := &backend.QueryDataRequest{
+			PluginContext: pluginCtxWithFeatureToggle(),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+					"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
+					"tableHintValues":      map[string]interface{}{"statistic": "Sum"},
+				})},
+			},
+		}
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
+		require.NotNil(t, mdq.Statistic)
+		assert.Equal(t, "Sum", *mdq.Statistic)
+	})
+}
+
+func TestNormalizeGrafanaSQLRequest_ParseMetricDataQueriesAcceptsOutput(t *testing.T) {
+	trFrom := time.Now().Add(-1 * time.Hour)
+	trTo := time.Now()
+	logger := log.NewNullLogger()
+
+	req := &backend.QueryDataRequest{
+		PluginContext: pluginCtxWithFeatureToggle(),
+		Queries: []backend.DataQuery{
+			{RefID: "A", TimeRange: backend.TimeRange{From: trFrom, To: trTo}, JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", map[string]interface{}{
+				"tableParameterValues": map[string]interface{}{RegionTableParameter: "us-east-1", MetricNameTableParameter: "CPUUtilization"},
+			})},
+		},
+	}
+	out, _ := normalizeGrafanaSQLRequestUnderTest(req)
+	require.Len(t, out.Queries, 1)
+
+	parsed, err := models.ParseMetricDataQueries([]backend.DataQuery{out.Queries[0]}, trFrom, trTo, "eu-west-1", logger, false)
+	require.NoError(t, err)
+	require.Len(t, parsed, 1)
+	assert.Equal(t, "Average", parsed[0].Statistic)
 }
 
 // ---- normalizeGrafanaSQLRequest — dimension filters ----
@@ -490,7 +609,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		dims := dimensionValuesByName(mdq)
 		assert.Equal(t, []string{"i-12345"}, dims["InstanceId"])
@@ -513,7 +632,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		dims := dimensionValuesByName(mdq)
 		assert.ElementsMatch(t, []string{"i-11111", "i-22222"}, dims["InstanceId"])
@@ -543,7 +662,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		dims := dimensionValuesByName(mdq)
 		assert.Equal(t, []string{"i-abc"}, dims["InstanceId"])
@@ -571,7 +690,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		dims := dimensionValuesByName(mdq)
 		for _, k := range []string{"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"} {
@@ -598,7 +717,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		dims := dimensionValuesByName(mdq)
 		assert.Len(t, dims, 4)
@@ -616,7 +735,7 @@ func TestNormalizeGrafanaSQLRequest_DimensionFilters(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		dims := dimensionValuesByName(mdq)
 		for _, k := range []string{"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"} {
@@ -640,7 +759,7 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		require.NotNil(t, mdq.MatchExact)
 		assert.False(t, *mdq.MatchExact, "schema-only wildcards: use non-schema SEARCH for partial-dimension series")
@@ -663,7 +782,7 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		require.NotNil(t, mdq.MatchExact)
 		assert.True(t, *mdq.MatchExact, "dimension filters present → matchExact should be true")
@@ -679,7 +798,7 @@ func TestNormalizeGrafanaSQLRequest_MatchExact(t *testing.T) {
 				})},
 			},
 		}
-		out, _, _ := normalizeGrafanaSQLRequestUnderTest(req)
+		out, _ := normalizeGrafanaSQLRequestUnderTest(req)
 		mdq := requireNormalizedMetricsDataQuery(t, out.Queries[0])
 		require.NotNil(t, mdq.MatchExact)
 		assert.False(t, *mdq.MatchExact, "statistic hint is not a dimension filter")

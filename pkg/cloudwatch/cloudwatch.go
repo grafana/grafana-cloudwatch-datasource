@@ -63,11 +63,11 @@ type DataSource struct {
 	ProxyOpts         *proxy.Options
 	AWSConfigProvider awsauth.ConfigProvider
 
-	logger                 log.Logger
-	tagValueCache          *cache.Cache
-	schemaMetadataCache    *cache.Cache
-	resourceHandler        backend.CallResourceHandler
-	monitoringAccountCache sync.Map
+	logger                   log.Logger
+	tagValueCache            *cache.Cache
+	schemaMetadataCache      *cache.Cache
+	resourceHandler          backend.CallResourceHandler
+	monitoringAccountCache   sync.Map
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
@@ -142,6 +142,9 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 
 	schemaProvider := NewSchemaProvider(ds)
+	// schemads ≥v0.1.0 applies DefaultOptions (response cache for abstractionSchema/*
+	// CallResource). Logs discovery relies on that; schemaMetadataCache stays for
+	// ListMetrics-backed paths outside CallResource.
 	schemaDs := schemas.NewSchemaDatasource(
 		schemaProvider,     // SchemaHandler
 		schemaProvider,     // TablesHandler
@@ -174,7 +177,7 @@ func (ds *DataSource) CallResource(ctx context.Context, req *backend.CallResourc
 }
 
 func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	req, grafanaSQLMetricsRefIDs, _ := ds.normalizeGrafanaSQLRequest(ctx, req)
+	req, grafanaSQLMetricsRefIDs := ds.normalizeGrafanaSQLRequest(ctx, req)
 	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
 	if len(req.Queries) == 0 {
 		return nil, backend.DownstreamError(fmt.Errorf("no queries to execute: request was empty or all Grafana SQL queries were omitted"))

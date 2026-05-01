@@ -103,18 +103,18 @@ func TestSchemaProvider_Tables(t *testing.T) {
 
 				acct, ok := paramByName[AccountIdTableParameter]
 				assert.True(t, ok)
-				assert.False(t, acct.Required)
+				assert.True(t, acct.Required)
 				assert.Equal(t, []string{RegionTableParameter}, acct.DependsOn)
 
 				prefix, ok := paramByName[LogGroupNamePrefixTableParameter]
 				assert.True(t, ok)
 				assert.False(t, prefix.Required)
-				assert.Equal(t, []string{RegionTableParameter}, prefix.DependsOn)
+				assert.Equal(t, []string{RegionTableParameter, AccountIdTableParameter}, prefix.DependsOn)
 
-				lg, ok := paramByName[LogGroupNameTableParameter]
+				lg, ok := paramByName[LogGroupTableParameter]
 				assert.True(t, ok)
-				assert.True(t, lg.Required)
-				assert.Equal(t, []string{RegionTableParameter}, lg.DependsOn)
+				assert.False(t, lg.Required)
+				assert.Equal(t, []string{RegionTableParameter, AccountIdTableParameter}, lg.DependsOn)
 				continue
 			}
 
@@ -241,14 +241,27 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		assert.True(t, hasValue, "expected value data column")
 	})
 
-	t.Run("logs table requires logGroupName table parameter", func(t *testing.T) {
+	t.Run("logs table requires accountId and log group identity", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
 			Tables:          []string{LogsTableName},
 			TableParameters: map[string]string{RegionTableParameter: "us-east-1"},
 		})
 		require.NoError(t, err)
-		assert.Contains(t, resp.Errors[LogsTableName], LogGroupNameTableParameter)
+		assert.Contains(t, resp.Errors[LogsTableName], AccountIdTableParameter)
+	})
+
+	t.Run("logs table requires logGroup when accountId set", func(t *testing.T) {
+		p := newSchemaProviderForTest()
+		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
+			Tables: []string{LogsTableName},
+			TableParameters: map[string]string{
+				RegionTableParameter:    "us-east-1",
+				AccountIdTableParameter: LogsAccountSelfSentinel,
+			},
+		})
+		require.NoError(t, err)
+		assert.Contains(t, resp.Errors[LogsTableName], LogGroupTableParameter)
 	})
 
 	t.Run("logs table loads columns from GetLogGroupFields", func(t *testing.T) {
@@ -258,7 +271,7 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		mockLogs := &mocks.LogsService{}
 		// LogsService.GetLogGroupFields passes only the request to mock.Called (see mocks.LogsService).
 		mockLogs.On("GetLogGroupFields", mock.MatchedBy(func(r resources.LogGroupFieldsRequest) bool {
-			return r.LogGroupName == "/aws/lambda/foo" && r.Region == "us-east-1"
+			return r.LogGroupName == "/aws/lambda/foo" && r.Region == "us-east-1" && r.AccountId == nil
 		})).Return([]resources.ResourceResponse[resources.LogGroupField]{
 			{Value: resources.LogGroupField{Name: "msg", Percent: 50}},
 			{Value: resources.LogGroupField{Name: "@timestamp", Percent: 100}},
@@ -272,8 +285,9 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
 			Tables: []string{LogsTableName},
 			TableParameters: map[string]string{
-				RegionTableParameter:       "us-east-1",
-				LogGroupNameTableParameter: "/aws/lambda/foo",
+				RegionTableParameter:    "us-east-1",
+				AccountIdTableParameter: LogsAccountSelfSentinel,
+				LogGroupTableParameter:  FormatLogGroupTableParameter("/aws/lambda/foo", "arn:aws:logs:us-east-1:1:log-group:/aws/lambda/foo"),
 			},
 		})
 		require.NoError(t, err)
@@ -283,6 +297,38 @@ func TestSchemaProvider_Columns(t *testing.T) {
 		assert.Equal(t, "@timestamp", cols[0].Name)
 		assert.Equal(t, schemas.ColumnTypeTimestamp, cols[0].Type)
 		assert.Equal(t, "msg", cols[1].Name)
+		mockLogs.AssertExpectations(t)
+	})
+
+	t.Run("logs table loads columns using logGroupArn when name omitted", func(t *testing.T) {
+		origNewLogGroupsService := services.NewLogGroupsService
+		t.Cleanup(func() { services.NewLogGroupsService = origNewLogGroupsService })
+
+		arn := "arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/foo"
+		mockLogs := &mocks.LogsService{}
+		mockLogs.On("GetLogGroupFields", mock.MatchedBy(func(r resources.LogGroupFieldsRequest) bool {
+			return r.LogGroupName == "/aws/lambda/foo" && r.Region == "us-east-1" && r.AccountId != nil && *r.AccountId == "111111111111"
+		})).Return([]resources.ResourceResponse[resources.LogGroupField]{
+			{Value: resources.LogGroupField{Name: "@timestamp", Percent: 100}},
+		}, nil)
+
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+			return mockLogs
+		}
+
+		p := newSchemaProviderForTest()
+		resp, err := p.Columns(context.Background(), &schemas.ColumnsRequest{
+			Tables: []string{LogsTableName},
+			TableParameters: map[string]string{
+				RegionTableParameter:     "us-east-1",
+				AccountIdTableParameter:  "111111111111",
+				LogGroupTableParameter:   arn,
+			},
+		})
+		require.NoError(t, err)
+		require.Empty(t, resp.Errors)
+		require.Len(t, resp.Columns[LogsTableName], 1)
+		assert.Equal(t, "@timestamp", resp.Columns[LogsTableName][0].Name)
 		mockLogs.AssertExpectations(t)
 	})
 
@@ -420,6 +466,27 @@ func TestSchemaProvider_TableParameterValues_AccountId(t *testing.T) {
 		assert.ElementsMatch(t, []string{"all", "111122223333", "444455556666"}, accountIds)
 	})
 
+	t.Run("logs table prepends self then all for a monitoring account", func(t *testing.T) {
+		mockAcctService := &mocks.AccountsServiceMock{}
+		mockAcctService.On("GetAccountsForCurrentUserOrRole", mock.Anything).Return(
+			[]resources.ResourceResponse[resources.Account]{
+				{Value: resources.Account{Id: "111122223333", Label: "prod", IsMonitoringAccount: false}},
+			}, nil,
+		)
+		services.NewAccountsService = func(_ models.OAMAPIProvider) models.AccountsProvider {
+			return mockAcctService
+		}
+
+		p := newSchemaProviderForTest()
+		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
+			Table:            LogsTableName,
+			TableParameter:   AccountIdTableParameter,
+			DependencyValues: map[string]string{RegionTableParameter: "us-east-1"},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{LogsAccountSelfSentinel, "all", "111122223333"}, resp.TableParameterValues[AccountIdTableParameter])
+	})
+
 	t.Run("returns empty list (no error) when not a monitoring account", func(t *testing.T) {
 		mockAcctService := &mocks.AccountsServiceMock{}
 		mockAcctService.On("GetAccountsForCurrentUserOrRole", mock.Anything).Return(
@@ -436,6 +503,25 @@ func TestSchemaProvider_TableParameterValues_AccountId(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Empty(t, resp.TableParameterValues[AccountIdTableParameter])
+	})
+
+	t.Run("logs table returns only self when not a monitoring account", func(t *testing.T) {
+		mockAcctService := &mocks.AccountsServiceMock{}
+		mockAcctService.On("GetAccountsForCurrentUserOrRole", mock.Anything).Return(
+			[]resources.ResourceResponse[resources.Account](nil), nil,
+		)
+		services.NewAccountsService = func(_ models.OAMAPIProvider) models.AccountsProvider {
+			return mockAcctService
+		}
+
+		p := newSchemaProviderForTest()
+		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
+			Table:            LogsTableName,
+			TableParameter:   AccountIdTableParameter,
+			DependencyValues: map[string]string{RegionTableParameter: "us-east-1"},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{LogsAccountSelfSentinel}, resp.TableParameterValues[AccountIdTableParameter])
 	})
 
 	t.Run("returns empty list when region dependency is missing", func(t *testing.T) {
@@ -761,25 +847,28 @@ func TestSchemaProvider_ColumnValues(t *testing.T) {
 	t.Run("logs table returns empty column values (no enumeration API)", func(t *testing.T) {
 		p := newSchemaProviderForTest()
 		resp, err := p.ColumnValues(context.Background(), &schemas.ColumnValuesRequest{
-			Table:           LogsTableName,
-			Columns:         []string{"msg"},
-			TableParameters: map[string]string{RegionTableParameter: "us-east-1"},
+			Table:   LogsTableName,
+			Columns: []string{"msg"},
+			TableParameters: map[string]string{
+				RegionTableParameter:    "us-east-1",
+				AccountIdTableParameter: LogsAccountSelfSentinel,
+			},
 		})
 		require.NoError(t, err)
 		assert.Empty(t, resp.ColumnValues)
 	})
 }
 
-// ---- TableParameterValues — log group names -------------------------------
+// ---- TableParameterValues — log group (combined name+ARN) -------------------
 
 func TestSchemaProvider_TableParameterValues_LogGroupName(t *testing.T) {
-	t.Run("lists log groups for logs table", func(t *testing.T) {
+	t.Run("lists log groups for logs table as name+ARN", func(t *testing.T) {
 		origNewLogGroupsService := services.NewLogGroupsService
 		t.Cleanup(func() { services.NewLogGroupsService = origNewLogGroupsService })
 
 		mockLogs := &mocks.LogsService{}
 		mockLogs.On("GetLogGroups", mock.MatchedBy(func(r resources.LogGroupsRequest) bool {
-			return r.Region == "us-east-1" && r.ListAllLogGroups && r.LogGroupNamePrefix == nil
+			return r.Region == "us-east-1" && r.ListAllLogGroups && r.LogGroupNamePrefix == nil && r.AccountId == nil
 		})).Return([]resources.ResourceResponse[resources.LogGroup]{
 			{Value: resources.LogGroup{Name: "/z/group", Arn: "arn:aws:logs:us-east-1:1:log-group:z"}},
 			{Value: resources.LogGroup{Name: "/a/group", Arn: "arn:aws:logs:us-east-1:1:log-group:a"}},
@@ -792,13 +881,18 @@ func TestSchemaProvider_TableParameterValues_LogGroupName(t *testing.T) {
 		p := newSchemaProviderForTest()
 		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
 			Table:          LogsTableName,
-			TableParameter: LogGroupNameTableParameter,
+			TableParameter: LogGroupTableParameter,
 			DependencyValues: map[string]string{
-				RegionTableParameter: "us-east-1",
+				RegionTableParameter:    "us-east-1",
+				AccountIdTableParameter: LogsAccountSelfSentinel,
 			},
 		})
 		require.NoError(t, err)
-		assert.Equal(t, []string{"/a/group", "/z/group"}, resp.TableParameterValues[LogGroupNameTableParameter])
+		want := []string{
+			FormatLogGroupTableParameter("/a/group", "arn:aws:logs:us-east-1:1:log-group:a"),
+			FormatLogGroupTableParameter("/z/group", "arn:aws:logs:us-east-1:1:log-group:z"),
+		}
+		assert.Equal(t, want, resp.TableParameterValues[LogGroupTableParameter])
 		mockLogs.AssertExpectations(t)
 	})
 
@@ -808,7 +902,7 @@ func TestSchemaProvider_TableParameterValues_LogGroupName(t *testing.T) {
 
 		mockLogs := &mocks.LogsService{}
 		mockLogs.On("GetLogGroups", mock.MatchedBy(func(r resources.LogGroupsRequest) bool {
-			return r.Region == "eu-west-1" && r.LogGroupNamePrefix != nil && *r.LogGroupNamePrefix == "/aws/"
+			return r.Region == "eu-west-1" && r.LogGroupNamePrefix != nil && *r.LogGroupNamePrefix == "/aws/" && r.AccountId == nil
 		})).Return([]resources.ResourceResponse[resources.LogGroup]{
 			{Value: resources.LogGroup{Name: "/aws/lambda/x", Arn: "arn"}},
 		}, nil)
@@ -820,14 +914,15 @@ func TestSchemaProvider_TableParameterValues_LogGroupName(t *testing.T) {
 		p := newSchemaProviderForTest()
 		resp, err := p.TableParameterValues(context.Background(), &schemas.TableParameterValuesRequest{
 			Table:          LogsTableName,
-			TableParameter: LogGroupNameTableParameter,
+			TableParameter: LogGroupTableParameter,
 			DependencyValues: map[string]string{
 				RegionTableParameter:             "eu-west-1",
+				AccountIdTableParameter:          LogsAccountSelfSentinel,
 				LogGroupNamePrefixTableParameter: "/aws/",
 			},
 		})
 		require.NoError(t, err)
-		assert.Equal(t, []string{"/aws/lambda/x"}, resp.TableParameterValues[LogGroupNameTableParameter])
+		assert.Equal(t, []string{FormatLogGroupTableParameter("/aws/lambda/x", "arn")}, resp.TableParameterValues[LogGroupTableParameter])
 	})
 }
 
