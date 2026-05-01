@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	schemas "github.com/grafana/schemads"
@@ -24,7 +25,7 @@ import (
 // feature toggle enabled, which is required for grafanaSQL queries to be processed.
 func pluginCtxWithFeatureToggle() backend.PluginContext {
 	return backend.PluginContext{
-		GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+		GrafanaConfig: config.NewGrafanaCfg(map[string]string{
 			featuretoggles.EnabledFeatures: "dsAbstractionApp",
 		}),
 	}
@@ -141,7 +142,7 @@ func TestNormalizeGrafanaSQLRequest_FeatureGating(t *testing.T) {
 		nativeJSON := []byte(`{"refId":"B","type":"timeSeriesQuery","namespace":"AWS/EC2"}`)
 		req := &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
-				GrafanaConfig: backend.NewGrafanaCfg(map[string]string{}),
+				GrafanaConfig: config.NewGrafanaCfg(map[string]string{}),
 			},
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: grafanaSQLQueryJSON("metrics|AWS/EC2", nil)},
@@ -174,7 +175,7 @@ func TestQueryData_NoQueriesAfterGrafanaSQLNormalization(t *testing.T) {
 	t.Run("returns error when all queries were grafanaSQL and dsAbstractionApp is off", func(t *testing.T) {
 		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
-				GrafanaConfig: backend.NewGrafanaCfg(map[string]string{}),
+				GrafanaConfig: config.NewGrafanaCfg(map[string]string{}),
 			},
 			Queries: []backend.DataQuery{{
 				RefID:     "A",
@@ -350,9 +351,9 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:      "us-east-1",
-						AccountIdTableParameter:   LogsAccountSelfSentinel,
-						LogGroupTableParameter:    FormatLogGroupTableParameter("/aws/lambda/foo", ""),
+						RegionTableParameter:    "us-east-1",
+						AccountIdTableParameter: LogsAccountSelfSentinel,
+						LogGroupTableParameter:  FormatLogGroupTableParameter("/aws/lambda/foo", ""),
 					},
 					"limit":   &lim,
 					"columns": []string{"@timestamp", "@message"},
@@ -382,8 +383,8 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:      "us-east-1",
-						AccountIdTableParameter:   LogsAccountSelfSentinel,
+						RegionTableParameter:    "us-east-1",
+						AccountIdTableParameter: LogsAccountSelfSentinel,
 					},
 				})},
 			},
@@ -398,7 +399,7 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:    "us-east-1",
+						RegionTableParameter:   "us-east-1",
 						LogGroupTableParameter: FormatLogGroupTableParameter("/g", ""),
 					},
 				})},
@@ -415,9 +416,9 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:     "us-east-1",
-						AccountIdTableParameter:  "123456789012",
-						LogGroupTableParameter:   arn,
+						RegionTableParameter:    "us-east-1",
+						AccountIdTableParameter: "123456789012",
+						LogGroupTableParameter:  arn,
 					},
 				})},
 			},
@@ -436,9 +437,9 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:     "us-east-1",
-						AccountIdTableParameter:  "123456789012",
-						LogGroupTableParameter:   FormatLogGroupTableParameter("/g", ""),
+						RegionTableParameter:    "us-east-1",
+						AccountIdTableParameter: "123456789012",
+						LogGroupTableParameter:  FormatLogGroupTableParameter("/g", ""),
 					},
 				})},
 			},
@@ -459,9 +460,9 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:     "us-east-1",
-						AccountIdTableParameter:  LogsAccountSelfSentinel,
-						LogGroupTableParameter:   FormatLogGroupTableParameter("/g", ""),
+						RegionTableParameter:    "us-east-1",
+						AccountIdTableParameter: LogsAccountSelfSentinel,
+						LogGroupTableParameter:  FormatLogGroupTableParameter("/g", ""),
 					},
 				})},
 			},
@@ -479,9 +480,9 @@ func TestNormalizeGrafanaSQLRequest_Logs(t *testing.T) {
 			Queries: []backend.DataQuery{
 				{RefID: "L", JSON: grafanaSQLQueryJSON(LogsTableName, map[string]interface{}{
 					"tableParameterValues": map[string]interface{}{
-						RegionTableParameter:     "us-east-1",
-						AccountIdTableParameter:  "all",
-						LogGroupTableParameter:   FormatLogGroupTableParameter("/g", ""),
+						RegionTableParameter:    "us-east-1",
+						AccountIdTableParameter: "all",
+						LogGroupTableParameter:  FormatLogGroupTableParameter("/g", ""),
 					},
 				})},
 			},
