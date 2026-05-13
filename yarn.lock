@@ -1153,9 +1153,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:^7.0.0":
-  version: 7.3.12
-  resolution: "@grafana/scenes@npm:7.3.12"
+"@grafana/scenes@npm:^8.0.0":
+  version: 8.2.5
+  resolution: "@grafana/scenes@npm:8.2.5"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -1180,7 +1180,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10c0/c545414278030943aa1fd2b5b7b385ad32aa575455b73ff439f399c221df7066ab698f2d3036db1e46dc22b3c0828fe5b31bfe9f1c9dab543839a00d4b416f20
+  checksum: 10c0/8916658df63ed28b4479522b9e42e13b046d9f2b031387eb37003fcf6e286a40fc999af4c3be1f481ad3ddf302a1e54351251d18cef1db6af24be71ad2e3032b
   languageName: node
   linkType: hard
 
@@ -6662,7 +6662,7 @@ __metadata:
     "@grafana/plugin-e2e": "npm:3.4.13"
     "@grafana/plugin-ui": "npm:^0.13.0"
     "@grafana/runtime": "npm:^12.0.2"
-    "@grafana/scenes": "npm:^7.0.0"
+    "@grafana/scenes": "npm:^8.0.0"
     "@grafana/schema": "npm:^12.0.1"
     "@grafana/tsconfig": "npm:2.0.1"
     "@grafana/ui": "npm:^12.0.1"
