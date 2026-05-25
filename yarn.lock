@@ -959,13 +959,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@npm:12.4.2, @grafana/data@npm:^12.0.2":
-  version: 12.4.2
-  resolution: "@grafana/data@npm:12.4.2"
+"@grafana/data@npm:12.4.3, @grafana/data@npm:^12.2.0":
+  version: 12.4.3
+  resolution: "@grafana/data@npm:12.4.3"
   dependencies:
     "@braintree/sanitize-url": "npm:7.0.1"
-    "@grafana/i18n": "npm:12.4.2"
-    "@grafana/schema": "npm:12.4.2"
+    "@grafana/i18n": "npm:12.4.3"
+    "@grafana/schema": "npm:12.4.3"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/string-hash": "npm:1.1.3"
@@ -995,18 +995,18 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10c0/783961bd253df95caca7ac53e0b11376e410bbda82c7be412cb3e700574769b4a170de2bf25f3d7ddf3d4fa819f9951199614795a94830de7f79f206ef5e202a
+  checksum: 10c0/fd54bd2a24a507952cec2866456288bb3f8b7bdb8d3c9357ad910a82006c959d6bf65d860eb26d4a3ce9c25b6d1485f62cb5c57b9f52ea823fd683c1ab3c1ffb
   languageName: node
   linkType: hard
 
-"@grafana/e2e-selectors@npm:12.4.2":
-  version: 12.4.2
-  resolution: "@grafana/e2e-selectors@npm:12.4.2"
+"@grafana/e2e-selectors@npm:12.4.3":
+  version: 12.4.3
+  resolution: "@grafana/e2e-selectors@npm:12.4.3"
   dependencies:
     semver: "npm:^7.7.0"
     tslib: "npm:2.8.1"
     typescript: "npm:5.9.2"
-  checksum: 10c0/1116d175f03a9bae1417d2ed4156a84ca8b047621fa921325a25fa222fb3910369c226bd4c7fbb5eb8ee5566f5c8d762eb28d2d884c96d082a818b6b735bbe75
+  checksum: 10c0/07fe9d280a0649b3419b9ac1e6704da28b6f6b6be2dd1ef2da5c32294fc7d1f989be79cdb0774dfab515b4bb3c7422f880f4e737a3ddfc7e1f65034cbee5c5e7
   languageName: node
   linkType: hard
 
@@ -1059,9 +1059,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/i18n@npm:12.4.2":
-  version: 12.4.2
-  resolution: "@grafana/i18n@npm:12.4.2"
+"@grafana/i18n@npm:12.4.3, @grafana/i18n@npm:^12.2.0":
+  version: 12.4.3
+  resolution: "@grafana/i18n@npm:12.4.3"
   dependencies:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@typescript-eslint/utils": "npm:^8.33.1"
@@ -1073,7 +1073,7 @@ __metadata:
     react-i18next: "npm:^15.0.0"
   peerDependencies:
     react: ">=18"
-  checksum: 10c0/1485c25fded7356f4051b70b74a5b39bb6261a998907ca765dd1e37902d381e204332604f64461b17dbd2bb8acde1cce0263a7ebbc90d68f0494698f12f7fe4f
+  checksum: 10c0/7b28537bd785cbfda1a8b9f72eebe04d97b463bb61ed3703723d06dd4f0946dec588fcf428100b9fce3bde66bd57452351c91ca3eb269edba8dbd29ebcb597e0
   languageName: node
   linkType: hard
 
@@ -1127,15 +1127,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@npm:^12.0.2":
-  version: 12.4.2
-  resolution: "@grafana/runtime@npm:12.4.2"
+"@grafana/runtime@npm:^12.2.0":
+  version: 12.4.3
+  resolution: "@grafana/runtime@npm:12.4.3"
   dependencies:
-    "@grafana/data": "npm:12.4.2"
-    "@grafana/e2e-selectors": "npm:12.4.2"
+    "@grafana/data": "npm:12.4.3"
+    "@grafana/e2e-selectors": "npm:12.4.3"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
-    "@grafana/schema": "npm:12.4.2"
-    "@grafana/ui": "npm:12.4.2"
+    "@grafana/schema": "npm:12.4.3"
+    "@grafana/ui": "npm:12.4.3"
     "@openfeature/core": "npm:^1.9.0"
     "@openfeature/ofrep-web-provider": "npm:^0.3.3"
     "@openfeature/react-sdk": "npm:^1.2.0"
@@ -1149,7 +1149,7 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10c0/9ee66a71028836b80c0a360d96fbabbf36a6b1ea856e85e86641c7359d05606d28eb34fa289eb598861ca768833529ab5ebad4cfb0364b83af7928bd5270e4d7
+  checksum: 10c0/e698ecbee4f8a59e75d4f60c2cce49f18f45bc7189e7546950165eac6bdcdcac368cf59d7b4779ad20b4aa024b0d3970076bd8cfc0e2e07273763b94317f77ac
   languageName: node
   linkType: hard
 
@@ -1184,12 +1184,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/schema@npm:12.4.2, @grafana/schema@npm:^12.0.1":
-  version: 12.4.2
-  resolution: "@grafana/schema@npm:12.4.2"
+"@grafana/schema@npm:12.4.3, @grafana/schema@npm:^12.2.0":
+  version: 12.4.3
+  resolution: "@grafana/schema@npm:12.4.3"
   dependencies:
     tslib: "npm:2.8.1"
-  checksum: 10c0/e3f8e8353c66a958af047e15bd01f85c3bc4a294a58db6b1fde610e860fbbb9669a66695e0560d7ff8562e32571ab3cd51bc08b1e7d552cac1f7f60ddea2cdc0
+  checksum: 10c0/75a12ac51e0dd1cd4f86f2c820b3cd6d6bd0163f0b87308a92707ca0d0bcb06899cf002a7899465950f38f76722e96e7109df9d424273e1e4fd5521692937c06
   languageName: node
   linkType: hard
 
@@ -1200,19 +1200,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@npm:12.4.2, @grafana/ui@npm:^12.0.1":
-  version: 12.4.2
-  resolution: "@grafana/ui@npm:12.4.2"
+"@grafana/ui@npm:12.4.3, @grafana/ui@npm:^12.2.0":
+  version: 12.4.3
+  resolution: "@grafana/ui@npm:12.4.3"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
     "@floating-ui/react": "npm:0.27.16"
-    "@grafana/data": "npm:12.4.2"
-    "@grafana/e2e-selectors": "npm:12.4.2"
+    "@grafana/data": "npm:12.4.3"
+    "@grafana/e2e-selectors": "npm:12.4.3"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
-    "@grafana/i18n": "npm:12.4.2"
-    "@grafana/schema": "npm:12.4.2"
+    "@grafana/i18n": "npm:12.4.3"
+    "@grafana/schema": "npm:12.4.3"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
@@ -1276,7 +1276,7 @@ __metadata:
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10c0/245aaac8f12a26918e5c54a237a7610ea209525c7a0ceefdffdc09d932d1604eaa0776ab553ebaff514c54e0dd5c81da349cbcffa7a0d17bf5c02d8a68235eeb
+  checksum: 10c0/4e41089dede145da06a84114baa247c7224ab69878578b7049bf2389be1676c965a25b5e45fe53b72b54a6d6936babcf1ee4acc765edf62f1bf0aa4a18cb641d
   languageName: node
   linkType: hard
 
@@ -3371,10 +3371,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/prop-types@npm:*":
+  version: 15.7.15
+  resolution: "@types/prop-types@npm:15.7.15"
+  checksum: 10c0/b59aad1ad19bf1733cf524fd4e618196c6c7690f48ee70a327eb450a42aab8e8a063fbe59ca0a5701aebe2d92d582292c0fb845ea57474f6a15f6994b0e260b2
+  languageName: node
+  linkType: hard
+
 "@types/rbush@npm:4.0.0":
   version: 4.0.0
   resolution: "@types/rbush@npm:4.0.0"
   checksum: 10c0/15a4da94a2591aedf7915061ce07a85d99ba762b89b25f46dd8b8c09a3cd6087335839773ba99a5159d3db3e97a98856bc94c1eb8e0f93b89edc19bc608998c9
+  languageName: node
+  linkType: hard
+
+"@types/react-dom@npm:^18.3.0":
+  version: 18.3.7
+  resolution: "@types/react-dom@npm:18.3.7"
+  peerDependencies:
+    "@types/react": ^18.0.0
+  checksum: 10c0/8bd309e2c3d1604a28a736a24f96cbadf6c05d5288cfef8883b74f4054c961b6b3a5e997fd5686e492be903c8f3380dba5ec017eff3906b1256529cd2d39603e
   languageName: node
   linkType: hard
 
@@ -3402,6 +3418,16 @@ __metadata:
   dependencies:
     csstype: "npm:^3.2.2"
   checksum: 10c0/7d25bf41b57719452d86d2ac0570b659210402707313a36ee612666bf11275a1c69824f8c3ee1fdca077ccfe15452f6da8f1224529b917050eb2d861e52b59b7
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^18.3.0":
+  version: 18.3.29
+  resolution: "@types/react@npm:18.3.29"
+  dependencies:
+    "@types/prop-types": "npm:*"
+    csstype: "npm:^3.2.2"
+  checksum: 10c0/b582f5c3a034229b2e287f5e39aebf3988d6ce79e7fd81c8257dc55bee0e321ddf708d6014a44c5ceae8debea1e15a93326b207a4fec6a0170200a03d105adfb
   languageName: node
   linkType: hard
 
@@ -6657,15 +6683,16 @@ __metadata:
     "@eslint/compat": "npm:2.0.5"
     "@eslint/js": "npm:10.0.1"
     "@grafana/aws-sdk": "npm:0.10.2"
-    "@grafana/data": "npm:^12.0.2"
+    "@grafana/data": "npm:^12.2.0"
     "@grafana/eslint-config": "npm:9.0.0"
+    "@grafana/i18n": "npm:^12.2.0"
     "@grafana/plugin-e2e": "npm:3.4.13"
     "@grafana/plugin-ui": "npm:^0.13.0"
-    "@grafana/runtime": "npm:^12.0.2"
+    "@grafana/runtime": "npm:^12.2.0"
     "@grafana/scenes": "npm:^7.0.0"
-    "@grafana/schema": "npm:^12.0.1"
+    "@grafana/schema": "npm:^12.2.0"
     "@grafana/tsconfig": "npm:2.0.1"
-    "@grafana/ui": "npm:^12.0.1"
+    "@grafana/ui": "npm:^12.2.0"
     "@openfeature/web-sdk": "npm:1.7.3"
     "@playwright/test": "npm:1.59.1"
     "@stylistic/eslint-plugin-ts": "npm:4.4.1"
@@ -6680,6 +6707,8 @@ __metadata:
     "@types/jsurl": "npm:0.1.2"
     "@types/node": "npm:24.12.2"
     "@types/prismjs": "npm:1.26.6"
+    "@types/react": "npm:^18.3.0"
+    "@types/react-dom": "npm:^18.3.0"
     "@types/slate": "npm:0.47.16"
     "@typescript-eslint/eslint-plugin": "npm:8.58.1"
     "@typescript-eslint/parser": "npm:8.58.1"
@@ -6695,7 +6724,7 @@ __metadata:
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
     glob: "npm:13.0.6"
     identity-obj-proxy: "npm:3.0.0"
-    imports-loader: "npm:5.0.0"
+    imports-loader: "npm:^5.0.0"
     jest: "npm:30.3.0"
     jest-environment-jsdom: "npm:30.3.0"
     jsurl: "npm:^0.1.5"
@@ -6703,20 +6732,20 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select-event: "npm:5.5.1"
-    replace-in-file-webpack-plugin: "npm:1.0.6"
+    replace-in-file-webpack-plugin: "npm:^1.0.6"
     sass: "npm:1.99.0"
     sass-loader: "npm:16.0.7"
     semver: "npm:7.7.4"
     style-loader: "npm:4.0.0"
     swc-loader: "npm:0.2.7"
     terser-webpack-plugin: "npm:5.4.0"
-    ts-node: "npm:10.9.2"
+    ts-node: "npm:^10.9.2"
     typescript: "npm:5.9.3"
     webpack: "npm:5.106.0"
     webpack-cli: "npm:7.0.2"
-    webpack-livereload-plugin: "npm:3.0.2"
-    webpack-subresource-integrity: "npm:5.1.0"
-    webpack-virtual-modules: "npm:0.6.2"
+    webpack-livereload-plugin: "npm:^3.0.2"
+    webpack-subresource-integrity: "npm:^5.1.0"
+    webpack-virtual-modules: "npm:^0.6.2"
   languageName: unknown
   linkType: soft
 
@@ -7069,7 +7098,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"imports-loader@npm:5.0.0":
+"imports-loader@npm:^5.0.0":
   version: 5.0.0
   resolution: "imports-loader@npm:5.0.0"
   dependencies:
@@ -10208,7 +10237,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"replace-in-file-webpack-plugin@npm:1.0.6":
+"replace-in-file-webpack-plugin@npm:^1.0.6":
   version: 1.0.6
   resolution: "replace-in-file-webpack-plugin@npm:1.0.6"
   checksum: 10c0/a04086786c68df77e7f59d43675cc2c88fbcb1d266a09bd579e6ec05618077c6c7d609f054355f06d20686ae482791c0306ae0ea62d097bb16445dab833d594c
@@ -11501,7 +11530,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:10.9.2":
+"ts-node@npm:^10.9.2":
   version: 10.9.2
   resolution: "ts-node@npm:10.9.2"
   dependencies:
@@ -12004,7 +12033,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-livereload-plugin@npm:3.0.2":
+"webpack-livereload-plugin@npm:^3.0.2":
   version: 3.0.2
   resolution: "webpack-livereload-plugin@npm:3.0.2"
   dependencies:
@@ -12036,7 +12065,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-subresource-integrity@npm:5.1.0":
+"webpack-subresource-integrity@npm:^5.1.0":
   version: 5.1.0
   resolution: "webpack-subresource-integrity@npm:5.1.0"
   dependencies:
@@ -12051,7 +12080,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-virtual-modules@npm:0.6.2":
+"webpack-virtual-modules@npm:^0.6.2":
   version: 0.6.2
   resolution: "webpack-virtual-modules@npm:0.6.2"
   checksum: 10c0/5ffbddf0e84bf1562ff86cf6fcf039c74edf09d78358a6904a09bbd4484e8bb6812dc385fe14330b715031892dcd8423f7a88278b57c9f5002c84c2860179add
