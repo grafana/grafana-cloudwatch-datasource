@@ -21,4 +21,4 @@ jobs:
       - name: Build plugin
         run: yarn run build
       - name: Compatibility check
-        run: npx --yes @grafana/levitate@latest is-compatible --path $(find ./src -type f \( -name "module.ts" -o -name "module.tsx" \)) --target @grafana/data,@grafana/ui,@grafana/runtime
+        run: npx --yes --package=@grafana/levitate@0.17.2 levitate is-compatible --path $(find ./src -type f \( -name "module.ts" -o -name "module.tsx" \)) --target @grafana/data,@grafana/ui,@grafana/runtime
