@@ -78,7 +78,7 @@
     "webpack-virtual-modules": "0.6.2"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
@@ -94,5 +94,5 @@
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
-  "packageManager": "yarn@4.14.0"
+  "packageManager": "yarn@4.15.0"
 }
