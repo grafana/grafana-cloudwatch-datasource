@@ -23,6 +23,22 @@ export const QUERY_COMMANDS: CompletionItem[] = [
     documentation:
       'Extracts data from a log field, creating one or more ephemeral fields that you can process further in the query',
   },
+  {
+    label: 'lookup',
+    documentation: 'Cross-reference log fields with a lookup table for enrichment. Example: | lookup accountId from "account-names"',
+  },
+  {
+    label: 'join',
+    documentation: 'Join results from multiple log groups on a common field. Example: | join "/aws/lambda/auth" as auth on requestId',
+  },
+  {
+    label: 'expand',
+    documentation: 'Expand nested JSON fields into top-level queryable fields. Example: | expand metadata',
+  },
+  {
+    label: 'relevantfields',
+    documentation: 'Display the most relevant fields for filtered results. Must follow a filter clause.',
+  },
 ];
 
 export const COMPARISON_OPERATORS = ['=', '!=', '<', '<=', '>', '>='];
@@ -64,6 +80,16 @@ export const NUMERIC_OPERATORS = [
     detail: 'sqrt(a)',
     documentation: 'Square root.',
   },
+  {
+    label: 'round',
+    detail: 'round(a)',
+    documentation: 'Rounds a numeric value to the nearest integer.',
+  },
+  {
+    label: 'haversine',
+    detail: 'haversine(lat1, lon1, lat2, lon2)',
+    documentation: 'Calculates the great-circle distance between two geographic coordinates in kilometers.',
+  },
 ];
 
 export const GENERAL_FUNCTIONS = [
@@ -76,6 +102,31 @@ export const GENERAL_FUNCTIONS = [
     label: 'coalesce',
     detail: 'coalesce(fieldname1, fieldname2, ... fieldnamex)',
     documentation: 'Returns the first non-null value from the list.',
+  },
+  {
+    label: 'case',
+    detail: 'case(condition1, value1, ..., default)',
+    documentation: 'Evaluates conditions in order, returns value for first true condition. Last argument is default. Example: fields case(statusCode >= 500, "error", statusCode >= 400, "warn", "ok") as severity',
+  },
+  {
+    label: 'base64encode',
+    detail: 'base64encode(field)',
+    documentation: 'Encodes a field value to Base64 representation.',
+  },
+  {
+    label: 'base64decode',
+    detail: 'base64decode(field)',
+    documentation: 'Decodes a Base64-encoded field value back to plaintext.',
+  },
+  {
+    label: 'urlencode',
+    detail: 'urlencode(field)',
+    documentation: 'URL-encodes a field value (percent-encoding).',
+  },
+  {
+    label: 'urldecode',
+    detail: 'urldecode(field)',
+    documentation: 'Decodes a URL-encoded (percent-encoded) field value.',
   },
 ];
 
@@ -143,6 +194,21 @@ export const STRING_FUNCTIONS = [
     label: 'strcontains',
     detail: 'strcontains(string1, string2)',
     documentation: 'Returns 1 if string1 contains string2 and 0 otherwise.',
+  },
+  {
+    label: 'startswith',
+    detail: 'startswith(field, prefix)',
+    documentation: 'Returns true if the field value starts with the specified string. Example: filter startswith(url, "/api/v2")',
+  },
+  {
+    label: 'endswith',
+    detail: 'endswith(field, suffix)',
+    documentation: 'Returns true if the field value ends with the specified string. Example: filter endswith(path, ".json")',
+  },
+  {
+    label: 'regex_replace',
+    detail: 'regex_replace(field, pattern, replacement)',
+    documentation: 'Replaces occurrences matching a regex pattern with the replacement string.',
   },
 ];
 
