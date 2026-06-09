@@ -170,4 +170,50 @@ export class ResourcesAPI extends CloudWatchRequest {
       logGroupNamePrefix: logGroupNamePrefix || '',
     });
   }
+
+  getPromQLLabelKeys(region: string, match?: string, start?: number, end?: number, limit?: number): Promise<string[]> {
+    const params: Record<string, string | number> = {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+    };
+    if (match !== undefined) {
+      params['match'] = match;
+    }
+    if (start !== undefined) {
+      params['start'] = start;
+    }
+    if (end !== undefined) {
+      params['end'] = end;
+    }
+    if (limit !== undefined) {
+      params['limit'] = limit;
+    }
+    return this.memoizedGetRequest<string[]>('promql-label-keys', params);
+  }
+
+  getPromQLLabelValues(
+    region: string,
+    labelKey: string,
+    match?: string,
+    start?: number,
+    end?: number,
+    limit?: number
+  ): Promise<string[]> {
+    const params: Record<string, string | number> = {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      labelKey,
+    };
+    if (match !== undefined) {
+      params['match'] = match;
+    }
+    if (start !== undefined) {
+      params['start'] = start;
+    }
+    if (end !== undefined) {
+      params['end'] = end;
+    }
+    if (limit !== undefined) {
+      params['limit'] = limit;
+    }
+    return this.memoizedGetRequest<string[]>('promql-label-values', params);
+  }
 }

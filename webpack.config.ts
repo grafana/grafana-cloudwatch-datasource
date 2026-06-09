@@ -1,4 +1,5 @@
 import type { Configuration } from 'webpack';
+import webpack from 'webpack';
 import { merge } from 'webpack-merge';
 import grafanaConfig from './.config/webpack/webpack.config';
 import path from 'path';
@@ -8,6 +9,17 @@ const config = async (env): Promise<Configuration> => {
   const baseConfig = await grafanaConfig(env);
 
   return merge(baseConfig, {
+    resolve: {
+      ...baseConfig.resolve,
+      alias: {
+        ...(baseConfig.resolve && typeof baseConfig.resolve.alias === 'object' && !Array.isArray(baseConfig.resolve.alias)
+          ? baseConfig.resolve.alias
+          : {}),
+        // Exact match only: `@grafana/prometheus` must not bundle a second `@grafana/i18n` (promql
+        // calls `t()` at module load; duplicate package state breaks before Grafana's i18n binds).
+        '@grafana/i18n$': path.resolve(process.cwd(), 'src/webpack-shims/grafanaI18nForBundledPrometheus.ts'),
+      },
+    },
     module: {
       ...baseConfig.module,
       rules: [
@@ -42,6 +54,15 @@ const config = async (env): Promise<Configuration> => {
     output: {
       asyncChunks: true,
     },
+    plugins: [
+      // @grafana/prometheus bundles monaco-promql which imports monaco-editor CSS files
+      // directly. Grafana already ships Monaco with its own CSS, so we drop these CSS
+      // side-effect imports to avoid the double css-loader processing that breaks webpack.
+      new webpack.IgnorePlugin({
+        resourceRegExp: /\.css$/,
+        contextRegExp: /monaco-editor/,
+      }),
+    ],
   });
 };
 

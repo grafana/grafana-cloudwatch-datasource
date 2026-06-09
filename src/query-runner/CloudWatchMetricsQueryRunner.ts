@@ -19,7 +19,7 @@ import { TemplateSrv, getAppEvents } from '@grafana/runtime';
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
-import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery, MetricQueryType } from '../types';
 import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
@@ -65,7 +65,8 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         ...migratedAndIterpolatedQuery,
-        type: 'timeSeriesQuery',
+        type:
+          migratedAndIterpolatedQuery.metricQueryType === MetricQueryType.PromQL ? 'promqlQuery' : 'timeSeriesQuery',
         datasource: this.ref,
       };
     });

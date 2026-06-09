@@ -53,6 +53,8 @@ type CloudWatchMetricsQuery struct {
 	Expression *string `json:"expression,omitempty"`
 	// When the metric query type is set to `Insights`, this field is used to specify the query string.
 	SqlExpression *string `json:"sqlExpression,omitempty"`
+	// When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
+	PromqlExpression *string `json:"promqlExpression,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -107,6 +109,7 @@ type MetricQueryType int64
 const (
 	MetricQueryTypeSearch   MetricQueryType = 0
 	MetricQueryTypeInsights MetricQueryType = 1
+	MetricQueryTypePromQL   MetricQueryType = 2
 )
 
 type MetricEditorMode int64

@@ -89,13 +89,18 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    * When the metric query type is set to `Insights`, this field is used to specify the query string.
    */
   sqlExpression?: string;
+  /**
+   * When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
+   */
+  promqlExpression?: string;
 }
 
 export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
-  Insights = 1,
   Search = 0,
+  Insights = 1,
+  PromQL = 2,
 }
 
 export enum MetricEditorMode {
@@ -226,12 +231,12 @@ export enum LogsQueryLanguage {
 /**
  * Log group selection scope - determines how log groups are selected for the query
  */
-export type LogsQueryScope = ('logGroupName' | 'namePrefix' | 'allLogGroups');
+export type LogsQueryScope = 'logGroupName' | 'namePrefix' | 'allLogGroups';
 
 /**
  * Log group class filter
  */
-export type LogGroupClass = ('STANDARD' | 'INFREQUENT_ACCESS');
+export type LogGroupClass = 'STANDARD' | 'INFREQUENT_ACCESS';
 
 /**
  * Shape of a CloudWatch Logs query

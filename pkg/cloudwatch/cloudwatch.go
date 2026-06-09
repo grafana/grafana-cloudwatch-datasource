@@ -49,6 +49,7 @@ const (
 	annotationQuery = "annotationQuery"
 	logAction       = "logAction"
 	timeSeriesQuery = "timeSeriesQuery"
+	promqlQuery     = "promqlQuery"
 )
 
 type DataQueryJson struct {
@@ -216,6 +217,8 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 		result, err = ds.executeAnnotationQuery(ctx, model, q)
 	case logAction:
 		result, err = ds.executeLogActions(ctx, req)
+	case promqlQuery:
+		result, err = ds.executePromQLQuery(ctx, req)
 	case timeSeriesQuery:
 		fallthrough
 	default:

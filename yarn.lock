@@ -823,7 +823,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.1.2, @floating-ui/react-dom@npm:^2.1.6":
+"@floating-ui/react-dom@npm:^2.1.2, @floating-ui/react-dom@npm:^2.1.6, @floating-ui/react-dom@npm:^2.1.8":
   version: 2.1.8
   resolution: "@floating-ui/react-dom@npm:2.1.8"
   dependencies:
@@ -846,6 +846,20 @@ __metadata:
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
   checksum: 10c0/a026266d8875e69de1ac1e1a00588660c8ee299c1e7d067c5c5fd1d69a46fd10acff5dd6cb66c3fe40a3347b443234309ba95f5b33d49059d0cda121f558f566
+  languageName: node
+  linkType: hard
+
+"@floating-ui/react@npm:0.27.19":
+  version: 0.27.19
+  resolution: "@floating-ui/react@npm:0.27.19"
+  dependencies:
+    "@floating-ui/react-dom": "npm:^2.1.8"
+    "@floating-ui/utils": "npm:^0.2.11"
+    tabbable: "npm:^6.0.0"
+  peerDependencies:
+    react: ">=17.0.0"
+    react-dom: ">=17.0.0"
+  checksum: 10c0/2a2cdfd3e67e0606833b63f922ad2a9037974f22b944e1cb8c0991b4c40450f8413d69745c0bbf4646e5ba283747f60d2fdc9a8d289b68b24448e59d81a3a96d
   languageName: node
   linkType: hard
 
@@ -1095,7 +1109,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.13.0":
+"@grafana/plugin-ui@npm:0.13.1, @grafana/plugin-ui@npm:^0.13.0":
   version: 0.13.1
   resolution: "@grafana/plugin-ui@npm:0.13.1"
   dependencies:
@@ -1124,6 +1138,46 @@ __metadata:
     react-dom: ^18.2.0
     rxjs: ^7.8.1
   checksum: 10c0/a44bf6e9ad3f3d5987005ebe8401cd148b7f2eaee29e9644b635a697afc4f6dc10b7e0520b549aad6f640bcb8d04659835e295731e5e9a873a60137eec7e9121
+  languageName: node
+  linkType: hard
+
+"@grafana/prometheus@npm:13.1.3":
+  version: 13.1.3
+  resolution: "@grafana/prometheus@npm:13.1.3"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@floating-ui/react": "npm:0.27.19"
+    "@grafana/plugin-ui": "npm:0.13.1"
+    "@hello-pangea/dnd": "npm:18.0.1"
+    "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@lezer/common": "npm:1.5.2"
+    "@lezer/highlight": "npm:1.2.3"
+    "@lezer/lr": "npm:1.4.8"
+    "@prometheus-io/lezer-promql": "npm:0.307.3"
+    debounce-promise: "npm:3.1.2"
+    lodash: "npm:4.18.1"
+    moment: "npm:2.30.1"
+    moment-timezone: "npm:0.5.47"
+    monaco-editor: "npm:0.34.1"
+    monaco-promql: "npm:1.8.0"
+    pluralize: "npm:8.0.0"
+    prismjs: "npm:1.30.0"
+    react-highlight-words: "npm:0.21.0"
+    react-use: "npm:17.6.0"
+    react-window: "npm:1.8.11"
+    rxjs: "npm:7.8.2"
+    semver: "npm:7.7.3"
+    uuid: "npm:11.1.0"
+  peerDependencies:
+    "@grafana/data": ">=11.5.0"
+    "@grafana/e2e-selectors": ">=11.5.0"
+    "@grafana/i18n": ">=12.3.0"
+    "@grafana/runtime": ">=11.5.0"
+    "@grafana/schema": ">=11.5.0"
+    "@grafana/ui": ">=11.5.0"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10c0/1b92024abe604b9a2c7c427e83d379666abfd337f76a4a11b165c2e903da53aa45b207b7b6ed7793dd08a1266b29d8fe9243b2d3ed2869e4ff8ced4d37122caf
   languageName: node
   linkType: hard
 
@@ -1813,6 +1867,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lezer/common@npm:1.5.2, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.3.0":
+  version: 1.5.2
+  resolution: "@lezer/common@npm:1.5.2"
+  checksum: 10c0/e39b46d74899409eab549df7942f00cd8c7f46c81ef0e2f079654ca96d262fca009927328bcd500d69270f5f09986e74768bed19c0acaadbd22f1a6c7dd9bd85
+  languageName: node
+  linkType: hard
+
+"@lezer/highlight@npm:1.2.3":
+  version: 1.2.3
+  resolution: "@lezer/highlight@npm:1.2.3"
+  dependencies:
+    "@lezer/common": "npm:^1.3.0"
+  checksum: 10c0/3bcb4fce7a1a45b5973895d7cb2be47970a0098700f2a0970aef9878ffd37f540285a2d7388ec1f524726ec90cc5196b5701bbb9764b7e7300786d772b7d2ce2
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:1.4.8":
+  version: 1.4.8
+  resolution: "@lezer/lr@npm:1.4.8"
+  dependencies:
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10c0/8bd2228a316a5ef8da01908e3e22aca95fa9695211ffe56f3e8be756b37d0810d5aa91fbbdd274b198a343051d8637e130e26f51161161f089244af242b653c9
+  languageName: node
+  linkType: hard
+
 "@monaco-editor/loader@npm:^1.5.0":
   version: 1.7.0
   resolution: "@monaco-editor/loader@npm:1.7.0"
@@ -2202,6 +2281,16 @@ __metadata:
   version: 2.11.8
   resolution: "@popperjs/core@npm:2.11.8"
   checksum: 10c0/4681e682abc006d25eb380d0cf3efc7557043f53b6aea7a5057d0d1e7df849a00e281cd8ea79c902a35a414d7919621fc2ba293ecec05f413598e0b23d5a1e63
+  languageName: node
+  linkType: hard
+
+"@prometheus-io/lezer-promql@npm:0.307.3":
+  version: 0.307.3
+  resolution: "@prometheus-io/lezer-promql@npm:0.307.3"
+  peerDependencies:
+    "@lezer/highlight": ^1.1.2
+    "@lezer/lr": ^1.2.3
+  checksum: 10c0/bac7363279b945aa391c44e115a3622793099e973d2fa1ea279fffbb90a7bb58a2e7438848520e99e7ecfcb086a9e4e092ce2235c103ef2952123f8ed9f7285a
   languageName: node
   linkType: hard
 
@@ -5328,6 +5417,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"debounce-promise@npm:3.1.2":
+  version: 3.1.2
+  resolution: "debounce-promise@npm:3.1.2"
+  checksum: 10c0/68d22b2ed5e8c890643c1b02dadffc9a6a31ec6db225530f34dfeef14112977bedf735d5141e29264ce608ec59375665d582f0013362fa61c7a92d3c0f2f410d
+  languageName: node
+  linkType: hard
+
 "debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.6, debug@npm:^4.4.3":
   version: 4.4.3
   resolution: "debug@npm:4.4.3"
@@ -6661,6 +6757,7 @@ __metadata:
     "@grafana/eslint-config": "npm:9.0.0"
     "@grafana/plugin-e2e": "npm:3.4.13"
     "@grafana/plugin-ui": "npm:^0.13.0"
+    "@grafana/prometheus": "npm:13.1.3"
     "@grafana/runtime": "npm:^12.0.2"
     "@grafana/scenes": "npm:^7.0.0"
     "@grafana/schema": "npm:^12.0.1"
@@ -8359,6 +8456,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash@npm:4.18.1":
+  version: 4.18.1
+  resolution: "lodash@npm:4.18.1"
+  checksum: 10c0/757228fc68805c59789e82185135cf85f05d0b2d3d54631d680ca79ec21944ec8314d4533639a14b8bcfbd97a517e78960933041a5af17ecb693ec6eecb99a27
+  languageName: node
+  linkType: hard
+
 "lodash@npm:^4.1.1, lodash@npm:^4.17.15, lodash@npm:^4.17.21, lodash@npm:^4.17.23, lodash@npm:^4.17.4":
   version: 4.17.23
   resolution: "lodash@npm:4.17.23"
@@ -8742,6 +8846,13 @@ __metadata:
   version: 0.34.1
   resolution: "monaco-editor@npm:0.34.1"
   checksum: 10c0/92ea10f7c4947eb5cbe12cfe6de706ee8932d903c343c8de1bbfb6cbb63505d0459c4669082e5c2341cbfb31728f15e97b4f51ad24725d30be1d4c65c2e229e0
+  languageName: node
+  linkType: hard
+
+"monaco-promql@npm:1.8.0":
+  version: 1.8.0
+  resolution: "monaco-promql@npm:1.8.0"
+  checksum: 10c0/a98ba465344d47116e8d46ff096fc75cbe0e13caa88ed83e3bc76bcdf79867bdbe48fbfddc0258079700373d28c92e3f162af2b3b8ba1855a3a0fd5ddfef463b
   languageName: node
   linkType: hard
 
@@ -9311,6 +9422,13 @@ __metadata:
   bin:
     playwright: cli.js
   checksum: 10c0/dfe38396e616e5c4f98825ce90037bb96e477c5a2bd9258a24854f8ce72a8a41427b19098863866f85aa0216e70287dd537c4438d761aca93995e31ae099c533
+  languageName: node
+  linkType: hard
+
+"pluralize@npm:8.0.0":
+  version: 8.0.0
+  resolution: "pluralize@npm:8.0.0"
+  checksum: 10c0/2044cfc34b2e8c88b73379ea4a36fc577db04f651c2909041b054c981cd863dd5373ebd030123ab058d194ae615d3a97cfdac653991e499d10caf592e8b3dc33
   languageName: node
   linkType: hard
 
@@ -10529,6 +10647,15 @@ __metadata:
   version: 1.0.0
   resolution: "selection-is-backward@npm:1.0.0"
   checksum: 10c0/ee163b8c230c57b9e92795b8d7cd3af7387c535a8f15c097f7d69bd326f95850f0ecaa7080ea9bfe4a623263b256fc93535b2ec6412cb81787e0a331d8f33ff2
+  languageName: node
+  linkType: hard
+
+"semver@npm:7.7.3":
+  version: 7.7.3
+  resolution: "semver@npm:7.7.3"
+  bin:
+    semver: bin/semver.js
+  checksum: 10c0/4afe5c986567db82f44c8c6faef8fe9df2a9b1d98098fc1721f57c696c4c21cebd572f297fc21002f81889492345b8470473bc6f4aff5fb032a6ea59ea2bc45e
   languageName: node
   linkType: hard
 
