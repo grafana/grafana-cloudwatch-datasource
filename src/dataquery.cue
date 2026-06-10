@@ -73,6 +73,10 @@ composableKinds: DataQuery: {
 					sqlExpression?: string
 					// When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
 					promqlExpression?: string
+					// When the metric query type is set to `PromQL`, evaluates the expression at a single point in time. Default false.
+					instant?: bool
+					// When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
+					range?: bool
 					// When the metric query type is set to `Insights` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
 					sql?: #SQLExpression
 				} @cuetsy(kind="interface")

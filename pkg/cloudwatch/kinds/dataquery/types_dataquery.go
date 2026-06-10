@@ -55,6 +55,10 @@ type CloudWatchMetricsQuery struct {
 	SqlExpression *string `json:"sqlExpression,omitempty"`
 	// When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
 	PromqlExpression *string `json:"promqlExpression,omitempty"`
+	// When the metric query type is set to `PromQL`, evaluates the expression at a single point in time. Default false.
+	Instant *bool `json:"instant,omitempty"`
+	// When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
+	Range *bool `json:"range,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.

@@ -96,3 +96,99 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 		assert.Empty(t, frames)
 	})
 }
+
+func TestConvertPromInstantResultToDataFrames(t *testing.T) {
+	t.Run("converts a vector result to single-point frames", func(t *testing.T) {
+		resp := prometheusInstantResponse{Status: "success"}
+		resp.Data.ResultType = "vector"
+		resp.Data.Result = []struct {
+			Metric    map[string]string `json:"metric"`
+			Value     []interface{}     `json:"value,omitempty"`
+			Histogram []interface{}     `json:"histogram,omitempty"`
+		}{
+			{
+				Metric: map[string]string{"__name__": "up", "job": "api"},
+				Value:  []interface{}{float64(1000000), "1"},
+			},
+			{
+				Metric: map[string]string{"__name__": "up", "job": "web"},
+				Value:  []interface{}{float64(1000000), "0"},
+			},
+		}
+
+		frames := convertPromInstantResultToDataFrames(resp, "A")
+		require.Len(t, frames, 2)
+
+		first := frames[0]
+		assert.Equal(t, "A", first.RefID)
+		require.Len(t, first.Fields, 2)
+		assert.Equal(t, 1, first.Fields[0].Len())
+		assert.Equal(t, time.Unix(1000000, 0).UTC(), first.Fields[0].At(0))
+		assert.Equal(t, 1.0, first.Fields[1].At(0))
+		assert.Equal(t, "api", first.Fields[1].Labels["job"])
+	})
+
+	t.Run("skips malformed instant points", func(t *testing.T) {
+		resp := prometheusInstantResponse{Status: "success"}
+		resp.Data.Result = []struct {
+			Metric    map[string]string `json:"metric"`
+			Value     []interface{}     `json:"value,omitempty"`
+			Histogram []interface{}     `json:"histogram,omitempty"`
+		}{
+			{Metric: map[string]string{}, Value: []interface{}{float64(1000), "notanumber"}},
+			{Metric: map[string]string{}, Value: []interface{}{"bad-ts", "1.0"}},
+			{Metric: map[string]string{}, Value: []interface{}{float64(1000)}},
+			{Metric: map[string]string{}, Value: []interface{}{float64(1000), "5.5"}},
+		}
+
+		frames := convertPromInstantResultToDataFrames(resp, "B")
+		require.Len(t, frames, 1)
+		assert.Equal(t, 5.5, frames[0].Fields[1].At(0))
+	})
+
+	t.Run("falls back to histogram sum/count", func(t *testing.T) {
+		resp := prometheusInstantResponse{Status: "success"}
+		resp.Data.Result = []struct {
+			Metric    map[string]string `json:"metric"`
+			Value     []interface{}     `json:"value,omitempty"`
+			Histogram []interface{}     `json:"histogram,omitempty"`
+		}{
+			{
+				Metric:    map[string]string{"__name__": "http_request_duration"},
+				Histogram: []interface{}{float64(2000000), map[string]interface{}{"sum": "100", "count": "4"}},
+			},
+		}
+
+		frames := convertPromInstantResultToDataFrames(resp, "C")
+		require.Len(t, frames, 1)
+		assert.Equal(t, 25.0, frames[0].Fields[1].At(0))
+	})
+
+	t.Run("returns empty frames for empty result", func(t *testing.T) {
+		resp := prometheusInstantResponse{Status: "success"}
+		frames := convertPromInstantResultToDataFrames(resp, "D")
+		assert.Empty(t, frames)
+	})
+}
+
+func TestPromQLQueryModelEffectiveModes(t *testing.T) {
+	tests := []struct {
+		name        string
+		model       promQLQueryModel
+		wantInstant bool
+		wantRange   bool
+	}{
+		{"neither set defaults to range", promQLQueryModel{}, false, true},
+		{"instant only", promQLQueryModel{Instant: true}, true, false},
+		{"range only", promQLQueryModel{Range: true}, false, true},
+		{"both true", promQLQueryModel{Instant: true, Range: true}, true, true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gotInstant, gotRange := tc.model.effectiveModes()
+			assert.Equal(t, tc.wantInstant, gotInstant)
+			assert.Equal(t, tc.wantRange, gotRange)
+		})
+	}
+}

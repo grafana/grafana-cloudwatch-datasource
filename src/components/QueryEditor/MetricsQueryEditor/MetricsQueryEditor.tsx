@@ -198,6 +198,7 @@ export const MetricsQueryEditor = (props: Props) => {
           onRunQuery={props.onRunQuery}
           datasource={datasource}
           timeRange={props.range ?? getDefaultTimeRange()}
+          app={props.app}
         />
       )}
       {query.metricQueryType !== MetricQueryType.PromQL && (

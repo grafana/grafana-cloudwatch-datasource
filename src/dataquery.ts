@@ -93,6 +93,14 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    * When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
    */
   promqlExpression?: string;
+  /**
+   * When the metric query type is set to `PromQL`, evaluates the expression at a single point in time. Default false.
+   */
+  instant?: boolean;
+  /**
+   * When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
+   */
+  range?: boolean;
 }
 
 export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';

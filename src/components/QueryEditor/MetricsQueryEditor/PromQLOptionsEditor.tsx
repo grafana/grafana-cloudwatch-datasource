@@ -1,0 +1,68 @@
+import { CoreApp, SelectableValue } from '@grafana/data';
+import { EditorField, QueryOptionGroup } from '@grafana/plugin-ui';
+import { Box, RadioButtonGroup } from '@grafana/ui';
+
+import { CloudWatchMetricsQuery } from '../../../types';
+
+export interface Props {
+  query: CloudWatchMetricsQuery;
+  onChange: (query: CloudWatchMetricsQuery) => void;
+  onRunQuery: () => void;
+  app?: CoreApp;
+}
+
+type PromQLQueryType = 'range' | 'instant' | 'both';
+
+const baseOptions: Array<SelectableValue<PromQLQueryType>> = [
+  { label: 'Range', value: 'range', description: 'Run query over a range of time' },
+  { label: 'Instant', value: 'instant', description: 'Run query against a single point in time' },
+];
+
+const bothOption: SelectableValue<PromQLQueryType> = {
+  label: 'Both',
+  value: 'both',
+  description: 'Run both instant and range queries',
+};
+
+function getQueryType(query: CloudWatchMetricsQuery): PromQLQueryType {
+  if (query.instant && query.range) {
+    return 'both';
+  }
+  if (query.instant) {
+    return 'instant';
+  }
+  return 'range';
+}
+
+function applyQueryType(query: CloudWatchMetricsQuery, queryType: PromQLQueryType): CloudWatchMetricsQuery {
+  switch (queryType) {
+    case 'instant':
+      return { ...query, instant: true, range: false };
+    case 'both':
+      return { ...query, instant: true, range: true };
+    case 'range':
+    default:
+      return { ...query, instant: false, range: true };
+  }
+}
+
+export const PromQLOptionsEditor = ({ query, onChange, onRunQuery, app }: Props) => {
+  const queryType = getQueryType(query);
+  const canRenderBoth = app !== CoreApp.UnifiedAlerting;
+  const queryTypeOptions = canRenderBoth ? [...baseOptions, bothOption] : baseOptions;
+
+  const onQueryTypeChange = (next: PromQLQueryType) => {
+    onChange(applyQueryType(query, next));
+    onRunQuery();
+  };
+
+  return (
+    <Box backgroundColor="secondary" borderRadius="default" marginTop={0.5}>
+      <QueryOptionGroup title="Options" collapsedInfo={[`Type: ${queryType}`]}>
+        <EditorField label="Type">
+          <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
+        </EditorField>
+      </QueryOptionGroup>
+    </Box>
+  );
+};
