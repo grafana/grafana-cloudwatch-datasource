@@ -1,6 +1,8 @@
+import { FormEvent } from 'react';
+
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorField, QueryOptionGroup } from '@grafana/plugin-ui';
-import { Box, RadioButtonGroup } from '@grafana/ui';
+import { AutoSizeInput, Box, RadioButtonGroup } from '@grafana/ui';
 
 import { CloudWatchMetricsQuery } from '../../../types';
 
@@ -56,9 +58,26 @@ export const PromQLOptionsEditor = ({ query, onChange, onRunQuery, app }: Props)
     onRunQuery();
   };
 
+  const onMinStepChange = (event: FormEvent<HTMLInputElement>) => {
+    onChange({ ...query, interval: event.currentTarget.value.trim() });
+    onRunQuery();
+  };
+
   return (
     <Box backgroundColor="secondary" borderRadius="default" marginTop={0.5}>
-      <QueryOptionGroup title="Options" collapsedInfo={[`Type: ${queryType}`]}>
+      <QueryOptionGroup title="Options" collapsedInfo={[`Min step: ${query.interval || 'auto'}`, `Type: ${queryType}`]}>
+        <EditorField
+          label="Min step"
+          tooltip="An additional lower bound for the step parameter of range queries. Accepts duration strings like '10s' or '1m'. Empty means auto."
+        >
+          <AutoSizeInput
+            type="text"
+            placeholder="auto"
+            minWidth={10}
+            onCommitChange={onMinStepChange}
+            defaultValue={query.interval}
+          />
+        </EditorField>
         <EditorField label="Type">
           <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
         </EditorField>

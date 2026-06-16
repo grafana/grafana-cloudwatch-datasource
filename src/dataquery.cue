@@ -77,6 +77,8 @@ composableKinds: DataQuery: {
 					instant?: bool
 					// When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
 					range?: bool
+					// When the metric query type is set to `PromQL`, an additional lower bound for the step parameter of range queries and for the $__interval and $__rate_interval variables. Accepts duration strings like "10s", "1m". Empty means auto.
+					interval?: string
 					// When the metric query type is set to `Insights` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
 					sql?: #SQLExpression
 				} @cuetsy(kind="interface")

@@ -192,3 +192,26 @@ func TestPromQLQueryModelEffectiveModes(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveStepSeconds(t *testing.T) {
+	tests := []struct {
+		name       string
+		calculated time.Duration
+		minStep    string
+		want       float64
+	}{
+		{"empty min step uses calculated", 30 * time.Second, "", 30},
+		{"min step larger than calculated wins", 30 * time.Second, "1m", 60},
+		{"min step smaller than calculated is ignored", 60 * time.Second, "10s", 60},
+		{"floor of 1s when both are zero", 0, "", 1},
+		{"floor of 1s when calculated is sub-second", 500 * time.Millisecond, "", 1},
+		{"unparseable min step is ignored", 30 * time.Second, "invalid", 30},
+		{"Prometheus duration syntax supported", 30 * time.Second, "1h", 3600},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, resolveStepSeconds(tc.calculated, tc.minStep))
+		})
+	}
+}

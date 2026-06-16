@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -21,6 +22,7 @@ type promQLQueryModel struct {
 	PromqlExpression string `json:"promqlExpression"`
 	Instant          bool   `json:"instant,omitempty"`
 	Range            bool   `json:"range,omitempty"`
+	Interval         string `json:"interval,omitempty"`
 }
 
 func (m promQLQueryModel) effectiveModes() (instant, rangeQuery bool) {
@@ -28,6 +30,19 @@ func (m promQLQueryModel) effectiveModes() (instant, rangeQuery bool) {
 		return false, true
 	}
 	return m.Instant, m.Range
+}
+
+func resolveStepSeconds(calculated time.Duration, minStep string) float64 {
+	step := calculated.Seconds()
+	if minStep != "" {
+		if d, err := gtime.ParseIntervalStringToTimeDuration(minStep); err == nil && d.Seconds() > step {
+			step = d.Seconds()
+		}
+	}
+	if step < 1 {
+		step = 1
+	}
+	return step
 }
 
 type prometheusRangeResponse struct {
@@ -80,7 +95,7 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 		instant, rangeQuery := model.effectiveModes()
 
 		if rangeQuery {
-			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, q)
+			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, model.Interval, q)
 		}
 
 		if instant {
@@ -95,11 +110,8 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 	return resp, nil
 }
 
-func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression string, q backend.DataQuery) backend.DataResponse {
-	stepSecs := q.Interval.Seconds()
-	if stepSecs < 1 {
-		stepSecs = 1
-	}
+func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression, minStep string, q backend.DataQuery) backend.DataResponse {
+	stepSecs := resolveStepSeconds(q.Interval, minStep)
 
 	params := url.Values{}
 	params.Set("query", expression)

@@ -101,6 +101,10 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    * When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
    */
   range?: boolean;
+  /**
+   * When the metric query type is set to `PromQL`, an additional lower bound for the step parameter of range queries and for the $__interval and $__rate_interval variables. Accepts duration strings like "10s", "1m". Empty means auto.
+   */
+  interval?: string;
 }
 
 export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
