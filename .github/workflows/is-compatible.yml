@@ -1,0 +1,24 @@
+name: Latest Grafana API compatibility check
+on: [pull_request]
+permissions: {}
+
+jobs:
+  compatibilitycheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: Setup Node.js environment
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build plugin
+        run: yarn run build
+      - name: Compatibility check
+        run: npx --yes --package=@grafana/levitate@0.17.2 levitate is-compatible --path $(find ./src -type f \( -name "module.ts" -o -name "module.tsx" \)) --target @grafana/data,@grafana/ui,@grafana/runtime

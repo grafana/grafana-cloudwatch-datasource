@@ -1,0 +1,44 @@
+package clients
+
+import (
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+
+	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
+)
+
+type MetricsClient struct {
+	cloudwatch.ListMetricsAPIClient
+
+	listMetricsPageLimit int
+}
+
+func NewMetricsClient(client cloudwatch.ListMetricsAPIClient, listMetricsPageLimit int) *MetricsClient {
+	return &MetricsClient{
+		ListMetricsAPIClient: client,
+		listMetricsPageLimit: listMetricsPageLimit,
+	}
+}
+
+func (mc *MetricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
+	var response []resources.MetricResponse
+	paginator := cloudwatch.NewListMetricsPaginator(mc.ListMetricsAPIClient, params)
+	includeAccount := params.IncludeLinkedAccounts != nil && *params.IncludeLinkedAccounts
+	pages := 0
+	for paginator.HasMorePages() && pages < mc.listMetricsPageLimit {
+		pages += 1
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return response, err
+		}
+		for i, metric := range page.Metrics {
+			resp := resources.MetricResponse{Metric: metric}
+			if includeAccount && len(page.OwningAccounts) >= i {
+				resp.AccountId = &page.OwningAccounts[i]
+			}
+			response = append(response, resp)
+		}
+	}
+	return response, nil
+}
