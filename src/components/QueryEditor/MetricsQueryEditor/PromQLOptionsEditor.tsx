@@ -2,7 +2,7 @@ import { FormEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorField, QueryOptionGroup } from '@grafana/plugin-ui';
-import { AutoSizeInput, Box, RadioButtonGroup } from '@grafana/ui';
+import { AutoSizeInput, Box, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { CloudWatchMetricsQuery } from '../../../types';
 
@@ -14,6 +14,7 @@ export interface Props {
 }
 
 type PromQLQueryType = 'range' | 'instant' | 'both';
+type PromQLFormat = 'time_series' | 'table';
 
 const baseOptions: Array<SelectableValue<PromQLQueryType>> = [
   { label: 'Range', value: 'range', description: 'Run query over a range of time' },
@@ -25,6 +26,11 @@ const bothOption: SelectableValue<PromQLQueryType> = {
   value: 'both',
   description: 'Run both instant and range queries',
 };
+
+const formatOptions: Array<SelectableValue<PromQLFormat>> = [
+  { label: 'Time series', value: 'time_series' },
+  { label: 'Table', value: 'table' },
+];
 
 function getQueryType(query: CloudWatchMetricsQuery): PromQLQueryType {
   if (query.instant && query.range) {
@@ -63,9 +69,24 @@ export const PromQLOptionsEditor = ({ query, onChange, onRunQuery, app }: Props)
     onRunQuery();
   };
 
+  const format: PromQLFormat = query.format ?? 'time_series';
+  const formatOption = formatOptions.find((o) => o.value === format) ?? formatOptions[0];
+
+  const onFormatChange = (next: SelectableValue<PromQLFormat>) => {
+    onChange({ ...query, format: next.value });
+    onRunQuery();
+  };
+
   return (
     <Box backgroundColor="secondary" borderRadius="default" marginTop={0.5}>
-      <QueryOptionGroup title="Options" collapsedInfo={[`Min step: ${query.interval || 'auto'}`, `Type: ${queryType}`]}>
+      <QueryOptionGroup
+        title="Options"
+        collapsedInfo={[
+          `Min step: ${query.interval || 'auto'}`,
+          `Format: ${formatOption.label}`,
+          `Type: ${queryType}`,
+        ]}
+      >
         <EditorField
           label="Min step"
           tooltip="An additional lower bound for the step parameter of range queries. Accepts duration strings like '10s' or '1m'. Empty means auto."
@@ -77,6 +98,9 @@ export const PromQLOptionsEditor = ({ query, onChange, onRunQuery, app }: Props)
             onCommitChange={onMinStepChange}
             defaultValue={query.interval}
           />
+        </EditorField>
+        <EditorField label="Format">
+          <Select options={formatOptions} value={formatOption} onChange={onFormatChange} width={20} />
         </EditorField>
         <EditorField label="Type">
           <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />

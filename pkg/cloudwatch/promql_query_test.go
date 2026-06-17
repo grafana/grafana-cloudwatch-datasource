@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -191,6 +192,88 @@ func TestPromQLQueryModelEffectiveModes(t *testing.T) {
 			assert.Equal(t, tc.wantRange, gotRange)
 		})
 	}
+}
+
+func TestConvertPromRangeResultToTable(t *testing.T) {
+	t.Run("flattens multiple series into one wide frame", func(t *testing.T) {
+		resp := prometheusRangeResponse{Status: "success"}
+		resp.Data.Result = []struct {
+			Metric     map[string]string `json:"metric"`
+			Values     [][]interface{}   `json:"values"`
+			Histograms [][]interface{}   `json:"histograms"`
+		}{
+			{
+				Metric: map[string]string{"job": "api", "instance": "host1"},
+				Values: [][]interface{}{{float64(1000), "1.0"}, {float64(2000), "2.0"}},
+			},
+			{
+				Metric: map[string]string{"job": "web"},
+				Values: [][]interface{}{{float64(1000), "3.0"}},
+			},
+		}
+
+		frames := convertPromRangeResultToTable(resp, "A")
+		require.Len(t, frames, 1)
+
+		frame := frames[0]
+		assert.Equal(t, "A", frame.RefID)
+		require.Len(t, frame.Fields, 4)
+		assert.Equal(t, "Time", frame.Fields[0].Name)
+		assert.Equal(t, "instance", frame.Fields[1].Name)
+		assert.Equal(t, "job", frame.Fields[2].Name)
+		assert.Equal(t, "Value", frame.Fields[3].Name)
+
+		assert.Equal(t, 3, frame.Fields[0].Len())
+		assert.Equal(t, "host1", frame.Fields[1].At(0))
+		assert.Equal(t, "", frame.Fields[1].At(2))
+		assert.Equal(t, "api", frame.Fields[2].At(0))
+		assert.Equal(t, "web", frame.Fields[2].At(2))
+		assert.Equal(t, 1.0, frame.Fields[3].At(0))
+		assert.Equal(t, 3.0, frame.Fields[3].At(2))
+
+		assert.NotNil(t, frame.Meta)
+		assert.Equal(t, data.VisType("table"), frame.Meta.PreferredVisualization)
+	})
+
+	t.Run("returns an empty table frame for empty result", func(t *testing.T) {
+		resp := prometheusRangeResponse{Status: "success"}
+		frames := convertPromRangeResultToTable(resp, "A")
+		require.Len(t, frames, 1)
+		assert.Equal(t, 0, frames[0].Fields[0].Len())
+	})
+}
+
+func TestConvertPromInstantResultToTable(t *testing.T) {
+	t.Run("flattens vector result into one row per series", func(t *testing.T) {
+		resp := prometheusInstantResponse{Status: "success"}
+		resp.Data.Result = []struct {
+			Metric    map[string]string `json:"metric"`
+			Value     []interface{}     `json:"value,omitempty"`
+			Histogram []interface{}     `json:"histogram,omitempty"`
+		}{
+			{
+				Metric: map[string]string{"job": "api"},
+				Value:  []interface{}{float64(1000), "1.0"},
+			},
+			{
+				Metric: map[string]string{"job": "web"},
+				Value:  []interface{}{float64(1000), "2.0"},
+			},
+		}
+
+		frames := convertPromInstantResultToTable(resp, "A")
+		require.Len(t, frames, 1)
+		frame := frames[0]
+
+		assert.Equal(t, "A", frame.RefID)
+		require.Len(t, frame.Fields, 3)
+		assert.Equal(t, 2, frame.Fields[0].Len())
+		assert.Equal(t, "api", frame.Fields[1].At(0))
+		assert.Equal(t, "web", frame.Fields[1].At(1))
+		assert.Equal(t, 1.0, frame.Fields[2].At(0))
+		assert.Equal(t, 2.0, frame.Fields[2].At(1))
+		assert.Equal(t, data.VisType("table"), frame.Meta.PreferredVisualization)
+	})
 }
 
 func TestResolveStepSeconds(t *testing.T) {

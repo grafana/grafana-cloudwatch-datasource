@@ -61,6 +61,8 @@ type CloudWatchMetricsQuery struct {
 	Range *bool `json:"range,omitempty"`
 	// When the metric query type is set to `PromQL`, an additional lower bound for the step parameter of range queries and for the $__interval and $__rate_interval variables. Accepts duration strings like "10s", "1m". Empty means auto.
 	Interval *string `json:"interval,omitempty"`
+	// When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
+	Format *string `json:"format,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.

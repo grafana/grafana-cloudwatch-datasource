@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +16,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-const instantRefIDSuffix = "-Instant"
+const (
+	instantRefIDSuffix = "-Instant"
+
+	formatTimeSeries = "time_series"
+	formatTable      = "table"
+)
 
 type promQLQueryModel struct {
 	Region           string `json:"region"`
@@ -23,6 +29,7 @@ type promQLQueryModel struct {
 	Instant          bool   `json:"instant,omitempty"`
 	Range            bool   `json:"range,omitempty"`
 	Interval         string `json:"interval,omitempty"`
+	Format           string `json:"format,omitempty"`
 }
 
 func (m promQLQueryModel) effectiveModes() (instant, rangeQuery bool) {
@@ -95,7 +102,7 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 		instant, rangeQuery := model.effectiveModes()
 
 		if rangeQuery {
-			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, model.Interval, q)
+			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, model.Interval, model.Format, q)
 		}
 
 		if instant {
@@ -103,14 +110,14 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 			if rangeQuery {
 				instantRefID = q.RefID + instantRefIDSuffix
 			}
-			resp.Responses[instantRefID] = ds.executePromQLInstant(ctx, region, model.PromqlExpression, q, instantRefID)
+			resp.Responses[instantRefID] = ds.executePromQLInstant(ctx, region, model.PromqlExpression, model.Format, q, instantRefID)
 		}
 	}
 
 	return resp, nil
 }
 
-func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression, minStep string, q backend.DataQuery) backend.DataResponse {
+func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression, minStep, format string, q backend.DataQuery) backend.DataResponse {
 	stepSecs := resolveStepSeconds(q.Interval, minStep)
 
 	params := url.Values{}
@@ -135,10 +142,13 @@ func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("PromQL error (%s): %s", promResp.ErrorType, promResp.Error)))
 	}
 
+	if format == formatTable {
+		return backend.DataResponse{Frames: convertPromRangeResultToTable(promResp, q.RefID)}
+	}
 	return backend.DataResponse{Frames: convertPromRangeResultToDataFrames(promResp, q.RefID)}
 }
 
-func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expression string, q backend.DataQuery, refID string) backend.DataResponse {
+func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expression, format string, q backend.DataQuery, refID string) backend.DataResponse {
 	params := url.Values{}
 	params.Set("query", expression)
 	params.Set("time", strconv.FormatInt(q.TimeRange.To.Unix(), 10))
@@ -159,6 +169,9 @@ func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expressi
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("PromQL error (%s): %s", promResp.ErrorType, promResp.Error)))
 	}
 
+	if format == formatTable {
+		return backend.DataResponse{Frames: convertPromInstantResultToTable(promResp, refID)}
+	}
 	return backend.DataResponse{Frames: convertPromInstantResultToDataFrames(promResp, refID)}
 }
 
@@ -247,6 +260,154 @@ func convertPromInstantResultToDataFrames(promResp prometheusInstantResponse, re
 	}
 
 	return frames
+}
+
+func convertPromRangeResultToTable(promResp prometheusRangeResponse, refID string) data.Frames {
+	metrics := make([]map[string]string, 0, len(promResp.Data.Result))
+	for _, s := range promResp.Data.Result {
+		metrics = append(metrics, s.Metric)
+	}
+
+	labelNames := collectLabelNames(metrics)
+	times := make([]time.Time, 0)
+	values := make([]float64, 0)
+	labelCols := initLabelColumns(labelNames)
+
+	for _, series := range promResp.Data.Result {
+		for _, point := range series.Values {
+			ts, val, ok := parseStringPoint(point)
+			if !ok {
+				continue
+			}
+			times = append(times, time.Unix(int64(ts), 0).UTC())
+			values = append(values, val)
+			appendLabelRow(labelCols, labelNames, series.Metric)
+		}
+		if len(series.Values) == 0 {
+			for _, point := range series.Histograms {
+				ts, val, ok := parseHistogramPoint(point)
+				if !ok {
+					continue
+				}
+				times = append(times, time.Unix(int64(ts), 0).UTC())
+				values = append(values, val)
+				appendLabelRow(labelCols, labelNames, series.Metric)
+			}
+		}
+	}
+
+	return data.Frames{buildTableFrame(refID, times, values, labelNames, labelCols)}
+}
+
+func convertPromInstantResultToTable(promResp prometheusInstantResponse, refID string) data.Frames {
+	metrics := make([]map[string]string, 0, len(promResp.Data.Result))
+	for _, s := range promResp.Data.Result {
+		metrics = append(metrics, s.Metric)
+	}
+	labelNames := collectLabelNames(metrics)
+	times := make([]time.Time, 0)
+	values := make([]float64, 0)
+	labelCols := initLabelColumns(labelNames)
+
+	for _, series := range promResp.Data.Result {
+		ts, val, ok := extractInstantPoint(series.Value)
+		if !ok {
+			if h, hasHistogram := extractInstantHistogram(series.Histogram); hasHistogram {
+				ts, val, ok = h.ts, h.value, true
+			}
+		}
+		if !ok {
+			continue
+		}
+		times = append(times, time.Unix(int64(ts), 0).UTC())
+		values = append(values, val)
+		appendLabelRow(labelCols, labelNames, series.Metric)
+	}
+
+	return data.Frames{buildTableFrame(refID, times, values, labelNames, labelCols)}
+}
+
+func collectLabelNames(labelSets []map[string]string) []string {
+	seen := map[string]struct{}{}
+	for _, ls := range labelSets {
+		for k := range ls {
+			seen[k] = struct{}{}
+		}
+	}
+	names := make([]string, 0, len(seen))
+	for k := range seen {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func initLabelColumns(names []string) map[string][]string {
+	cols := make(map[string][]string, len(names))
+	for _, n := range names {
+		cols[n] = make([]string, 0)
+	}
+	return cols
+}
+
+func appendLabelRow(cols map[string][]string, names []string, labels map[string]string) {
+	for _, n := range names {
+		cols[n] = append(cols[n], labels[n])
+	}
+}
+
+// parseStringPoint handles the [timestamp, "value-string"] shape used by both /query_range Values
+// entries and /query Value (vector) entries.
+func parseStringPoint(point []interface{}) (float64, float64, bool) {
+	if len(point) != 2 {
+		return 0, 0, false
+	}
+	ts, ok := point[0].(float64)
+	if !ok {
+		return 0, 0, false
+	}
+	valStr, ok := point[1].(string)
+	if !ok {
+		return 0, 0, false
+	}
+	val, err := strconv.ParseFloat(valStr, 64)
+	if err != nil {
+		return 0, 0, false
+	}
+	return ts, val, true
+}
+
+func parseHistogramPoint(point []interface{}) (float64, float64, bool) {
+	if len(point) != 2 {
+		return 0, 0, false
+	}
+	ts, ok := point[0].(float64)
+	if !ok {
+		return 0, 0, false
+	}
+	h, ok := point[1].(map[string]interface{})
+	if !ok {
+		return 0, 0, false
+	}
+	sum, count := histogramSumCount(h)
+	if count == 0 {
+		return 0, 0, false
+	}
+	return ts, sum / count, true
+}
+
+func buildTableFrame(refID string, times []time.Time, values []float64, labelNames []string, labelCols map[string][]string) *data.Frame {
+	fields := make([]*data.Field, 0, 2+len(labelNames))
+	fields = append(fields, data.NewField("Time", nil, times))
+	for _, name := range labelNames {
+		fields = append(fields, data.NewField(name, nil, labelCols[name]))
+	}
+	fields = append(fields, data.NewField("Value", nil, values))
+
+	frame := data.NewFrame(refID, fields...)
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{PreferredVisualization: data.VisTypeTable}
+	return frame
 }
 
 func extractInstantPoint(point []interface{}) (ts float64, val float64, ok bool) {
