@@ -80,7 +80,9 @@ composableKinds: DataQuery: {
 					// When the metric query type is set to `PromQL`, an additional lower bound for the step parameter of range queries and for the $__interval and $__rate_interval variables. Accepts duration strings like "10s", "1m". Empty means auto.
 					interval?: string
 					// When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
-					format?: "time_series" | "table"
+					format?: "time_series" | "table" | "heatmap"
+					// When the metric query type is set to `PromQL`, a template for series names. Supports `{{label}}` placeholders and the special value `__auto`.
+					legendFormat?: string
 					// When the metric query type is set to `Insights` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
 					sql?: #SQLExpression
 				} @cuetsy(kind="interface")

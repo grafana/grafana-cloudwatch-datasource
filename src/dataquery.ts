@@ -108,7 +108,11 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   /**
    * When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
    */
-  format?: 'time_series' | 'table';
+  format?: 'time_series' | 'table' | 'heatmap';
+  /**
+   * When the metric query type is set to `PromQL`, a template for series names. Supports `{{label}}` placeholders and the special value `__auto`.
+   */
+  legendFormat?: string;
 }
 
 export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';

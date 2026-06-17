@@ -63,6 +63,8 @@ type CloudWatchMetricsQuery struct {
 	Interval *string `json:"interval,omitempty"`
 	// When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
 	Format *string `json:"format,omitempty"`
+	// When the metric query type is set to `PromQL`, a template for series names. Supports `{{label}}` placeholders and the special value `__auto`.
+	LegendFormat *string `json:"legendFormat,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
