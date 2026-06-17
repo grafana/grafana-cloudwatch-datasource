@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,10 +19,13 @@ import (
 
 const (
 	instantRefIDSuffix = "-Instant"
-
-	formatTimeSeries = "time_series"
-	formatTable      = "table"
+	formatTimeSeries   = "time_series"
+	formatTable        = "table"
+	legendFormatVerbose = ""
+	legendFormatAuto    = "__auto"
 )
+
+var legendTemplateRe = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 type promQLQueryModel struct {
 	Region           string `json:"region"`
@@ -30,6 +34,7 @@ type promQLQueryModel struct {
 	Range            bool   `json:"range,omitempty"`
 	Interval         string `json:"interval,omitempty"`
 	Format           string `json:"format,omitempty"`
+	LegendFormat *string `json:"legendFormat,omitempty"`
 }
 
 func (m promQLQueryModel) effectiveModes() (instant, rangeQuery bool) {
@@ -101,8 +106,13 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 
 		instant, rangeQuery := model.effectiveModes()
 
+		legendFormat := legendFormatAuto
+		if model.LegendFormat != nil {
+			legendFormat = *model.LegendFormat
+		}
+
 		if rangeQuery {
-			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, model.Interval, model.Format, q)
+			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, model.Interval, model.Format, legendFormat, q)
 		}
 
 		if instant {
@@ -110,14 +120,14 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 			if rangeQuery {
 				instantRefID = q.RefID + instantRefIDSuffix
 			}
-			resp.Responses[instantRefID] = ds.executePromQLInstant(ctx, region, model.PromqlExpression, model.Format, q, instantRefID)
+			resp.Responses[instantRefID] = ds.executePromQLInstant(ctx, region, model.PromqlExpression, model.Format, legendFormat, q, instantRefID)
 		}
 	}
 
 	return resp, nil
 }
 
-func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression, minStep, format string, q backend.DataQuery) backend.DataResponse {
+func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression, minStep, format, legendFormat string, q backend.DataQuery) backend.DataResponse {
 	stepSecs := resolveStepSeconds(q.Interval, minStep)
 
 	params := url.Values{}
@@ -145,10 +155,10 @@ func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression
 	if format == formatTable {
 		return backend.DataResponse{Frames: convertPromRangeResultToTable(promResp, q.RefID)}
 	}
-	return backend.DataResponse{Frames: convertPromRangeResultToDataFrames(promResp, q.RefID)}
+	return backend.DataResponse{Frames: convertPromRangeResultToDataFrames(promResp, q.RefID, legendFormat)}
 }
 
-func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expression, format string, q backend.DataQuery, refID string) backend.DataResponse {
+func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expression, format, legendFormat string, q backend.DataQuery, refID string) backend.DataResponse {
 	params := url.Values{}
 	params.Set("query", expression)
 	params.Set("time", strconv.FormatInt(q.TimeRange.To.Unix(), 10))
@@ -172,11 +182,17 @@ func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expressi
 	if format == formatTable {
 		return backend.DataResponse{Frames: convertPromInstantResultToTable(promResp, refID)}
 	}
-	return backend.DataResponse{Frames: convertPromInstantResultToDataFrames(promResp, refID)}
+	return backend.DataResponse{Frames: convertPromInstantResultToDataFrames(promResp, refID, legendFormat)}
 }
 
-func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID string) data.Frames {
+func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID, legendFormat string) data.Frames {
 	var frames data.Frames
+
+	labelSets := make([]map[string]string, len(promResp.Data.Result))
+	for i, s := range promResp.Data.Result {
+		labelSets[i] = s.Metric
+	}
+	commonLabels := commonLabelsForAutoLegend(legendFormat, labelSets)
 
 	for _, series := range promResp.Data.Result {
 		times := make([]time.Time, 0)
@@ -224,9 +240,11 @@ func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID 
 			}
 		}
 
+		valueField := data.NewField("Value", data.Labels(series.Metric), values)
+		applyLegendFormat(valueField, legendFormat, series.Metric, commonLabels)
 		frame := data.NewFrame(refID,
 			data.NewField("Time", nil, times),
-			data.NewField("Value", data.Labels(series.Metric), values),
+			valueField,
 		)
 		frame.RefID = refID
 		frames = append(frames, frame)
@@ -235,8 +253,14 @@ func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID 
 	return frames
 }
 
-func convertPromInstantResultToDataFrames(promResp prometheusInstantResponse, refID string) data.Frames {
+func convertPromInstantResultToDataFrames(promResp prometheusInstantResponse, refID, legendFormat string) data.Frames {
 	var frames data.Frames
+
+	labelSets := make([]map[string]string, len(promResp.Data.Result))
+	for i, s := range promResp.Data.Result {
+		labelSets[i] = s.Metric
+	}
+	commonLabels := commonLabelsForAutoLegend(legendFormat, labelSets)
 
 	for _, series := range promResp.Data.Result {
 		ts, val, ok := extractInstantPoint(series.Value)
@@ -251,15 +275,97 @@ func convertPromInstantResultToDataFrames(promResp prometheusInstantResponse, re
 			continue
 		}
 
+		valueField := data.NewField("Value", data.Labels(series.Metric), []float64{val})
+		applyLegendFormat(valueField, legendFormat, series.Metric, commonLabels)
 		frame := data.NewFrame(refID,
 			data.NewField("Time", nil, []time.Time{time.Unix(int64(ts), 0).UTC()}),
-			data.NewField("Value", data.Labels(series.Metric), []float64{val}),
+			valueField,
 		)
 		frame.RefID = refID
 		frames = append(frames, frame)
 	}
 
 	return frames
+}
+
+func applyLegendFormat(field *data.Field, legendFormat string, labels, commonLabels map[string]string) {
+	var rendered string
+
+	switch legendFormat {
+	case legendFormatVerbose:
+		rendered = renderNameAndLabels(labels, nil)
+	case legendFormatAuto:
+		rendered = renderNameAndLabels(labels, commonLabels)
+	default:
+		rendered = substituteLabelPlaceholders(legendFormat, labels)
+	}
+
+	if rendered == "" {
+		return
+	}
+
+	if field.Config == nil {
+		field.Config = &data.FieldConfig{}
+	}
+
+	field.Config.DisplayNameFromDS = rendered
+}
+
+func renderNameAndLabels(labels, commonLabels map[string]string) string {
+	name := labels["__name__"]
+	keys := make([]string, 0, len(labels))
+
+	for k, v := range labels {
+		cv, isCommon := commonLabels[k]
+		if k == "__name__" || (isCommon && cv == v) {
+			continue
+		}
+
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+	if len(keys) == 0 {
+		return name
+	}
+	
+	return name + formatLabelBraces(keys, labels)
+}
+
+func formatLabelBraces(keys []string, labels map[string]string) string {
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%s=%q", k, labels[k]))
+	}
+	return "{" + strings.Join(parts, ", ") + "}"
+}
+
+func substituteLabelPlaceholders(template string, labels map[string]string) string {
+	return legendTemplateRe.ReplaceAllStringFunc(template, func(match string) string {
+		groups := legendTemplateRe.FindStringSubmatch(match)
+		if len(groups) < 2 {
+			return ""
+		}
+		return labels[groups[1]]
+	})
+}
+
+func commonLabelsForAutoLegend(legendFormat string, labelSets []map[string]string) map[string]string {
+	if legendFormat != legendFormatAuto || len(labelSets) <= 1 {
+		return nil
+	}
+	common := make(map[string]string, len(labelSets[0]))
+	for k, v := range labelSets[0] {
+		common[k] = v
+	}
+	for _, ls := range labelSets[1:] {
+		for k, v := range common {
+			if other, ok := ls[k]; !ok || other != v {
+				delete(common, k)
+			}
+		}
+	}
+	return common
 }
 
 func convertPromRangeResultToTable(promResp prometheusRangeResponse, refID string) data.Frames {

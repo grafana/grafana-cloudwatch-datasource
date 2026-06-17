@@ -26,7 +26,7 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "A")
+		frames := convertPromRangeResultToDataFrames(resp, "A", "")
 		require.Len(t, frames, 1)
 
 		frame := frames[0]
@@ -64,7 +64,7 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "B")
+		frames := convertPromRangeResultToDataFrames(resp, "B", "")
 		assert.Len(t, frames, 2)
 	})
 
@@ -86,14 +86,14 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "C")
+		frames := convertPromRangeResultToDataFrames(resp, "C", "")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 1, frames[0].Fields[0].Len())
 	})
 
 	t.Run("returns empty frames for empty result", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
-		frames := convertPromRangeResultToDataFrames(resp, "D")
+		frames := convertPromRangeResultToDataFrames(resp, "D", "")
 		assert.Empty(t, frames)
 	})
 }
@@ -117,7 +117,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "A")
+		frames := convertPromInstantResultToDataFrames(resp, "A", "")
 		require.Len(t, frames, 2)
 
 		first := frames[0]
@@ -142,7 +142,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 			{Metric: map[string]string{}, Value: []interface{}{float64(1000), "5.5"}},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "B")
+		frames := convertPromInstantResultToDataFrames(resp, "B", "")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 5.5, frames[0].Fields[1].At(0))
 	})
@@ -160,14 +160,14 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "C")
+		frames := convertPromInstantResultToDataFrames(resp, "C", "")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 25.0, frames[0].Fields[1].At(0))
 	})
 
 	t.Run("returns empty frames for empty result", func(t *testing.T) {
 		resp := prometheusInstantResponse{Status: "success"}
-		frames := convertPromInstantResultToDataFrames(resp, "D")
+		frames := convertPromInstantResultToDataFrames(resp, "D", "")
 		assert.Empty(t, frames)
 	})
 }
@@ -297,4 +297,176 @@ func TestResolveStepSeconds(t *testing.T) {
 			assert.Equal(t, tc.want, resolveStepSeconds(tc.calculated, tc.minStep))
 		})
 	}
+}
+
+func TestSubstituteLabelPlaceholders(t *testing.T) {
+	labels := map[string]string{"job": "api", "instance": "host1"}
+
+	tests := []struct {
+		name     string
+		template string
+		want     string
+	}{
+		{"single placeholder substituted", "{{job}}", "api"},
+		{"multiple placeholders substituted", "{{job}} - {{instance}}", "api - host1"},
+		{"missing label becomes empty string", "{{job}}/{{missing}}", "api/"},
+		{"inner whitespace tolerated", "{{ job }}", "api"},
+		{"literal text without placeholders passes through", "static-name", "static-name"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, substituteLabelPlaceholders(tc.template, labels))
+		})
+	}
+}
+
+func TestConvertPromRangeResultLegendFormat(t *testing.T) {
+	resp := prometheusRangeResponse{Status: "success"}
+	resp.Data.Result = []struct {
+		Metric     map[string]string `json:"metric"`
+		Values     [][]interface{}   `json:"values"`
+		Histograms [][]interface{}   `json:"histograms"`
+	}{
+		{
+			Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host1"},
+			Values: [][]interface{}{{float64(1000), "1.0"}},
+		},
+	}
+
+	t.Run("custom template sets DisplayNameFromDS on value field", func(t *testing.T) {
+		frames := convertPromRangeResultToDataFrames(resp, "A", "{{job}}/{{instance}}")
+		require.Len(t, frames, 1)
+		require.NotNil(t, frames[0].Fields[1].Config)
+		assert.Equal(t, "api/host1", frames[0].Fields[1].Config.DisplayNameFromDS)
+	})
+
+	t.Run("verbose extracts __name__ as the prefix", func(t *testing.T) {
+		frames := convertPromRangeResultToDataFrames(resp, "A", "")
+		require.Len(t, frames, 1)
+		require.NotNil(t, frames[0].Fields[1].Config)
+		assert.Equal(t, `RequestCount{instance="host1", job="api"}`, frames[0].Fields[1].Config.DisplayNameFromDS)
+	})
+
+	t.Run("__auto on a single-series response keeps every label", func(t *testing.T) {
+		frames := convertPromRangeResultToDataFrames(resp, "A", "__auto")
+		require.Len(t, frames, 1)
+		require.NotNil(t, frames[0].Fields[1].Config)
+		assert.Equal(t, `RequestCount{instance="host1", job="api"}`, frames[0].Fields[1].Config.DisplayNameFromDS)
+	})
+
+	t.Run("__auto strips labels common to every series", func(t *testing.T) {
+		multiResp := prometheusRangeResponse{Status: "success"}
+		multiResp.Data.Result = []struct {
+			Metric     map[string]string `json:"metric"`
+			Values     [][]interface{}   `json:"values"`
+			Histograms [][]interface{}   `json:"histograms"`
+		}{
+			{
+				Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host1"},
+				Values: [][]interface{}{{float64(1000), "1.0"}},
+			},
+			{
+				Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host2"},
+				Values: [][]interface{}{{float64(1000), "2.0"}},
+			},
+		}
+
+		frames := convertPromRangeResultToDataFrames(multiResp, "A", "__auto")
+		require.Len(t, frames, 2)
+		assert.Equal(t, `RequestCount{instance="host1"}`, frames[0].Fields[1].Config.DisplayNameFromDS)
+		assert.Equal(t, `RequestCount{instance="host2"}`, frames[1].Fields[1].Config.DisplayNameFromDS)
+	})
+
+	t.Run("__auto falls back to the metric name when every label is common", func(t *testing.T) {
+		multiResp := prometheusRangeResponse{Status: "success"}
+		multiResp.Data.Result = []struct {
+			Metric     map[string]string `json:"metric"`
+			Values     [][]interface{}   `json:"values"`
+			Histograms [][]interface{}   `json:"histograms"`
+		}{
+			{
+				Metric: map[string]string{"__name__": "RequestCount", "job": "api"},
+				Values: [][]interface{}{{float64(1000), "1.0"}},
+			},
+			{
+				Metric: map[string]string{"__name__": "RequestCount", "job": "api"},
+				Values: [][]interface{}{{float64(1000), "2.0"}},
+			},
+		}
+
+		frames := convertPromRangeResultToDataFrames(multiResp, "A", "__auto")
+		require.Len(t, frames, 2)
+		assert.Equal(t, "RequestCount", frames[0].Fields[1].Config.DisplayNameFromDS)
+	})
+}
+
+func TestRenderNameAndLabels(t *testing.T) {
+	tests := []struct {
+		name   string
+		labels map[string]string
+		common map[string]string
+		want   string
+	}{
+		{
+			name:   "verbose: name plus every label except __name__",
+			labels: map[string]string{"__name__": "metric", "job": "api", "instance": "h1"},
+			common: nil,
+			want:   `metric{instance="h1", job="api"}`,
+		},
+		{
+			name:   "auto: name plus only the distinguishing labels",
+			labels: map[string]string{"__name__": "metric", "job": "api", "instance": "h1"},
+			common: map[string]string{"job": "api"},
+			want:   `metric{instance="h1"}`,
+		},
+		{
+			name:   "name only when no other labels exist",
+			labels: map[string]string{"__name__": "metric"},
+			want:   "metric",
+		},
+		{
+			name:   "name only when every label is common (auto fully collapses)",
+			labels: map[string]string{"__name__": "metric", "job": "api"},
+			common: map[string]string{"job": "api"},
+			want:   "metric",
+		},
+		{
+			name:   "missing __name__ still renders the label braces",
+			labels: map[string]string{"job": "api"},
+			want:   `{job="api"}`,
+		},
+		{
+			name:   "missing __name__ and nothing distinguishing returns empty",
+			labels: map[string]string{"job": "api"},
+			common: map[string]string{"job": "api"},
+			want:   "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, renderNameAndLabels(tc.labels, tc.common))
+		})
+	}
+}
+
+func TestConvertPromInstantResultLegendFormat(t *testing.T) {
+	resp := prometheusInstantResponse{Status: "success"}
+	resp.Data.ResultType = "vector"
+	resp.Data.Result = []struct {
+		Metric    map[string]string `json:"metric"`
+		Value     []interface{}     `json:"value,omitempty"`
+		Histogram []interface{}     `json:"histogram,omitempty"`
+	}{
+		{
+			Metric: map[string]string{"job": "api"},
+			Value:  []interface{}{float64(1000), "1.0"},
+		},
+	}
+
+	frames := convertPromInstantResultToDataFrames(resp, "A", "{{job}}")
+	require.Len(t, frames, 1)
+	require.NotNil(t, frames[0].Fields[1].Config)
+	assert.Equal(t, "api", frames[0].Fields[1].Config.DisplayNameFromDS)
 }

@@ -37,6 +37,6 @@ function toPromQuery(query: CloudWatchMetricsQuery): PromQuery {
     instant: query.instant,
     range: query.range,
     interval: query.interval,
-    legendFormat: query.legendFormat,
+    legendFormat: query.legendFormat ?? '__auto',
   };
 }
