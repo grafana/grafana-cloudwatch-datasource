@@ -25,7 +25,11 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
     const shim = makePrometheusDatasourceShim(datasource);
     shim.languageProvider = new CloudWatchPromQLLanguageProvider(shim, datasource.resources, query.region);
     return shim;
-  }, [datasource]);
+
+    // query.region seeds the language provider once; subsequent region changes flow through
+    // languageProvider.updateRegion() in the effect below. Rebuilding the shim on every region
+    // change would throw away the labelKeys/labelValues caches.
+  }, [datasource]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const languageProvider = prometheusDatasourceShim.languageProvider as CloudWatchPromQLLanguageProvider;
