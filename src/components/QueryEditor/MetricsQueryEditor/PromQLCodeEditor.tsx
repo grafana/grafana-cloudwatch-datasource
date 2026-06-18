@@ -71,7 +71,17 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
         range={timeRange}
         app={app}
       />
-      <PromQueryBuilderOptions query={promQuery} app={app} onChange={handleChange} onRunQuery={onRunQuery} />
+      <PromQueryBuilderOptions
+        query={promQuery}
+        app={app}
+        onChange={handleChange}
+        onRunQuery={onRunQuery}
+        uiOptions={{ exemplars: false }}
+        formatOptions={[
+          { label: 'Time series', value: 'time_series' },
+          { label: 'Table', value: 'table' },
+        ]}
+      />
     </Stack>
   );
 };
