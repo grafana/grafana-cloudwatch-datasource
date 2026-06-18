@@ -45,18 +45,12 @@ func (ds *DataSource) PromQLLabelKeysHandler(ctx context.Context, params url.Val
 		return nil, models.NewHttpError("failed to fetch PromQL label keys", http.StatusInternalServerError, fmt.Errorf("CloudWatch PromQL API returned %d: %s", status, body))
 	}
 
-	var promResp promqlStringListResponse
-	if err := json.Unmarshal(body, &promResp); err != nil {
-		return nil, models.NewHttpError("failed to parse PromQL label keys response", http.StatusInternalServerError, err)
-	}
-	if promResp.Status != "success" {
-		return nil, models.NewHttpError("failed to fetch PromQL label keys", http.StatusInternalServerError, fmt.Errorf("PromQL API error (%s): %s", promResp.ErrorType, promResp.Error))
-	}
-	if promResp.Data == nil {
-		promResp.Data = []string{}
+	data, err := decodePromQLStringListResponse(body)
+	if err != nil {
+		return nil, models.NewHttpError("failed to fetch PromQL label keys", http.StatusInternalServerError, err)
 	}
 
-	out, err := json.Marshal(promResp.Data)
+	out, err := json.Marshal(data)
 	if err != nil {
 		return nil, models.NewHttpError("failed to encode PromQL label keys", http.StatusInternalServerError, err)
 	}
@@ -87,20 +81,28 @@ func (ds *DataSource) PromQLLabelValuesHandler(ctx context.Context, params url.V
 		return nil, models.NewHttpError("failed to fetch PromQL label values", http.StatusInternalServerError, fmt.Errorf("CloudWatch PromQL API returned %d: %s", status, body))
 	}
 
-	var promResp promqlStringListResponse
-	if err := json.Unmarshal(body, &promResp); err != nil {
-		return nil, models.NewHttpError("failed to parse PromQL label values response", http.StatusInternalServerError, err)
-	}
-	if promResp.Status != "success" {
-		return nil, models.NewHttpError("failed to fetch PromQL label values", http.StatusInternalServerError, fmt.Errorf("PromQL API error (%s): %s", promResp.ErrorType, promResp.Error))
-	}
-	if promResp.Data == nil {
-		promResp.Data = []string{}
+	data, err := decodePromQLStringListResponse(body)
+	if err != nil {
+		return nil, models.NewHttpError("failed to fetch PromQL label values", http.StatusInternalServerError, err)
 	}
 
-	out, err := json.Marshal(promResp.Data)
+	out, err := json.Marshal(data)
 	if err != nil {
 		return nil, models.NewHttpError("failed to encode PromQL label values", http.StatusInternalServerError, err)
 	}
 	return out, nil
+}
+
+func decodePromQLStringListResponse(body []byte) ([]string, error) {
+	var promResp promqlStringListResponse
+	if err := json.Unmarshal(body, &promResp); err != nil {
+		return nil, fmt.Errorf("failed to parse PromQL response: %w", err)
+	}
+	if promResp.Status != "success" {
+		return nil, fmt.Errorf("PromQL API error (%s): %s", promResp.ErrorType, promResp.Error)
+	}
+	if promResp.Data == nil {
+		return []string{}, nil
+	}
+	return promResp.Data, nil
 }
