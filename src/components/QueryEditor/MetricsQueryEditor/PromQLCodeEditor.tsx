@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { CoreApp, TimeRange } from '@grafana/data';
-import { PromQueryField } from '@grafana/prometheus';
+import { PromQueryBuilderOptions, PromQueryField } from '@grafana/prometheus';
 import { type PrometheusDatasource } from '@grafana/prometheus/dist/types/datasource';
 import { type PromQuery } from '@grafana/prometheus/dist/types/types';
 import { Stack } from '@grafana/ui';
@@ -10,7 +10,6 @@ import { CloudWatchDatasource } from '../../../datasource';
 import { CloudWatchMetricsQuery } from '../../../types';
 
 import { CloudWatchPromQLLanguageProvider } from './CloudWatchPromQLLanguageProvider';
-import { PromQLOptionsEditor } from './PromQLOptionsEditor';
 
 export interface Props {
   query: CloudWatchMetricsQuery;
@@ -37,12 +36,23 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
   const promQuery: PromQuery = {
     refId: query.refId,
     expr: query.promqlExpression ?? '',
+    format: query.format,
+    instant: query.instant,
+    range: query.range,
+    interval: query.interval,
+    legendFormat: query.legendFormat ?? '__auto',
   };
 
   const handleChange = (next: PromQuery) => {
-    if (next.expr !== query.promqlExpression) {
-      onChange({ ...query, promqlExpression: next.expr });
-    }
+    onChange({
+      ...query,
+      promqlExpression: next.expr,
+      format: next.format,
+      instant: next.instant,
+      range: next.range,
+      interval: next.interval,
+      legendFormat: next.legendFormat,
+    });
   };
 
   return (
@@ -56,7 +66,7 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
         range={timeRange}
         app={app}
       />
-      <PromQLOptionsEditor query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
+      <PromQueryBuilderOptions query={promQuery} app={app} onChange={handleChange} onRunQuery={onRunQuery} />
     </Stack>
   );
 };

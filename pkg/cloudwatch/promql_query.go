@@ -57,11 +57,6 @@ type prometheusInstantSeries struct {
 	Histogram []interface{}     `json:"histogram,omitempty"`
 }
 
-type instantHistogramPoint struct {
-	ts    float64
-	value float64
-}
-
 type prometheusRangeResponse struct {
 	Status string `json:"status"`
 	Data   struct {
@@ -220,11 +215,9 @@ func convertPromInstantResultToDataFrames(promResp prometheusInstantResponse, re
 	var frames data.Frames
 
 	for _, series := range promResp.Data.Result {
-		ts, val, ok := extractInstantPoint(series.Value)
+		ts, val, ok := parseStringPoint(series.Value)
 		if !ok {
-			if h, hasHistogram := extractInstantHistogram(series.Histogram); hasHistogram {
-				ts, val, ok = h.ts, h.value, true
-			}
+			ts, val, ok = parseHistogramPoint(series.Histogram)
 		}
 		if !ok {
 			continue
@@ -277,44 +270,6 @@ func parseHistogramPoint(point []interface{}) (float64, float64, bool) {
 		return 0, 0, false
 	}
 	return ts, sum / count, true
-}
-
-func extractInstantPoint(point []interface{}) (ts float64, val float64, ok bool) {
-	if len(point) != 2 {
-		return 0, 0, false
-	}
-	ts, ok = point[0].(float64)
-	if !ok {
-		return 0, 0, false
-	}
-	valStr, isStr := point[1].(string)
-	if !isStr {
-		return 0, 0, false
-	}
-	parsed, err := strconv.ParseFloat(valStr, 64)
-	if err != nil {
-		return 0, 0, false
-	}
-	return ts, parsed, true
-}
-
-func extractInstantHistogram(point []interface{}) (instantHistogramPoint, bool) {
-	if len(point) != 2 {
-		return instantHistogramPoint{}, false
-	}
-	ts, ok := point[0].(float64)
-	if !ok {
-		return instantHistogramPoint{}, false
-	}
-	h, ok := point[1].(map[string]interface{})
-	if !ok {
-		return instantHistogramPoint{}, false
-	}
-	sum, count := histogramSumCount(h)
-	if count == 0 {
-		return instantHistogramPoint{}, false
-	}
-	return instantHistogramPoint{ts: ts, value: sum / count}, true
 }
 
 func histogramSumCount(h map[string]interface{}) (sum, count float64) {
