@@ -21,6 +21,7 @@ import { MetricStatEditor } from '../../shared/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
+import { PromQLBuilderEditor } from './PromQLBuilderEditor';
 import { PromQLCodeEditor } from './PromQLCodeEditor';
 import { SQLBuilderEditor } from './SQLBuilderEditor';
 import { SQLCodeEditor } from './SQLCodeEditor';
@@ -95,14 +96,12 @@ export const MetricsQueryEditor = (props: Props) => {
 
     extraHeaderElementRight?.(
       <>
-        {query.metricQueryType !== MetricQueryType.PromQL && (
-          <RadioButtonGroup
-            options={editorModes}
-            size="sm"
-            value={query.metricEditorMode}
-            onChange={onEditorModeChange}
-          />
-        )}
+        <RadioButtonGroup
+          options={editorModes}
+          size="sm"
+          value={query.metricEditorMode}
+          onChange={onEditorModeChange}
+        />
         <ConfirmModal
           isOpen={showConfirm}
           title="Are you sure?"
@@ -191,14 +190,21 @@ export const MetricsQueryEditor = (props: Props) => {
         </>
       )}
       {query.metricQueryType === MetricQueryType.PromQL && (
-        <PromQLCodeEditor
-          query={query}
-          onChange={props.onChange}
-          onRunQuery={props.onRunQuery}
-          datasource={datasource}
-          timeRange={props.range ?? getDefaultTimeRange()}
-          app={props.app}
-        />
+        <>
+          {query.metricEditorMode === MetricEditorMode.Code && (
+            <PromQLCodeEditor
+              query={query}
+              onChange={props.onChange}
+              onRunQuery={props.onRunQuery}
+              datasource={datasource}
+              timeRange={props.range ?? getDefaultTimeRange()}
+              app={props.app}
+            />
+          )}
+          {query.metricEditorMode === MetricEditorMode.Builder && (
+            <PromQLBuilderEditor query={query} onChange={props.onChange} datasource={datasource} />
+          )}
+        </>
       )}
       {query.metricQueryType !== MetricQueryType.PromQL && (
         <>
