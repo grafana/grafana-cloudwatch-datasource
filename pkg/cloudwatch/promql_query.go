@@ -57,14 +57,22 @@ func resolveStepSeconds(calculated time.Duration, minStep string) float64 {
 	return step
 }
 
+type prometheusRangeSeries struct {
+	Metric     map[string]string `json:"metric"`
+	Values     [][]interface{}   `json:"values"`
+	Histograms [][]interface{}   `json:"histograms"`
+}
+
+type prometheusInstantSeries struct {
+	Metric    map[string]string `json:"metric"`
+	Value     []interface{}     `json:"value,omitempty"`
+	Histogram []interface{}     `json:"histogram,omitempty"`
+}
+
 type prometheusRangeResponse struct {
 	Status string `json:"status"`
 	Data   struct {
-		Result []struct {
-			Metric     map[string]string `json:"metric"`
-			Values     [][]interface{}   `json:"values"`
-			Histograms [][]interface{}   `json:"histograms"`
-		} `json:"result"`
+		Result []prometheusRangeSeries `json:"result"`
 	} `json:"data"`
 	Error     string `json:"error,omitempty"`
 	ErrorType string `json:"errorType,omitempty"`
@@ -73,12 +81,8 @@ type prometheusRangeResponse struct {
 type prometheusInstantResponse struct {
 	Status string `json:"status"`
 	Data   struct {
-		ResultType string `json:"resultType"`
-		Result     []struct {
-			Metric    map[string]string `json:"metric"`
-			Value     []interface{}     `json:"value,omitempty"`
-			Histogram []interface{}     `json:"histogram,omitempty"`
-		} `json:"result"`
+		ResultType string                    `json:"resultType"`
+		Result     []prometheusInstantSeries `json:"result"`
 	} `json:"data"`
 	Error     string `json:"error,omitempty"`
 	ErrorType string `json:"errorType,omitempty"`

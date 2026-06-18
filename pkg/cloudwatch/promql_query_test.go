@@ -12,11 +12,7 @@ import (
 func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 	t.Run("converts a single series to a data frame", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
-		resp.Data.Result = []struct {
-			Metric     map[string]string `json:"metric"`
-			Values     [][]interface{}   `json:"values"`
-			Histograms [][]interface{}   `json:"histograms"`
-		}{
+		resp.Data.Result = []prometheusRangeSeries{
 			{
 				Metric: map[string]string{"__name__": "http_requests_total", "job": "api"},
 				Values: [][]interface{}{
@@ -49,11 +45,7 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 
 	t.Run("converts multiple series to separate frames", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
-		resp.Data.Result = []struct {
-			Metric     map[string]string `json:"metric"`
-			Values     [][]interface{}   `json:"values"`
-			Histograms [][]interface{}   `json:"histograms"`
-		}{
+		resp.Data.Result = []prometheusRangeSeries{
 			{
 				Metric: map[string]string{"instance": "host1"},
 				Values: [][]interface{}{{float64(1000), "1.0"}},
@@ -70,11 +62,7 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 
 	t.Run("skips malformed points", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
-		resp.Data.Result = []struct {
-			Metric     map[string]string `json:"metric"`
-			Values     [][]interface{}   `json:"values"`
-			Histograms [][]interface{}   `json:"histograms"`
-		}{
+		resp.Data.Result = []prometheusRangeSeries{
 			{
 				Metric: map[string]string{},
 				Values: [][]interface{}{
@@ -102,11 +90,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 	t.Run("converts a vector result to single-point frames", func(t *testing.T) {
 		resp := prometheusInstantResponse{Status: "success"}
 		resp.Data.ResultType = "vector"
-		resp.Data.Result = []struct {
-			Metric    map[string]string `json:"metric"`
-			Value     []interface{}     `json:"value,omitempty"`
-			Histogram []interface{}     `json:"histogram,omitempty"`
-		}{
+		resp.Data.Result = []prometheusInstantSeries{
 			{
 				Metric: map[string]string{"__name__": "up", "job": "api"},
 				Value:  []interface{}{float64(1000000), "1"},
@@ -131,11 +115,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 
 	t.Run("skips malformed instant points", func(t *testing.T) {
 		resp := prometheusInstantResponse{Status: "success"}
-		resp.Data.Result = []struct {
-			Metric    map[string]string `json:"metric"`
-			Value     []interface{}     `json:"value,omitempty"`
-			Histogram []interface{}     `json:"histogram,omitempty"`
-		}{
+		resp.Data.Result = []prometheusInstantSeries{
 			{Metric: map[string]string{}, Value: []interface{}{float64(1000), "notanumber"}},
 			{Metric: map[string]string{}, Value: []interface{}{"bad-ts", "1.0"}},
 			{Metric: map[string]string{}, Value: []interface{}{float64(1000)}},
@@ -149,11 +129,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 
 	t.Run("falls back to histogram sum/count", func(t *testing.T) {
 		resp := prometheusInstantResponse{Status: "success"}
-		resp.Data.Result = []struct {
-			Metric    map[string]string `json:"metric"`
-			Value     []interface{}     `json:"value,omitempty"`
-			Histogram []interface{}     `json:"histogram,omitempty"`
-		}{
+		resp.Data.Result = []prometheusInstantSeries{
 			{
 				Metric:    map[string]string{"__name__": "http_request_duration"},
 				Histogram: []interface{}{float64(2000000), map[string]interface{}{"sum": "100", "count": "4"}},
@@ -197,11 +173,7 @@ func TestPromQLQueryModelEffectiveModes(t *testing.T) {
 func TestConvertPromRangeResultToTable(t *testing.T) {
 	t.Run("flattens multiple series into one wide frame", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
-		resp.Data.Result = []struct {
-			Metric     map[string]string `json:"metric"`
-			Values     [][]interface{}   `json:"values"`
-			Histograms [][]interface{}   `json:"histograms"`
-		}{
+		resp.Data.Result = []prometheusRangeSeries{
 			{
 				Metric: map[string]string{"job": "api", "instance": "host1"},
 				Values: [][]interface{}{{float64(1000), "1.0"}, {float64(2000), "2.0"}},
@@ -246,11 +218,7 @@ func TestConvertPromRangeResultToTable(t *testing.T) {
 func TestConvertPromInstantResultToTable(t *testing.T) {
 	t.Run("flattens vector result into one row per series", func(t *testing.T) {
 		resp := prometheusInstantResponse{Status: "success"}
-		resp.Data.Result = []struct {
-			Metric    map[string]string `json:"metric"`
-			Value     []interface{}     `json:"value,omitempty"`
-			Histogram []interface{}     `json:"histogram,omitempty"`
-		}{
+		resp.Data.Result = []prometheusInstantSeries{
 			{
 				Metric: map[string]string{"job": "api"},
 				Value:  []interface{}{float64(1000), "1.0"},
@@ -323,11 +291,7 @@ func TestSubstituteLabelPlaceholders(t *testing.T) {
 
 func TestConvertPromRangeResultLegendFormat(t *testing.T) {
 	resp := prometheusRangeResponse{Status: "success"}
-	resp.Data.Result = []struct {
-		Metric     map[string]string `json:"metric"`
-		Values     [][]interface{}   `json:"values"`
-		Histograms [][]interface{}   `json:"histograms"`
-	}{
+	resp.Data.Result = []prometheusRangeSeries{
 		{
 			Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host1"},
 			Values: [][]interface{}{{float64(1000), "1.0"}},
@@ -357,11 +321,7 @@ func TestConvertPromRangeResultLegendFormat(t *testing.T) {
 
 	t.Run("__auto strips labels common to every series", func(t *testing.T) {
 		multiResp := prometheusRangeResponse{Status: "success"}
-		multiResp.Data.Result = []struct {
-			Metric     map[string]string `json:"metric"`
-			Values     [][]interface{}   `json:"values"`
-			Histograms [][]interface{}   `json:"histograms"`
-		}{
+		multiResp.Data.Result = []prometheusRangeSeries{
 			{
 				Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host1"},
 				Values: [][]interface{}{{float64(1000), "1.0"}},
@@ -380,11 +340,7 @@ func TestConvertPromRangeResultLegendFormat(t *testing.T) {
 
 	t.Run("__auto falls back to the metric name when every label is common", func(t *testing.T) {
 		multiResp := prometheusRangeResponse{Status: "success"}
-		multiResp.Data.Result = []struct {
-			Metric     map[string]string `json:"metric"`
-			Values     [][]interface{}   `json:"values"`
-			Histograms [][]interface{}   `json:"histograms"`
-		}{
+		multiResp.Data.Result = []prometheusRangeSeries{
 			{
 				Metric: map[string]string{"__name__": "RequestCount", "job": "api"},
 				Values: [][]interface{}{{float64(1000), "1.0"}},
@@ -454,11 +410,7 @@ func TestRenderNameAndLabels(t *testing.T) {
 func TestConvertPromInstantResultLegendFormat(t *testing.T) {
 	resp := prometheusInstantResponse{Status: "success"}
 	resp.Data.ResultType = "vector"
-	resp.Data.Result = []struct {
-		Metric    map[string]string `json:"metric"`
-		Value     []interface{}     `json:"value,omitempty"`
-		Histogram []interface{}     `json:"histogram,omitempty"`
-	}{
+	resp.Data.Result = []prometheusInstantSeries{
 		{
 			Metric: map[string]string{"job": "api"},
 			Value:  []interface{}{float64(1000), "1.0"},

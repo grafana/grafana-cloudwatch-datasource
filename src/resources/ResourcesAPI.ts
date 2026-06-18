@@ -172,22 +172,13 @@ export class ResourcesAPI extends CloudWatchRequest {
   }
 
   getPromQLLabelKeys(region: string, match?: string, start?: number, end?: number, limit?: number): Promise<string[]> {
-    const params: Record<string, string | number> = {
+    return this.memoizedGetRequest<string[]>('promql-label-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
-    };
-    if (match !== undefined) {
-      params['match'] = match;
-    }
-    if (start !== undefined) {
-      params['start'] = start;
-    }
-    if (end !== undefined) {
-      params['end'] = end;
-    }
-    if (limit !== undefined) {
-      params['limit'] = limit;
-    }
-    return this.memoizedGetRequest<string[]>('promql-label-keys', params);
+      ...(match !== undefined && { match }),
+      ...(start !== undefined && { start }),
+      ...(end !== undefined && { end }),
+      ...(limit !== undefined && { limit }),
+    });
   }
 
   getPromQLLabelValues(
@@ -198,22 +189,13 @@ export class ResourcesAPI extends CloudWatchRequest {
     end?: number,
     limit?: number
   ): Promise<string[]> {
-    const params: Record<string, string | number> = {
+    return this.memoizedGetRequest<string[]>('promql-label-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       labelKey,
-    };
-    if (match !== undefined) {
-      params['match'] = match;
-    }
-    if (start !== undefined) {
-      params['start'] = start;
-    }
-    if (end !== undefined) {
-      params['end'] = end;
-    }
-    if (limit !== undefined) {
-      params['limit'] = limit;
-    }
-    return this.memoizedGetRequest<string[]>('promql-label-values', params);
+      ...(match !== undefined && { match }),
+      ...(start !== undefined && { start }),
+      ...(end !== undefined && { end }),
+      ...(limit !== undefined && { limit }),
+    });
   }
 }

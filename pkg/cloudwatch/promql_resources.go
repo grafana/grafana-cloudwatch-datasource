@@ -16,27 +16,26 @@ type promqlStringListResponse struct {
 	Data   []string `json:"data"`
 }
 
+func buildPromQLForwardParams(params url.Values) url.Values {
+	cwParams := url.Values{}
+	for _, name := range []string{"start", "end", "limit"} {
+		if v := params.Get(name); v != "" {
+			cwParams.Set(name, v)
+		}
+	}
+	if match := params.Get("match"); match != "" {
+		cwParams.Set("match[]", match)
+	}
+	return cwParams
+}
+
 func (ds *DataSource) PromQLLabelKeysHandler(ctx context.Context, params url.Values) ([]byte, *models.HttpError) {
 	region := params.Get("region")
 	if region == "" || region == defaultRegion {
 		region = ds.Settings.Region
 	}
 
-	cwParams := url.Values{}
-	if match := params.Get("match"); match != "" {
-		cwParams.Set("match[]", match)
-	}
-	if start := params.Get("start"); start != "" {
-		cwParams.Set("start", start)
-	}
-	if end := params.Get("end"); end != "" {
-		cwParams.Set("end", end)
-	}
-	if limit := params.Get("limit"); limit != "" {
-		cwParams.Set("limit", limit)
-	}
-
-	body, status, err := ds.promqlSignedGet(ctx, region, "/api/v1/labels", cwParams, 30*time.Second)
+	body, status, err := ds.promqlSignedGet(ctx, region, "/api/v1/labels", buildPromQLForwardParams(params), 30*time.Second)
 	if err != nil {
 		return nil, models.NewHttpError("failed to fetch PromQL label keys", http.StatusInternalServerError, err)
 	}
@@ -67,22 +66,8 @@ func (ds *DataSource) PromQLLabelValuesHandler(ctx context.Context, params url.V
 		return nil, models.NewHttpError("labelKey parameter is required", http.StatusBadRequest, nil)
 	}
 
-	cwParams := url.Values{}
-	if match := params.Get("match"); match != "" {
-		cwParams.Set("match[]", match)
-	}
-	if start := params.Get("start"); start != "" {
-		cwParams.Set("start", start)
-	}
-	if end := params.Get("end"); end != "" {
-		cwParams.Set("end", end)
-	}
-	if limit := params.Get("limit"); limit != "" {
-		cwParams.Set("limit", limit)
-	}
-
 	path := fmt.Sprintf("/api/v1/label/%s/values", url.PathEscape(labelKey))
-	body, status, err := ds.promqlSignedGet(ctx, region, path, cwParams, 30*time.Second)
+	body, status, err := ds.promqlSignedGet(ctx, region, path, buildPromQLForwardParams(params), 30*time.Second)
 	if err != nil {
 		return nil, models.NewHttpError("failed to fetch PromQL label values", http.StatusInternalServerError, err)
 	}
