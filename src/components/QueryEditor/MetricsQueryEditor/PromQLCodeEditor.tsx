@@ -1,8 +1,10 @@
 import { useEffect, useMemo } from 'react';
 
 import { CoreApp, TimeRange } from '@grafana/data';
-import { MonacoQueryFieldLazy } from '@grafana/prometheus';
+import { PromQueryField } from '@grafana/prometheus';
 import { type PrometheusDatasource } from '@grafana/prometheus/dist/types/datasource';
+import { type PromQuery } from '@grafana/prometheus/dist/types/types';
+import { Stack } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { CloudWatchMetricsQuery } from '../../../types';
@@ -21,39 +23,41 @@ export interface Props {
 
 export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, timeRange, app }: Props) => {
   const prometheusDatasourceShim = useMemo(() => {
-    return makePrometheusDatasourceShim(datasource);
+    const shim = makePrometheusDatasourceShim(datasource);
+    shim.languageProvider = new CloudWatchPromQLLanguageProvider(shim, datasource.resources, query.region);
+    return shim;
   }, [datasource]);
 
-  const languageProvider = useMemo(() => {
-    return new CloudWatchPromQLLanguageProvider(prometheusDatasourceShim, datasource.resources, query.region);
-  }, [prometheusDatasourceShim, datasource.resources]);
-
   useEffect(() => {
+    const languageProvider = prometheusDatasourceShim.languageProvider as CloudWatchPromQLLanguageProvider;
     languageProvider.updateRegion(query.region);
     languageProvider.start(timeRange);
-  }, [languageProvider, query.region]);
+  }, [prometheusDatasourceShim, query.region, timeRange]);
+
+  const promQuery: PromQuery = {
+    refId: query.refId,
+    expr: query.promqlExpression ?? '',
+  };
+
+  const handleChange = (next: PromQuery) => {
+    if (next.expr !== query.promqlExpression) {
+      onChange({ ...query, promqlExpression: next.expr });
+    }
+  };
 
   return (
-    <>
-      <MonacoQueryFieldLazy
-        initialValue={query.promqlExpression ?? ''}
-        languageProvider={languageProvider}
-        history={[]}
-        placeholder="Enter a PromQL expression"
-        onRunQuery={(value) => {
-          onChange({ ...query, promqlExpression: value });
-          onRunQuery();
-        }}
-        onBlur={(value) => {
-          if (value !== query.promqlExpression) {
-            onChange({ ...query, promqlExpression: value });
-          }
-        }}
+    <Stack direction="column" gap={0.5}>
+      <PromQueryField
         datasource={prometheusDatasourceShim}
-        timeRange={timeRange}
+        query={promQuery}
+        onChange={handleChange}
+        onRunQuery={onRunQuery}
+        history={[]}
+        range={timeRange}
+        app={app}
       />
       <PromQLOptionsEditor query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
-    </>
+    </Stack>
   );
 };
 
