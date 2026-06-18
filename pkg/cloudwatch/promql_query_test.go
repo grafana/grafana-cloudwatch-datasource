@@ -4,13 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConvertPromRangeResultToDataFrames(t *testing.T) {
-	t.Run("converts a single series to a data frame", func(t *testing.T) {
+	t.Run("converts a single series to a data frame named after __name__", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
 		resp.Data.Result = []prometheusRangeSeries{
 			{
@@ -22,7 +21,7 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "A", "")
+		frames := convertPromRangeResultToDataFrames(resp, "A")
 		require.Len(t, frames, 1)
 
 		frame := frames[0]
@@ -36,28 +35,28 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 		assert.Equal(t, time.Unix(1000060, 0).UTC(), timeField.At(1))
 
 		valueField := frame.Fields[1]
-		assert.Equal(t, "Value", valueField.Name)
+		// Value field is named after the __name__ label so @grafana/prometheus's transformV2
+		// auto-legend path (which checks `field.labels.__name__ === field.name`) works.
+		assert.Equal(t, "http_requests_total", valueField.Name)
 		assert.Equal(t, 2, valueField.Len())
 		assert.Equal(t, 42.5, valueField.At(0))
 		assert.Equal(t, 43.0, valueField.At(1))
 		assert.Equal(t, "api", valueField.Labels["job"])
+		assert.Equal(t, "http_requests_total", valueField.Labels["__name__"])
 	})
 
-	t.Run("converts multiple series to separate frames", func(t *testing.T) {
+	t.Run("falls back to 'Value' when __name__ is missing", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
 		resp.Data.Result = []prometheusRangeSeries{
 			{
 				Metric: map[string]string{"instance": "host1"},
 				Values: [][]interface{}{{float64(1000), "1.0"}},
 			},
-			{
-				Metric: map[string]string{"instance": "host2"},
-				Values: [][]interface{}{{float64(1000), "2.0"}},
-			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "B", "")
-		assert.Len(t, frames, 2)
+		frames := convertPromRangeResultToDataFrames(resp, "A")
+		require.Len(t, frames, 1)
+		assert.Equal(t, "Value", frames[0].Fields[1].Name)
 	})
 
 	t.Run("skips malformed points", func(t *testing.T) {
@@ -74,14 +73,14 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "C", "")
+		frames := convertPromRangeResultToDataFrames(resp, "C")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 1, frames[0].Fields[0].Len())
 	})
 
 	t.Run("returns empty frames for empty result", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
-		frames := convertPromRangeResultToDataFrames(resp, "D", "")
+		frames := convertPromRangeResultToDataFrames(resp, "D")
 		assert.Empty(t, frames)
 	})
 }
@@ -101,7 +100,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "A", "")
+		frames := convertPromInstantResultToDataFrames(resp, "A")
 		require.Len(t, frames, 2)
 
 		first := frames[0]
@@ -109,6 +108,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 		require.Len(t, first.Fields, 2)
 		assert.Equal(t, 1, first.Fields[0].Len())
 		assert.Equal(t, time.Unix(1000000, 0).UTC(), first.Fields[0].At(0))
+		assert.Equal(t, "up", first.Fields[1].Name)
 		assert.Equal(t, 1.0, first.Fields[1].At(0))
 		assert.Equal(t, "api", first.Fields[1].Labels["job"])
 	})
@@ -122,7 +122,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 			{Metric: map[string]string{}, Value: []interface{}{float64(1000), "5.5"}},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "B", "")
+		frames := convertPromInstantResultToDataFrames(resp, "B")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 5.5, frames[0].Fields[1].At(0))
 	})
@@ -136,14 +136,14 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "C", "")
+		frames := convertPromInstantResultToDataFrames(resp, "C")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 25.0, frames[0].Fields[1].At(0))
 	})
 
 	t.Run("returns empty frames for empty result", func(t *testing.T) {
 		resp := prometheusInstantResponse{Status: "success"}
-		frames := convertPromInstantResultToDataFrames(resp, "D", "")
+		frames := convertPromInstantResultToDataFrames(resp, "D")
 		assert.Empty(t, frames)
 	})
 }
@@ -170,80 +170,6 @@ func TestPromQLQueryModelEffectiveModes(t *testing.T) {
 	}
 }
 
-func TestConvertPromRangeResultToTable(t *testing.T) {
-	t.Run("flattens multiple series into one wide frame", func(t *testing.T) {
-		resp := prometheusRangeResponse{Status: "success"}
-		resp.Data.Result = []prometheusRangeSeries{
-			{
-				Metric: map[string]string{"job": "api", "instance": "host1"},
-				Values: [][]interface{}{{float64(1000), "1.0"}, {float64(2000), "2.0"}},
-			},
-			{
-				Metric: map[string]string{"job": "web"},
-				Values: [][]interface{}{{float64(1000), "3.0"}},
-			},
-		}
-
-		frames := convertPromRangeResultToTable(resp, "A")
-		require.Len(t, frames, 1)
-
-		frame := frames[0]
-		assert.Equal(t, "A", frame.RefID)
-		require.Len(t, frame.Fields, 4)
-		assert.Equal(t, "Time", frame.Fields[0].Name)
-		assert.Equal(t, "instance", frame.Fields[1].Name)
-		assert.Equal(t, "job", frame.Fields[2].Name)
-		assert.Equal(t, "Value", frame.Fields[3].Name)
-
-		assert.Equal(t, 3, frame.Fields[0].Len())
-		assert.Equal(t, "host1", frame.Fields[1].At(0))
-		assert.Equal(t, "", frame.Fields[1].At(2))
-		assert.Equal(t, "api", frame.Fields[2].At(0))
-		assert.Equal(t, "web", frame.Fields[2].At(2))
-		assert.Equal(t, 1.0, frame.Fields[3].At(0))
-		assert.Equal(t, 3.0, frame.Fields[3].At(2))
-
-		assert.NotNil(t, frame.Meta)
-		assert.Equal(t, data.VisType("table"), frame.Meta.PreferredVisualization)
-	})
-
-	t.Run("returns an empty table frame for empty result", func(t *testing.T) {
-		resp := prometheusRangeResponse{Status: "success"}
-		frames := convertPromRangeResultToTable(resp, "A")
-		require.Len(t, frames, 1)
-		assert.Equal(t, 0, frames[0].Fields[0].Len())
-	})
-}
-
-func TestConvertPromInstantResultToTable(t *testing.T) {
-	t.Run("flattens vector result into one row per series", func(t *testing.T) {
-		resp := prometheusInstantResponse{Status: "success"}
-		resp.Data.Result = []prometheusInstantSeries{
-			{
-				Metric: map[string]string{"job": "api"},
-				Value:  []interface{}{float64(1000), "1.0"},
-			},
-			{
-				Metric: map[string]string{"job": "web"},
-				Value:  []interface{}{float64(1000), "2.0"},
-			},
-		}
-
-		frames := convertPromInstantResultToTable(resp, "A")
-		require.Len(t, frames, 1)
-		frame := frames[0]
-
-		assert.Equal(t, "A", frame.RefID)
-		require.Len(t, frame.Fields, 3)
-		assert.Equal(t, 2, frame.Fields[0].Len())
-		assert.Equal(t, "api", frame.Fields[1].At(0))
-		assert.Equal(t, "web", frame.Fields[1].At(1))
-		assert.Equal(t, 1.0, frame.Fields[2].At(0))
-		assert.Equal(t, 2.0, frame.Fields[2].At(1))
-		assert.Equal(t, data.VisType("table"), frame.Meta.PreferredVisualization)
-	})
-}
-
 func TestResolveStepSeconds(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -265,160 +191,4 @@ func TestResolveStepSeconds(t *testing.T) {
 			assert.Equal(t, tc.want, resolveStepSeconds(tc.calculated, tc.minStep))
 		})
 	}
-}
-
-func TestSubstituteLabelPlaceholders(t *testing.T) {
-	labels := map[string]string{"job": "api", "instance": "host1"}
-
-	tests := []struct {
-		name     string
-		template string
-		want     string
-	}{
-		{"single placeholder substituted", "{{job}}", "api"},
-		{"multiple placeholders substituted", "{{job}} - {{instance}}", "api - host1"},
-		{"missing label becomes empty string", "{{job}}/{{missing}}", "api/"},
-		{"inner whitespace tolerated", "{{ job }}", "api"},
-		{"literal text without placeholders passes through", "static-name", "static-name"},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, substituteLabelPlaceholders(tc.template, labels))
-		})
-	}
-}
-
-func TestConvertPromRangeResultLegendFormat(t *testing.T) {
-	resp := prometheusRangeResponse{Status: "success"}
-	resp.Data.Result = []prometheusRangeSeries{
-		{
-			Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host1"},
-			Values: [][]interface{}{{float64(1000), "1.0"}},
-		},
-	}
-
-	t.Run("custom template sets DisplayNameFromDS on value field", func(t *testing.T) {
-		frames := convertPromRangeResultToDataFrames(resp, "A", "{{job}}/{{instance}}")
-		require.Len(t, frames, 1)
-		require.NotNil(t, frames[0].Fields[1].Config)
-		assert.Equal(t, "api/host1", frames[0].Fields[1].Config.DisplayNameFromDS)
-	})
-
-	t.Run("verbose extracts __name__ as the prefix", func(t *testing.T) {
-		frames := convertPromRangeResultToDataFrames(resp, "A", "")
-		require.Len(t, frames, 1)
-		require.NotNil(t, frames[0].Fields[1].Config)
-		assert.Equal(t, `RequestCount{instance="host1", job="api"}`, frames[0].Fields[1].Config.DisplayNameFromDS)
-	})
-
-	t.Run("__auto on a single-series response keeps every label", func(t *testing.T) {
-		frames := convertPromRangeResultToDataFrames(resp, "A", "__auto")
-		require.Len(t, frames, 1)
-		require.NotNil(t, frames[0].Fields[1].Config)
-		assert.Equal(t, `RequestCount{instance="host1", job="api"}`, frames[0].Fields[1].Config.DisplayNameFromDS)
-	})
-
-	t.Run("__auto strips labels common to every series", func(t *testing.T) {
-		multiResp := prometheusRangeResponse{Status: "success"}
-		multiResp.Data.Result = []prometheusRangeSeries{
-			{
-				Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host1"},
-				Values: [][]interface{}{{float64(1000), "1.0"}},
-			},
-			{
-				Metric: map[string]string{"__name__": "RequestCount", "job": "api", "instance": "host2"},
-				Values: [][]interface{}{{float64(1000), "2.0"}},
-			},
-		}
-
-		frames := convertPromRangeResultToDataFrames(multiResp, "A", "__auto")
-		require.Len(t, frames, 2)
-		assert.Equal(t, `RequestCount{instance="host1"}`, frames[0].Fields[1].Config.DisplayNameFromDS)
-		assert.Equal(t, `RequestCount{instance="host2"}`, frames[1].Fields[1].Config.DisplayNameFromDS)
-	})
-
-	t.Run("__auto falls back to the metric name when every label is common", func(t *testing.T) {
-		multiResp := prometheusRangeResponse{Status: "success"}
-		multiResp.Data.Result = []prometheusRangeSeries{
-			{
-				Metric: map[string]string{"__name__": "RequestCount", "job": "api"},
-				Values: [][]interface{}{{float64(1000), "1.0"}},
-			},
-			{
-				Metric: map[string]string{"__name__": "RequestCount", "job": "api"},
-				Values: [][]interface{}{{float64(1000), "2.0"}},
-			},
-		}
-
-		frames := convertPromRangeResultToDataFrames(multiResp, "A", "__auto")
-		require.Len(t, frames, 2)
-		assert.Equal(t, "RequestCount", frames[0].Fields[1].Config.DisplayNameFromDS)
-	})
-}
-
-func TestRenderNameAndLabels(t *testing.T) {
-	tests := []struct {
-		name   string
-		labels map[string]string
-		common map[string]string
-		want   string
-	}{
-		{
-			name:   "verbose: name plus every label except __name__",
-			labels: map[string]string{"__name__": "metric", "job": "api", "instance": "h1"},
-			common: nil,
-			want:   `metric{instance="h1", job="api"}`,
-		},
-		{
-			name:   "auto: name plus only the distinguishing labels",
-			labels: map[string]string{"__name__": "metric", "job": "api", "instance": "h1"},
-			common: map[string]string{"job": "api"},
-			want:   `metric{instance="h1"}`,
-		},
-		{
-			name:   "name only when no other labels exist",
-			labels: map[string]string{"__name__": "metric"},
-			want:   "metric",
-		},
-		{
-			name:   "name only when every label is common (auto fully collapses)",
-			labels: map[string]string{"__name__": "metric", "job": "api"},
-			common: map[string]string{"job": "api"},
-			want:   "metric",
-		},
-		{
-			name:   "missing __name__ still renders the label braces",
-			labels: map[string]string{"job": "api"},
-			want:   `{job="api"}`,
-		},
-		{
-			name:   "missing __name__ and nothing distinguishing returns empty",
-			labels: map[string]string{"job": "api"},
-			common: map[string]string{"job": "api"},
-			want:   "",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, renderNameAndLabels(tc.labels, tc.common))
-		})
-	}
-}
-
-func TestConvertPromInstantResultLegendFormat(t *testing.T) {
-	resp := prometheusInstantResponse{Status: "success"}
-	resp.Data.ResultType = "vector"
-	resp.Data.Result = []prometheusInstantSeries{
-		{
-			Metric: map[string]string{"job": "api"},
-			Value:  []interface{}{float64(1000), "1.0"},
-		},
-	}
-
-	frames := convertPromInstantResultToDataFrames(resp, "A", "{{job}}")
-	require.Len(t, frames, 1)
-	require.NotNil(t, frames[0].Fields[1].Config)
-	assert.Equal(t, "api", frames[0].Fields[1].Config.DisplayNameFromDS)
 }

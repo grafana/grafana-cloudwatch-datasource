@@ -12,8 +12,11 @@ import {
   dateTimeFormat,
   FieldType,
   rangeUtil,
+  renderLegendFormat,
   ScopedVars,
 } from '@grafana/data';
+import { transformV2 } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus/dist/types/types';
 import { TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
@@ -23,6 +26,58 @@ import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery, MetricQuer
 import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
+
+function applyPromQLTransform(
+  response: DataQueryResponse,
+  request: DataQueryRequest<CloudWatchQuery>
+): DataQueryResponse {
+  const promTargets: PromQuery[] = [];
+
+  for (const target of request.targets as CloudWatchMetricsQuery[]) {
+    if (target.metricQueryType !== MetricQueryType.PromQL) {
+      continue;
+    }
+
+    const promTarget: PromQuery = {
+      refId: target.refId,
+      expr: target.promqlExpression ?? '',
+      legendFormat: target.legendFormat,
+      format: target.format,
+      instant: target.instant,
+      range: target.range,
+    };
+
+    promTargets.push(promTarget);
+    if (target.instant && target.range) {
+      promTargets.push({ ...promTarget, refId: `${target.refId}-Instant`, range: false });
+    }
+  }
+
+  if (promTargets.length === 0) {
+    return response;
+  }
+
+  for (const frame of response.data) {
+    const promTarget = promTargets.find((target) => target.refId === frame.refId);
+    if (!promTarget?.legendFormat || promTarget.legendFormat === '__auto') {
+      continue;
+    }
+
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.number || !field.labels) {
+        continue;
+      }
+
+      field.config = {
+        ...field.config,
+        displayNameFromDS: renderLegendFormat(promTarget.legendFormat, field.labels),
+      };
+    }
+  }
+
+  const transformed = transformV2(response, { ...request, targets: promTargets }, {});
+  return { ...response, data: transformed.data };
+}
 
 const getThrottlingErrorMessage = (region: string, message: string) =>
   `Please visit the AWS Service Quotas console at https://${region}.console.aws.amazon.com/servicequotas/home?region=${region}#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. ${message}`;
@@ -123,8 +178,9 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
           this.alertOnThrottlingErrors(res.errors, request);
         }
 
+        const transformed = applyPromQLTransform({ ...res, data: dataframes }, request);
         return {
-          data: dataframes,
+          data: transformed.data,
           // DataSourceWithBackend will not throw an error, instead it will return "errors" field along with the response
           errors: this.enrichThrottlingErrorMessages(request, res.errors),
         };
