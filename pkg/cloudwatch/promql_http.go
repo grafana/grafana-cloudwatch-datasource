@@ -45,6 +45,9 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 	}
 	defer func() { _ = httpResp.Body.Close() }()
 
-	body, _ := io.ReadAll(httpResp.Body)
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, 0, backend.DownstreamError(fmt.Errorf("failed to read response body: %w", err))
+	}
 	return body, httpResp.StatusCode, nil
 }

@@ -12,8 +12,10 @@ import (
 )
 
 type promqlStringListResponse struct {
-	Status string   `json:"status"`
-	Data   []string `json:"data"`
+	Status    string   `json:"status"`
+	Data      []string `json:"data"`
+	Error     string   `json:"error,omitempty"`
+	ErrorType string   `json:"errorType,omitempty"`
 }
 
 func buildPromQLForwardParams(params url.Values) url.Values {
@@ -46,6 +48,12 @@ func (ds *DataSource) PromQLLabelKeysHandler(ctx context.Context, params url.Val
 	var promResp promqlStringListResponse
 	if err := json.Unmarshal(body, &promResp); err != nil {
 		return nil, models.NewHttpError("failed to parse PromQL label keys response", http.StatusInternalServerError, err)
+	}
+	if promResp.Status != "success" {
+		return nil, models.NewHttpError("failed to fetch PromQL label keys", http.StatusInternalServerError, fmt.Errorf("PromQL API error (%s): %s", promResp.ErrorType, promResp.Error))
+	}
+	if promResp.Data == nil {
+		promResp.Data = []string{}
 	}
 
 	out, err := json.Marshal(promResp.Data)
@@ -82,6 +90,12 @@ func (ds *DataSource) PromQLLabelValuesHandler(ctx context.Context, params url.V
 	var promResp promqlStringListResponse
 	if err := json.Unmarshal(body, &promResp); err != nil {
 		return nil, models.NewHttpError("failed to parse PromQL label values response", http.StatusInternalServerError, err)
+	}
+	if promResp.Status != "success" {
+		return nil, models.NewHttpError("failed to fetch PromQL label values", http.StatusInternalServerError, fmt.Errorf("PromQL API error (%s): %s", promResp.ErrorType, promResp.Error))
+	}
+	if promResp.Data == nil {
+		promResp.Data = []string{}
 	}
 
 	out, err := json.Marshal(promResp.Data)

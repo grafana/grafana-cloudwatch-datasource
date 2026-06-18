@@ -31,7 +31,6 @@ export class CloudWatchPromQLLanguageProvider implements PrometheusLanguageProvi
 
   /**
    * Initializes the language provider by fetching metrics and label keys.
-   * All calls use the limit parameter from datasource configuration (default: 40,000 if not set).
    * When no timeRange provided, we will use the default time range (now/now-6h)
    */
   start = async (timeRange?: TimeRange): Promise<unknown[]> => {
@@ -101,8 +100,8 @@ export class CloudWatchPromQLLanguageProvider implements PrometheusLanguageProvi
     if (cacheForLabelKey) {
       const cached = cacheForLabelKey.get(key);
       if (cached) {
-      return cached;
-    }
+        return cached;
+      }
     } else {
       cacheForLabelKey = new Map();
       this.labelValuesCache.set(labelKey, cacheForLabelKey);
