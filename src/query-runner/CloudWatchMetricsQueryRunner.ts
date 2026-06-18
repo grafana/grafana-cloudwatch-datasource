@@ -57,7 +57,18 @@ function applyPromQLTransform(
     return response;
   }
 
+  const promRefIds = new Set(promTargets.map((target) => target.refId));
+  const promFrames: DataFrame[] = [];
+  const otherFrames: DataFrame[] = [];
   for (const frame of response.data) {
+    if (frame.refId && promRefIds.has(frame.refId)) {
+      promFrames.push(frame);
+    } else {
+      otherFrames.push(frame);
+    }
+  }
+
+  for (const frame of promFrames) {
     const promTarget = promTargets.find((target) => target.refId === frame.refId);
     if (!promTarget?.legendFormat || promTarget.legendFormat === '__auto') {
       continue;
@@ -75,8 +86,8 @@ function applyPromQLTransform(
     }
   }
 
-  const transformed = transformV2(response, { ...request, targets: promTargets }, {});
-  return { ...response, data: transformed.data };
+  const transformed = transformV2({ ...response, data: promFrames }, { ...request, targets: promTargets }, {});
+  return { ...response, data: [...otherFrames, ...transformed.data] };
 }
 
 const getThrottlingErrorMessage = (region: string, message: string) =>
