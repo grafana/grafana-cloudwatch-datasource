@@ -1,4 +1,4 @@
-import { CoreApp, TimeRange } from '@grafana/data';
+import { CoreApp, PanelData, TimeRange } from '@grafana/data';
 import { PromQueryBuilderExplained, PromQueryBuilderOptions, PromQueryField, type PromQuery } from '@grafana/prometheus';
 import { Stack } from '@grafana/ui';
 
@@ -15,9 +15,19 @@ export interface Props {
   timeRange: TimeRange;
   app?: CoreApp;
   showExplain: boolean;
+  data?: PanelData;
 }
 
-export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, timeRange, app, showExplain }: Props) => {
+export const PromQLCodeEditor = ({
+  query,
+  onChange,
+  onRunQuery,
+  datasource,
+  timeRange,
+  app,
+  showExplain,
+  data,
+}: Props) => {
   const prometheusDatasourceShim = useCloudWatchPrometheusDatasource(datasource, query.region, timeRange);
 
   const promQuery: PromQuery = {
@@ -52,6 +62,7 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
         history={[]}
         range={timeRange}
         app={app}
+        data={data}
       />
       {showExplain && <PromQueryBuilderExplained query={promQuery.expr} />}
       <PromQueryBuilderOptions

@@ -248,6 +248,7 @@ export const MetricsQueryEditor = (props: Props) => {
               timeRange={props.range ?? getDefaultTimeRange()}
               app={props.app}
               showExplain={showPromQLExplain}
+              data={props.data}
             />
           )}
           {query.metricEditorMode === MetricEditorMode.Builder && (
@@ -259,6 +260,7 @@ export const MetricsQueryEditor = (props: Props) => {
               timeRange={props.range ?? getDefaultTimeRange()}
               app={props.app}
               showExplain={showPromQLExplain}
+              data={props.data}
             />
           )}
         </>

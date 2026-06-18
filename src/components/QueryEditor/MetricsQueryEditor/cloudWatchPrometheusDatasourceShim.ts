@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
-import { type ScopedVars, type TimeRange } from '@grafana/data';
-import { PrometheusCacheLevel } from '@grafana/prometheus';
+import { type QueryFixAction, type ScopedVars, type TimeRange } from '@grafana/data';
+import { addLabelToQuery, getQueryHints, PrometheusCacheLevel } from '@grafana/prometheus';
 import { type PrometheusDatasource } from '@grafana/prometheus/dist/types/datasource';
 import { type PromQuery } from '@grafana/prometheus/dist/types/types';
 
@@ -23,12 +23,29 @@ export function makeCloudWatchPrometheusDatasourceShim(datasource: CloudWatchDat
     // CloudWatchPromQLLanguageProvider has its own 10-minute cache; the upstream
     // cacheLevel is only read for label-value autocomplete debounce timing.
     cacheLevel: PrometheusCacheLevel.Low,
-    // The visual builder's hint panel calls getQueryHints on every render and
-    // modifyQuery on hint button clicks. CloudWatch-aware implementations are
-    // a follow-up; for now we return no hints so the builder mounts cleanly.
-    getQueryHints: () => [],
-    modifyQuery: (query: PromQuery) => query,
+    getQueryHints: (query: PromQuery, series: unknown[]) => getQueryHints(query.expr ?? '', series),
+    modifyQuery: (query: PromQuery, action: QueryFixAction) => applyModifyQuery(query, action),
   } as unknown as PrometheusDatasource;
+}
+
+function applyModifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
+  const expr = query.expr ?? '';
+  switch (action.type) {
+    case 'ADD_FILTER': {
+      const { key, value } = action.options ?? {};
+      return key && value ? { ...query, expr: addLabelToQuery(expr, key, value) } : query;
+    }
+    case 'ADD_FILTER_OUT': {
+      const { key, value } = action.options ?? {};
+      return key && value ? { ...query, expr: addLabelToQuery(expr, key, value, '!=') } : query;
+    }
+    case 'ADD_RATE':
+      return { ...query, expr: `rate(${expr}[$__rate_interval])` };
+    case 'ADD_SUM':
+      return { ...query, expr: `sum(${expr.trim()}) by ($1)` };
+    default:
+      return query;
+  }
 }
 
 /**
