@@ -1,20 +1,11 @@
-import { useEffect, useMemo } from 'react';
-
 import { CoreApp, TimeRange } from '@grafana/data';
-import {
-  getPrometheusTime,
-  PrometheusCacheLevel,
-  PromQueryBuilderOptions,
-  PromQueryField,
-  type PromQuery,
-  type PrometheusDatasource,
-} from '@grafana/prometheus';
+import { PromQueryBuilderOptions, PromQueryField, type PromQuery } from '@grafana/prometheus';
 import { Stack } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { CloudWatchMetricsQuery } from '../../../types';
 
-import { CloudWatchPromQLLanguageProvider } from './CloudWatchPromQLLanguageProvider';
+import { useCloudWatchPrometheusDatasource } from './cloudWatchPrometheusDatasourceShim';
 
 export interface Props {
   query: CloudWatchMetricsQuery;
@@ -26,24 +17,7 @@ export interface Props {
 }
 
 export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, timeRange, app }: Props) => {
-  // query.region seeds the language provider once; subsequent region changes flow through
-  // languageProvider.updateRegion() in the effect below. Rebuilding the shim on every region
-  // change would throw away the labelKeys/labelValues caches.
-  /* eslint-disable react-hooks/exhaustive-deps */
-  const prometheusDatasourceShim = useMemo(() => {
-    const shim = makePrometheusDatasourceShim(datasource);
-    shim.languageProvider = new CloudWatchPromQLLanguageProvider(shim, datasource.resources, query.region);
-    return shim;
-  }, [datasource]);
-  /* eslint-enable react-hooks/exhaustive-deps */
-
-  useEffect(() => {
-    const languageProvider = prometheusDatasourceShim.languageProvider as CloudWatchPromQLLanguageProvider;
-    languageProvider.updateRegion(query.region);
-    languageProvider.start(timeRange);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prometheusDatasourceShim, query.region]);
+  const prometheusDatasourceShim = useCloudWatchPrometheusDatasource(datasource, query.region, timeRange);
 
   const promQuery: PromQuery = {
     refId: query.refId,
@@ -92,14 +66,3 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
     </Stack>
   );
 };
-
-function makePrometheusDatasourceShim(datasource: CloudWatchDatasource): PrometheusDatasource {
-  return {
-    interpolateString: (value: string) => datasource.templateSrv.replace(value),
-    cacheLevel: PrometheusCacheLevel.None,
-    getAdjustedInterval: (timeRange: TimeRange) => ({
-      start: getPrometheusTime(timeRange.from, false).toString(),
-      end: getPrometheusTime(timeRange.to, true).toString(),
-    }),
-  } as PrometheusDatasource;
-}

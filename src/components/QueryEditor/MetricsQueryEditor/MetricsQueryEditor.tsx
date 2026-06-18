@@ -202,7 +202,14 @@ export const MetricsQueryEditor = (props: Props) => {
             />
           )}
           {query.metricEditorMode === MetricEditorMode.Builder && (
-            <PromQLBuilderEditor query={query} onChange={props.onChange} datasource={datasource} />
+            <PromQLBuilderEditor
+              query={query}
+              onChange={props.onChange}
+              onRunQuery={props.onRunQuery}
+              datasource={datasource}
+              timeRange={props.range ?? getDefaultTimeRange()}
+              app={props.app}
+            />
           )}
         </>
       )}
