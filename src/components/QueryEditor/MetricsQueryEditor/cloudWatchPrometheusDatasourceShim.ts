@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
-import { type QueryFixAction, type ScopedVars, type TimeRange } from '@grafana/data';
-import { addLabelToQuery, getQueryHints, PrometheusCacheLevel } from '@grafana/prometheus';
+import { type ScopedVars, type TimeRange } from '@grafana/data';
+import { applyModifyQuery, getQueryHints, PrometheusCacheLevel } from '@grafana/prometheus';
 import { type PrometheusDatasource } from '@grafana/prometheus/dist/types/datasource';
 import { type PromQuery } from '@grafana/prometheus/dist/types/types';
 
@@ -24,28 +24,8 @@ export function makeCloudWatchPrometheusDatasourceShim(datasource: CloudWatchDat
     // cacheLevel is only read for label-value autocomplete debounce timing.
     cacheLevel: PrometheusCacheLevel.Low,
     getQueryHints: (query: PromQuery, series: unknown[]) => getQueryHints(query.expr ?? '', series),
-    modifyQuery: (query: PromQuery, action: QueryFixAction) => applyModifyQuery(query, action),
+    modifyQuery: applyModifyQuery,
   } as unknown as PrometheusDatasource;
-}
-
-function applyModifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
-  const expr = query.expr ?? '';
-  switch (action.type) {
-    case 'ADD_FILTER': {
-      const { key, value } = action.options ?? {};
-      return key && value ? { ...query, expr: addLabelToQuery(expr, key, value) } : query;
-    }
-    case 'ADD_FILTER_OUT': {
-      const { key, value } = action.options ?? {};
-      return key && value ? { ...query, expr: addLabelToQuery(expr, key, value, '!=') } : query;
-    }
-    case 'ADD_RATE':
-      return { ...query, expr: `rate(${expr}[$__rate_interval])` };
-    case 'ADD_SUM':
-      return { ...query, expr: `sum(${expr.trim()}) by ($1)` };
-    default:
-      return query;
-  }
 }
 
 /**
