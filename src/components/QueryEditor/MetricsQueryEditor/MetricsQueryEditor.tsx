@@ -153,8 +153,8 @@ export const MetricsQueryEditor = (props: Props) => {
         />
         <ConfirmModal
           isOpen={promQLParseModalOpen}
-          title="Parsing error: Switch to the builder mode?"
-          body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost."
+          title="Parsing error: Switch to builder mode?"
+          body="There is a syntax error, or the query structure cannot be visualized when switching to builder mode. Parts of the query may be lost."
           confirmText="Continue"
           dismissText="Cancel"
           icon="exclamation-triangle"
