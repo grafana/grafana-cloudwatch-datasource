@@ -43,7 +43,7 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 	if err != nil {
 		return nil, 0, backend.DownstreamError(fmt.Errorf("request failed: %w", err))
 	}
-	defer httpResp.Body.Close()
+	defer func() { _ = httpResp.Body.Close() }()
 
 	body, _ := io.ReadAll(httpResp.Body)
 	return body, httpResp.StatusCode, nil
