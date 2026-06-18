@@ -121,7 +121,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
     const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map((q) => {
       const migratedQuery = migrateMetricQuery(q);
-      const migratedAndIterpolatedQuery = this.interpolateMetricsQueryVariables(
+      const migratedAndInterpolatedQuery = this.interpolateMetricsQueryVariables(
         migratedQuery,
         options.scopedVars,
         options.range
@@ -131,9 +131,9 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         timezoneUTCOffset,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
-        ...migratedAndIterpolatedQuery,
+        ...migratedAndInterpolatedQuery,
         type:
-          migratedAndIterpolatedQuery.metricQueryType === MetricQueryType.PromQL ? 'promqlQuery' : 'timeSeriesQuery',
+          migratedAndInterpolatedQuery.metricQueryType === MetricQueryType.PromQL ? 'promqlQuery' : 'timeSeriesQuery',
         datasource: this.ref,
       };
     });
