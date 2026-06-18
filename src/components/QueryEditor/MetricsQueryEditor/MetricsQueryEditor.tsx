@@ -1,11 +1,12 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { ChangeEvent, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
-import { getDefaultTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
 import { buildVisualQueryFromString } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
+import { ConfirmModal, Input, RadioButtonGroup, Space, Stack, Switch, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_METRICS_QUERY } from '../../../defaultQueries';
@@ -48,6 +49,9 @@ export const MetricsQueryEditor = (props: Props) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [promQLParseModalOpen, setPromQLParseModalOpen] = useState(false);
   const [codeEditorIsDirty, setCodeEditorIsDirty] = useState(false);
+  const [showPromQLExplain, setShowPromQLExplain] = useState(false);
+  const promQLExplainSwitchId = useId();
+  const styles = useStyles2(getStyles);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
 
   const onEditorModeChange = useCallback(
@@ -89,22 +93,36 @@ export const MetricsQueryEditor = (props: Props) => {
 
   useEffect(() => {
     extraHeaderElementLeft?.(
-      <InlineSelect
-        aria-label="Metric editor mode"
-        value={metricEditorModes.find((m) => m.value === query.metricQueryType)}
-        options={metricEditorModes}
-        onChange={({ value }) => {
-          if (
-            codeEditorIsDirty &&
-            query.metricQueryType === MetricQueryType.Search &&
-            query.metricEditorMode === MetricEditorMode.Builder
-          ) {
-            setShowConfirm(true);
-            return;
-          }
-          onChange({ ...query, metricQueryType: value });
-        }}
-      />
+      <>
+        <InlineSelect
+          aria-label="Metric editor mode"
+          value={metricEditorModes.find((m) => m.value === query.metricQueryType)}
+          options={metricEditorModes}
+          onChange={({ value }) => {
+            if (
+              codeEditorIsDirty &&
+              query.metricQueryType === MetricQueryType.Search &&
+              query.metricEditorMode === MetricEditorMode.Builder
+            ) {
+              setShowConfirm(true);
+              return;
+            }
+            onChange({ ...query, metricQueryType: value });
+          }}
+        />
+        {query.metricQueryType === MetricQueryType.PromQL && (
+          <Stack direction="row" gap={1} alignItems="center">
+            <label htmlFor={promQLExplainSwitchId} className={styles.promQLExplainLabel}>
+              Explain
+            </label>
+            <Switch
+              id={promQLExplainSwitchId}
+              value={showPromQLExplain}
+              onChange={(event) => setShowPromQLExplain(event.currentTarget.checked)}
+            />
+          </Stack>
+        )}
+      </>
     );
 
     extraHeaderElementRight?.(
@@ -162,6 +180,9 @@ export const MetricsQueryEditor = (props: Props) => {
     extraHeaderElementRight,
     showConfirm,
     promQLParseModalOpen,
+    showPromQLExplain,
+    promQLExplainSwitchId,
+    styles.promQLExplainLabel,
     onEditorModeChange,
   ]);
 
@@ -226,6 +247,7 @@ export const MetricsQueryEditor = (props: Props) => {
               datasource={datasource}
               timeRange={props.range ?? getDefaultTimeRange()}
               app={props.app}
+              showExplain={showPromQLExplain}
             />
           )}
           {query.metricEditorMode === MetricEditorMode.Builder && (
@@ -236,6 +258,7 @@ export const MetricsQueryEditor = (props: Props) => {
               datasource={datasource}
               timeRange={props.range ?? getDefaultTimeRange()}
               app={props.app}
+              showExplain={showPromQLExplain}
             />
           )}
         </>
@@ -290,3 +313,14 @@ export const MetricsQueryEditor = (props: Props) => {
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  promQLExplainLabel: css({
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    fontSize: theme.typography.bodySmall.fontSize,
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
+});

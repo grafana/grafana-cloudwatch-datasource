@@ -15,6 +15,7 @@ export interface PromQLBuilderEditorProps {
   datasource: CloudWatchDatasource;
   timeRange: TimeRange;
   app?: CoreApp;
+  showExplain: boolean;
 }
 
 export const PromQLBuilderEditor = ({
@@ -24,6 +25,7 @@ export const PromQLBuilderEditor = ({
   datasource,
   timeRange,
   app,
+  showExplain,
 }: PromQLBuilderEditorProps) => {
   const prometheusDatasourceShim = useCloudWatchPrometheusDatasource(datasource, query.region, timeRange);
 
@@ -56,7 +58,7 @@ export const PromQLBuilderEditor = ({
         datasource={prometheusDatasourceShim}
         onChange={handleChange}
         onRunQuery={onRunQuery}
-        showExplain={false}
+        showExplain={showExplain}
       />
       <PromQueryBuilderOptions query={promQuery} app={app} onChange={handleChange} onRunQuery={onRunQuery} />
     </Stack>
