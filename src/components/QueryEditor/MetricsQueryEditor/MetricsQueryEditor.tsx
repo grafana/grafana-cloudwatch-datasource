@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { getDefaultTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
+import { buildVisualQueryFromString } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
 
@@ -45,6 +46,7 @@ const editorModes = [
 export const MetricsQueryEditor = (props: Props) => {
   const { query, datasource, extraHeaderElementLeft, extraHeaderElementRight, onChange } = props;
   const [showConfirm, setShowConfirm] = useState(false);
+  const [promQLParseModalOpen, setPromQLParseModalOpen] = useState(false);
   const [codeEditorIsDirty, setCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
 
@@ -57,6 +59,17 @@ export const MetricsQueryEditor = (props: Props) => {
       ) {
         setShowConfirm(true);
         return;
+      }
+      if (
+        query.metricQueryType === MetricQueryType.PromQL &&
+        query.metricEditorMode === MetricEditorMode.Code &&
+        newMetricEditorMode === MetricEditorMode.Builder
+      ) {
+        const parseResult = buildVisualQueryFromString(query.promqlExpression ?? '');
+        if (parseResult.errors.length > 0) {
+          setPromQLParseModalOpen(true);
+          return;
+        }
       }
       onChange({ ...query, metricEditorMode: newMetricEditorMode });
     },
@@ -120,6 +133,19 @@ export const MetricsQueryEditor = (props: Props) => {
           }}
           onDismiss={() => setShowConfirm(false)}
         />
+        <ConfirmModal
+          isOpen={promQLParseModalOpen}
+          title="Parsing error: Switch to the builder mode?"
+          body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost."
+          confirmText="Continue"
+          dismissText="Cancel"
+          icon="exclamation-triangle"
+          onConfirm={() => {
+            setPromQLParseModalOpen(false);
+            onChange({ ...query, metricEditorMode: MetricEditorMode.Builder });
+          }}
+          onDismiss={() => setPromQLParseModalOpen(false)}
+        />
       </>
     );
 
@@ -135,6 +161,7 @@ export const MetricsQueryEditor = (props: Props) => {
     extraHeaderElementLeft,
     extraHeaderElementRight,
     showConfirm,
+    promQLParseModalOpen,
     onEditorModeChange,
   ]);
 
