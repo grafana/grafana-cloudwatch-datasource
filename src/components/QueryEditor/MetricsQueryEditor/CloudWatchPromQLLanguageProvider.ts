@@ -72,7 +72,9 @@ export class CloudWatchPromQLLanguageProvider implements PrometheusLanguageProvi
     const key = cacheKey(start, end, match, limit);
 
     const cached = this.labelKeysCache.get(key);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     const keys = await this.resources.getPromQLLabelKeys(this.region, match, start, end, limit).catch(() => []);
     this.labelKeysCache.set(key, keys);
@@ -98,7 +100,9 @@ export class CloudWatchPromQLLanguageProvider implements PrometheusLanguageProvi
     let cacheForLabelKey = this.labelValuesCache.get(labelKey);
     if (cacheForLabelKey) {
       const cached = cacheForLabelKey.get(key);
-      if (cached) return cached;
+      if (cached) {
+      return cached;
+    }
     } else {
       cacheForLabelKey = new Map();
       this.labelValuesCache.set(labelKey, cacheForLabelKey);
