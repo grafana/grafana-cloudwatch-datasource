@@ -12,11 +12,7 @@ const config = async (env): Promise<Configuration> => {
     resolve: {
       ...baseConfig.resolve,
       alias: {
-        ...(baseConfig.resolve && typeof baseConfig.resolve.alias === 'object' && !Array.isArray(baseConfig.resolve.alias)
-          ? baseConfig.resolve.alias
-          : {}),
-        // Exact match only: `@grafana/prometheus` must not bundle a second `@grafana/i18n` (promql
-        // calls `t()` at module load; duplicate package state breaks before Grafana's i18n binds).
+        ...((baseConfig.resolve?.alias as Record<string, string | string[] | false>) ?? {}),
         '@grafana/i18n$': path.resolve(process.cwd(), 'src/webpack-shims/grafanaI18nForBundledPrometheus.ts'),
       },
     },
