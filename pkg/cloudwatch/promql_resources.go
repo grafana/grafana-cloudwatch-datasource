@@ -74,8 +74,7 @@ func (ds *DataSource) PromQLLabelValuesHandler(ctx context.Context, params url.V
 		return nil, models.NewHttpError("failed to fetch PromQL label values", http.StatusInternalServerError, err)
 	}
 	if status == http.StatusNotFound || status == http.StatusBadRequest {
-		out, _ := json.Marshal([]string{})
-		return out, nil
+		return []byte("[]"), nil
 	}
 	if status != http.StatusOK {
 		return nil, models.NewHttpError("failed to fetch PromQL label values", http.StatusInternalServerError, fmt.Errorf("CloudWatch PromQL API returned %d: %s", status, body))
