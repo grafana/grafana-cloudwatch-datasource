@@ -435,6 +435,33 @@ describe('CloudWatchMetricsQueryRunner', () => {
       },
     };
 
+    it('sends PromQL and metric queries as separate requests so the backend routes each correctly', async () => {
+      const mixedQueries: CloudWatchMetricsQuery[] = [
+        ...queries,
+        {
+          ...queries[0],
+          refId: 'B',
+          metricQueryType: MetricQueryType.PromQL,
+          metricEditorMode: MetricEditorMode.Code,
+          promqlExpression: 'up',
+        },
+      ];
+
+      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
+        response: toDataQueryResponse(responseFromBEQuery),
+      });
+
+      await expect(runner.handleMetricQueries(mixedQueries, request, queryMock)).toEmitValuesWith(() => {
+        expect(queryMock).toHaveBeenCalledTimes(2);
+        const requestsByType = Object.fromEntries(queryMock.mock.calls.map(([req]) => [req.targets[0].type, req]));
+
+        expect(requestsByType.timeSeriesQuery.requestId).toEqual('mockId-metrics');
+        expect(requestsByType.timeSeriesQuery.targets.map((t: CloudWatchMetricsQuery) => t.refId)).toEqual(['A']);
+        expect(requestsByType.promqlQuery.requestId).toEqual('mockId-promql');
+        expect(requestsByType.promqlQuery.targets.map((t: CloudWatchMetricsQuery) => t.refId)).toEqual(['B']);
+      });
+    });
+
     it('should return series list', async () => {
       const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
         // DataSourceWithBackend runs toDataQueryResponse({response from CW backend})

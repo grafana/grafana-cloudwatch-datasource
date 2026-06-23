@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 import { createElement } from 'react';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map, merge, Observable, of } from 'rxjs';
 
 import {
   AppEvents,
@@ -141,13 +141,31 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       return of({ data: [] });
     }
 
-    const request: DataQueryRequest<CloudWatchQuery> = {
-      ...options,
-      requestId: options.requestId + '-metrics', // adding -metrics to prevent requestId from matching logs queries sent from the same panel
-      targets: validMetricsQueries,
-    };
+    const timeSeriesTargets = validMetricsQueries.filter((q) => q.type === 'timeSeriesQuery');
+    const promqlTargets = validMetricsQueries.filter((q) => q.type === 'promqlQuery');
+    const responses: Array<Observable<DataQueryResponse>> = [];
 
-    return this.performTimeSeriesQuery(request, queryFn);
+    if (timeSeriesTargets.length) {
+      console.log('doing timeSeriesTargets');
+      responses.push(
+        this.performTimeSeriesQuery(
+          { ...options, requestId: options.requestId + '-metrics', targets: timeSeriesTargets },
+          queryFn
+        )
+      );
+    }
+
+    if (promqlTargets.length) {
+      console.log('doing promqlTargets');
+      responses.push(
+        this.performTimeSeriesQuery(
+          { ...options, requestId: options.requestId + '-promql', targets: promqlTargets },
+          queryFn
+        )
+      );
+    }
+
+    return responses.length === 1 ? responses[0] : merge(...responses);
   };
 
   interpolateMetricsQueryVariables(query: CloudWatchMetricsQuery, scopedVars: ScopedVars): CloudWatchMetricsQuery {
