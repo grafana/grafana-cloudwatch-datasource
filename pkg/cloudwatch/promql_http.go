@@ -2,19 +2,22 @@ package cloudwatch
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
 
-	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
-
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, params url.Values, timeout time.Duration) ([]byte, int, error) {
+	if region == defaultRegion || region == "" {
+		region = ds.Settings.Region
+	}
+
 	rawURL := fmt.Sprintf("https://monitoring.%s.amazonaws.com%s", region, path)
 	if len(params) > 0 {
 		rawURL += "?" + params.Encode()
@@ -25,21 +28,36 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 		return nil, 0, fmt.Errorf("failed to build request: %w", err)
 	}
 
-	cfg, err := ds.newAWSConfig(ctx, region)
+	authType := ds.Settings.AuthType
+	timeouts := httpclient.DefaultTimeoutOptions
+	timeouts.Timeout = timeout
+
+	opts := httpclient.Options{
+		Timeouts: &timeouts,
+		SigV4: &httpclient.SigV4Config{
+			AuthType:      authType.String(),
+			Profile:       ds.Settings.Profile,
+			Service:       "monitoring",
+			AccessKey:     ds.Settings.AccessKey,
+			SecretKey:     ds.Settings.SecretKey,
+			SessionToken:  ds.Settings.SessionToken,
+			AssumeRoleARN: ds.Settings.AssumeRoleARN,
+			ExternalID:    ds.Settings.ExternalID,
+			Region:        region,
+		},
+		Middlewares: append(httpclient.DefaultMiddlewares(), awsauth.NewSigV4Middleware()),
+	}
+	
+	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
+		opts.ProxyOptions = ds.ProxyOpts
+	}
+
+	client, err := NewPromQLHTTPClient(opts)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get AWS config: %w", err)
+		return nil, 0, fmt.Errorf("failed to build PromQL HTTP client: %w", err)
 	}
 
-	credentials, err := cfg.Credentials.Retrieve(ctx)
-	if err != nil {
-		return nil, 0, backend.DownstreamError(fmt.Errorf("failed to retrieve credentials: %w", err))
-	}
-
-	if err := v4.NewSigner().SignHTTP(ctx, credentials, httpReq, fmt.Sprintf("%x", sha256.Sum256(nil)), "monitoring", region, time.Now().UTC()); err != nil {
-		return nil, 0, fmt.Errorf("failed to sign request: %w", err)
-	}
-
-	httpResp, err := (&http.Client{Timeout: timeout}).Do(httpReq)
+	httpResp, err := client.Do(httpReq)
 	if err != nil {
 		return nil, 0, backend.DownstreamError(fmt.Errorf("request failed: %w", err))
 	}
