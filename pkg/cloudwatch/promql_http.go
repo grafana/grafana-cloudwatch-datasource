@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -18,7 +20,16 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 		region = ds.Settings.Region
 	}
 
-	rawURL := fmt.Sprintf("https://monitoring.%s.amazonaws.com%s", region, path)
+	baseURL := ds.Settings.Endpoint
+	if baseURL == "" {
+		endpoint, err := cloudwatch.NewDefaultEndpointResolver().ResolveEndpoint(region, cloudwatch.EndpointResolverOptions{})
+		if err != nil {
+			return nil, 0, backend.DownstreamError(fmt.Errorf("failed to resolve CloudWatch endpoint: %w", err))
+		}
+		baseURL = endpoint.URL
+	}
+	rawURL := strings.TrimRight(baseURL, "/") + path
+
 	if len(params) > 0 {
 		rawURL += "?" + params.Encode()
 	}
@@ -47,7 +58,7 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 		},
 		Middlewares: append(httpclient.DefaultMiddlewares(), awsauth.NewSigV4Middleware()),
 	}
-	
+
 	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
 		opts.ProxyOptions = ds.ProxyOpts
 	}
