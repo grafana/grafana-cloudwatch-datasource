@@ -15,8 +15,7 @@ import {
   renderLegendFormat,
   ScopedVars,
 } from '@grafana/data';
-import { transformV2 } from '@grafana/prometheus';
-import { type PromQuery } from '@grafana/prometheus/dist/types/types';
+import { transformV2, type PromQuery } from '@grafana/prometheus';
 import { TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';

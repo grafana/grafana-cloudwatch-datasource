@@ -1,9 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { CoreApp, TimeRange } from '@grafana/data';
-import { PromQueryBuilderOptions, PromQueryField } from '@grafana/prometheus';
-import { type PrometheusDatasource } from '@grafana/prometheus/dist/types/datasource';
-import { type PromQuery } from '@grafana/prometheus/dist/types/types';
+import { PromQueryBuilderOptions, PromQueryField, type PromQuery, type PrometheusDatasource } from '@grafana/prometheus';
 import { Stack } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';

@@ -1,7 +1,9 @@
 import { type TimeRange, dateTime } from '@grafana/data';
-import { type PrometheusLanguageProviderInterface } from '@grafana/prometheus';
-import { type PrometheusDatasource } from '@grafana/prometheus/dist/types/datasource';
-import { type PromMetricsMetadata } from '@grafana/prometheus/dist/types/types';
+import {
+  type PromMetricsMetadata,
+  type PrometheusDatasource,
+  type PrometheusLanguageProviderInterface,
+} from '@grafana/prometheus';
 import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
 
 export class CloudWatchPromQLLanguageProvider implements PrometheusLanguageProviderInterface {
