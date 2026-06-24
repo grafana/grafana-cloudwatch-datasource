@@ -21,12 +21,14 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "A")
+		frames := convertPromRangeResultToDataFrames(resp, "A", 60)
 		require.Len(t, frames, 1)
 
 		frame := frames[0]
 		assert.Equal(t, "A", frame.RefID)
 		require.Len(t, frame.Fields, 2)
+		require.NotNil(t, frame.Meta)
+		assert.Equal(t, float64(60), frame.Meta.Custom.(map[string]interface{})["period"])
 
 		timeField := frame.Fields[0]
 		assert.Equal(t, "Time", timeField.Name)
@@ -54,7 +56,7 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "A")
+		frames := convertPromRangeResultToDataFrames(resp, "A", 60)
 		require.Len(t, frames, 1)
 		assert.Equal(t, "Value", frames[0].Fields[1].Name)
 	})
@@ -73,14 +75,14 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromRangeResultToDataFrames(resp, "C")
+		frames := convertPromRangeResultToDataFrames(resp, "C", 60)
 		require.Len(t, frames, 1)
 		assert.Equal(t, 1, frames[0].Fields[0].Len())
 	})
 
 	t.Run("returns empty frames for empty result", func(t *testing.T) {
 		resp := prometheusRangeResponse{Status: "success"}
-		frames := convertPromRangeResultToDataFrames(resp, "D")
+		frames := convertPromRangeResultToDataFrames(resp, "D", 60)
 		assert.Empty(t, frames)
 	})
 }

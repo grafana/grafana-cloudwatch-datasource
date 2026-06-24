@@ -139,7 +139,7 @@ func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("PromQL error (%s): %s", promResp.ErrorType, promResp.Error)))
 	}
 
-	return backend.DataResponse{Frames: convertPromRangeResultToDataFrames(promResp, q.RefID)}
+	return backend.DataResponse{Frames: convertPromRangeResultToDataFrames(promResp, q.RefID, stepSecs)}
 }
 
 func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expression string, q backend.DataQuery, refID string) backend.DataResponse {
@@ -173,7 +173,7 @@ func valueFieldName(labels map[string]string) string {
 	return "Value"
 }
 
-func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID string) data.Frames {
+func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID string, stepSecs float64) data.Frames {
 	var frames data.Frames
 
 	for _, series := range promResp.Data.Result {
@@ -205,6 +205,7 @@ func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID 
 			data.NewField(valueFieldName(series.Metric), data.Labels(series.Metric), values),
 		)
 		frame.RefID = refID
+		frame.Meta = &data.FrameMeta{Custom: map[string]interface{}{"period": stepSecs}}
 		frames = append(frames, frame)
 	}
 
