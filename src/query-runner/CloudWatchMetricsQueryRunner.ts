@@ -146,7 +146,6 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     const responses: Array<Observable<DataQueryResponse>> = [];
 
     if (timeSeriesTargets.length) {
-      console.log('doing timeSeriesTargets');
       responses.push(
         this.performTimeSeriesQuery(
           { ...options, requestId: options.requestId + '-metrics', targets: timeSeriesTargets },
@@ -156,7 +155,6 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     }
 
     if (promqlTargets.length) {
-      console.log('doing promqlTargets');
       responses.push(
         this.performTimeSeriesQuery(
           { ...options, requestId: options.requestId + '-promql', targets: promqlTargets },
