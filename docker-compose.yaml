@@ -1,5 +1,51 @@
 services:
+  ministack:
+    image: ministackorg/ministack:latest
+    environment:
+      MINISTACK_REGION: us-east-1
+      MINISTACK_ACCOUNT_ID: '000000000000'
+
+  ms-loader:
+    image: amazon/aws-cli:latest
+    depends_on:
+      - ministack
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_PAGER: ''
+    volumes:
+      - ./tests/e2e/fixtures:/data:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        ENDPOINT=http://ministack:4566
+        echo "Waiting for ministack to accept AWS API calls..."
+        i=0
+        until aws --endpoint-url=$$ENDPOINT sts get-caller-identity >/dev/null 2>&1; do
+          i=$$((i + 1))
+          if [ $$i -ge 60 ]; then
+            echo "ministack did not become ready in time" >&2
+            exit 1
+          fi
+          sleep 2
+        done
+        echo "Seeding ministack fixtures..."
+        aws --endpoint-url=$$ENDPOINT logs create-log-group --log-group-name /e2e/app
+        aws --endpoint-url=$$ENDPOINT logs create-log-stream --log-group-name /e2e/app --log-stream-name s1
+        aws --endpoint-url=$$ENDPOINT logs put-log-events \
+            --log-group-name /e2e/app --log-stream-name s1 \
+            --log-events file:///data/logs.json
+        sh /data/seed-metrics.sh "$$ENDPOINT"
+        echo "Fixture load complete."
+    restart: 'no'
+
   grafana:
     extends:
       file: .config/docker-compose-base.yaml
       service: grafana
+    depends_on:
+      ms-loader:
+        condition: service_completed_successfully
