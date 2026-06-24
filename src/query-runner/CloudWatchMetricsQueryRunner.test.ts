@@ -605,6 +605,40 @@ describe('CloudWatchMetricsQueryRunner', () => {
         })
       );
     });
+    it('interpolates PromQL expression variables via handleMetricQueries', async () => {
+      const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
+        variables: [metricVariable],
+      });
+      runner.handleMetricQueries(
+        [
+          {
+            id: '',
+            refId: 'a',
+            region: 'us-east-2',
+            namespace: '',
+            period: '',
+            alias: '',
+            metricName: '',
+            dimensions: {},
+            matchExact: true,
+            statistic: '',
+            expression: '',
+            metricQueryType: MetricQueryType.PromQL,
+            metricEditorMode: MetricEditorMode.Code,
+            promqlExpression: 'rate($metric[5m])',
+          },
+        ],
+        request,
+        queryMock
+      );
+      expect(queryMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targets: expect.arrayContaining([
+            expect.objectContaining({ promqlExpression: 'rate(CPUUtilization[5m])' }),
+          ]),
+        })
+      );
+    });
     describe('When performing CloudWatch query with template variables', () => {
       const key = 'key';
       const var1: CustomVariableModel = {

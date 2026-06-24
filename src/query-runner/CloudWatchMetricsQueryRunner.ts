@@ -178,6 +178,9 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       period: String(this.getPeriod(query, scopedVars)),
       expression: this.templateSrv.replace(query.expression, scopedVars),
       sqlExpression: this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw'),
+      promqlExpression: query.promqlExpression
+        ? this.templateSrv.replace(query.promqlExpression, scopedVars)
+        : query.promqlExpression,
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
       statistic: this.templateSrv.replace(query.statistic, scopedVars),
       id: this.templateSrv.replace(query.id, scopedVars),
