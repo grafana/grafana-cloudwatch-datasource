@@ -9,13 +9,6 @@ const config = async (env): Promise<Configuration> => {
   const baseConfig = await grafanaConfig(env);
 
   return merge(baseConfig, {
-    resolve: {
-      ...baseConfig.resolve,
-      alias: {
-        ...((baseConfig.resolve?.alias as Record<string, string | string[] | false>) ?? {}),
-        '@grafana/i18n$': path.resolve(process.cwd(), 'src/webpack-shims/grafanaI18nForBundledPrometheus.ts'),
-      },
-    },
     module: {
       ...baseConfig.module,
       rules: [
