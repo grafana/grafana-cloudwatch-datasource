@@ -89,8 +89,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			instance, err := NewDatasource(tt.settingCtx, tt.settings)
-			dsWithSchema := instance.(*DataSourceWithSchema)
-			ds := dsWithSchema.DataSource
+			ds := instance.(*DataSource)
 			tt.Err(t, err)
 			assert.Equal(t, tt.expectedDS.Settings.GrafanaSettings, ds.Settings.GrafanaSettings)
 			datasourceComparer := cmp.Comparer(func(d1 *DataSource, d2 *DataSource) bool {
@@ -104,7 +103,7 @@ func TestNewInstanceSettings(t *testing.T) {
 					d1.Settings.AccessKey == d2.Settings.AccessKey &&
 					d1.Settings.SecretKey == d2.Settings.SecretKey
 			})
-			if !cmp.Equal(dsWithSchema.DataSource, tt.expectedDS, datasourceComparer) {
+			if !cmp.Equal(instance.(*DataSource), tt.expectedDS, datasourceComparer) {
 				t.Errorf("Unexpected result. Expecting\n%v \nGot:\n%v", instance, tt.expectedDS)
 			}
 		})

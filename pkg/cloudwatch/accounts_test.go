@@ -22,10 +22,9 @@ import (
 
 func newTestDatasource(opts ...func(*DataSource)) *DataSource {
 	ds := &DataSource{
-		AWSConfigProvider:     awsauth.NewFakeConfigProvider(false),
-		logger:                log.NewNullLogger(),
-		tagValueCache:         cache.New(0, 0),
-		schemaMetadataCache:   cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
+		AWSConfigProvider: awsauth.NewFakeConfigProvider(false),
+		logger:            log.NewNullLogger(),
+		tagValueCache:     cache.New(0, 0),
 		Settings: models.CloudWatchSettings{
 			AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-1"},
 		},
