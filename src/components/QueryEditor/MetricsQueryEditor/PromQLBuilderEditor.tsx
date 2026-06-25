@@ -68,7 +68,7 @@ export const PromQLBuilderEditor = ({
         app={app}
         onChange={handleChange}
         onRunQuery={onRunQuery}
-        uiOptions={{ exemplars: false }}
+        uiOptions={{ exemplars: false, disableTypeBoth: true }}
         formatOptions={[
           { label: 'Time series', value: 'time_series' },
           { label: 'Table', value: 'table' },

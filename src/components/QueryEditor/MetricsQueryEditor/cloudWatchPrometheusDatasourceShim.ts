@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { type ScopedVars, type TimeRange } from '@grafana/data';
-import { applyModifyQuery, getQueryHints, PrometheusCacheLevel } from '@grafana/prometheus';
+import { applyModifyQuery, getPrometheusTime, getQueryHints, PrometheusCacheLevel } from '@grafana/prometheus';
 import { type PrometheusDatasource } from '@grafana/prometheus/dist/types/datasource';
 import { type PromQuery } from '@grafana/prometheus/dist/types/types';
 
@@ -20,9 +20,11 @@ export function makeCloudWatchPrometheusDatasourceShim(datasource: CloudWatchDat
     interpolateString: (value: string, scopedVars?: ScopedVars) => datasource.templateSrv.replace(value, scopedVars),
     getVariables: () => datasource.getVariables(),
     lookupsDisabled: false,
-    // CloudWatchPromQLLanguageProvider has its own 10-minute cache; the upstream
-    // cacheLevel is only read for label-value autocomplete debounce timing.
-    cacheLevel: PrometheusCacheLevel.Low,
+    cacheLevel: PrometheusCacheLevel.None,
+    getAdjustedInterval: (timeRange: TimeRange) => ({
+      start: getPrometheusTime(timeRange.from, false).toString(),
+      end: getPrometheusTime(timeRange.to, true).toString(),
+    }),
     getQueryHints: (query: PromQuery, series: unknown[]) => getQueryHints(query.expr ?? '', series),
     modifyQuery: applyModifyQuery,
   } as unknown as PrometheusDatasource;

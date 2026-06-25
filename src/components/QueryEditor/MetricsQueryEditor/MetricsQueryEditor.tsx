@@ -157,7 +157,6 @@ export const MetricsQueryEditor = (props: Props) => {
           body="There is a syntax error, or the query structure cannot be visualized when switching to builder mode. Parts of the query may be lost."
           confirmText="Continue"
           dismissText="Cancel"
-          icon="exclamation-triangle"
           onConfirm={() => {
             setPromQLParseModalOpen(false);
             onChange({ ...query, metricEditorMode: MetricEditorMode.Builder });

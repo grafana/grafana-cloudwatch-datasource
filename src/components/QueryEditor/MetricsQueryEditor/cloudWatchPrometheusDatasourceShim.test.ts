@@ -36,10 +36,11 @@ describe('makeCloudWatchPrometheusDatasourceShim', () => {
     expect(shim.lookupsDisabled).toBe(false);
   });
 
-  it('sets cacheLevel to Low so the label-value autocomplete debounce uses Prom defaults', () => {
+  it('sets cacheLevel to None and provides getAdjustedInterval for the resource client', () => {
     const { datasource } = makeFakeDatasource();
     const shim = makeCloudWatchPrometheusDatasourceShim(datasource);
-    expect(shim.cacheLevel).toBe(PrometheusCacheLevel.Low);
+    expect(shim.cacheLevel).toBe(PrometheusCacheLevel.None);
+    expect(typeof shim.getAdjustedInterval).toBe('function');
   });
 
   it('exposes getQueryHints and modifyQuery so the builder hint panel can render fixes', () => {
