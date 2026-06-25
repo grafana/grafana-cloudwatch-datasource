@@ -85,7 +85,7 @@
     "@grafana/data": "^12.0.2",
     "@grafana/i18n": "12.4.2",
     "@grafana/plugin-ui": "^0.13.0",
-    "@grafana/prometheus": "13.1.6",
+    "@grafana/prometheus": "13.1.7",
     "@grafana/runtime": "^12.0.2",
     "@grafana/scenes": "^7.0.0",
     "@grafana/schema": "^12.0.1",

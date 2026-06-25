@@ -1,7 +1,14 @@
 import { useEffect, useMemo } from 'react';
 
 import { CoreApp, TimeRange } from '@grafana/data';
-import { PromQueryBuilderOptions, PromQueryField, type PromQuery, type PrometheusDatasource } from '@grafana/prometheus';
+import {
+  getPrometheusTime,
+  PrometheusCacheLevel,
+  PromQueryBuilderOptions,
+  PromQueryField,
+  type PromQuery,
+  type PrometheusDatasource,
+} from '@grafana/prometheus';
 import { Stack } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
@@ -87,5 +94,10 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
 function makePrometheusDatasourceShim(datasource: CloudWatchDatasource): PrometheusDatasource {
   return {
     interpolateString: (value: string) => datasource.templateSrv.replace(value),
+    cacheLevel: PrometheusCacheLevel.None,
+    getAdjustedInterval: (timeRange: TimeRange) => ({
+      start: getPrometheusTime(timeRange.from, false).toString(),
+      end: getPrometheusTime(timeRange.to, true).toString(),
+    }),
   } as PrometheusDatasource;
 }
