@@ -84,7 +84,7 @@ export function setupForLogs() {
     ): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
       throw new Error('Function not implemented.');
     },
-    reload: function (): void {
+    reload: function (): Promise<void> {
       throw new Error('Function not implemented.');
     },
   });
