@@ -15,8 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-const instantRefIDSuffix = "-Instant"
-
 type promQLQueryModel struct {
 	Region           string `json:"region"`
 	PromqlExpression string `json:"promqlExpression"`
@@ -96,18 +94,10 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 			region = ds.Settings.Region
 		}
 
-		instant, rangeQuery := model.effectiveModes()
-
-		if rangeQuery {
+		if instant, _ := model.effectiveModes(); instant {
+			resp.Responses[q.RefID] = ds.executePromQLInstant(ctx, region, model.PromqlExpression, q, q.RefID)
+		} else {
 			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, model.Interval, q)
-		}
-
-		if instant {
-			instantRefID := q.RefID
-			if rangeQuery {
-				instantRefID = q.RefID + instantRefIDSuffix
-			}
-			resp.Responses[instantRefID] = ds.executePromQLInstant(ctx, region, model.PromqlExpression, q, instantRefID)
 		}
 	}
 

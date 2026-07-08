@@ -47,9 +47,6 @@ function applyPromQLTransform(
     };
 
     promTargets.push(promTarget);
-    if (target.instant && target.range) {
-      promTargets.push({ ...promTarget, refId: `${target.refId}-Instant`, range: false });
-    }
   }
 
   if (promTargets.length === 0) {
