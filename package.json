@@ -18,7 +18,7 @@
   "devDependencies": {
     "@eslint/compat": "2.0.5",
     "@eslint/js": "10.0.1",
-    "@grafana/e2e-selectors": "^13.1.0",
+    "@grafana/e2e-selectors": "13.1.0",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.4.13",
     "@grafana/tsconfig": "2.0.1",
