@@ -112,6 +112,27 @@ func TestPromqlSignedGet(t *testing.T) {
 		assert.JSONEq(t, `{"status":"error"}`, string(body))
 	})
 
+	t.Run("reuses a cached client for repeated requests with the same region and timeout", func(t *testing.T) {
+		var built int
+		NewPromQLHTTPClient = func(_ httpclient.Options) (*http.Client, error) {
+			built++
+			return &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+				return newHTTPResponse(http.StatusOK, `{}`), nil
+			})}, nil
+		}
+
+		ds := dsWith("us-east-1", "")
+		for range 3 {
+			_, _, err := ds.promqlSignedGet(context.Background(), "us-east-1", "/api/v1/labels", nil, time.Second)
+			require.NoError(t, err)
+		}
+		assert.Equal(t, 1, built, "client should be built once and reused across requests")
+
+		_, _, err := ds.promqlSignedGet(context.Background(), "us-east-1", "/api/v1/labels", nil, 2*time.Second)
+		require.NoError(t, err)
+		assert.Equal(t, 2, built, "a different timeout should build a new client")
+	})
+
 	t.Run("wraps transport errors", func(t *testing.T) {
 		NewPromQLHTTPClient = func(_ httpclient.Options) (*http.Client, error) {
 			return &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {

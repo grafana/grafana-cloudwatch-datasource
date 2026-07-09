@@ -39,14 +39,37 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 		return nil, 0, fmt.Errorf("failed to build request: %w", err)
 	}
 
-	authType := ds.Settings.AuthType
+	client, err := ds.promqlHTTPClient(region, timeout)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to build PromQL HTTP client: %w", err)
+	}
+
+	httpResp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, 0, backend.DownstreamError(fmt.Errorf("request failed: %w", err))
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, 0, backend.DownstreamError(fmt.Errorf("failed to read response body: %w", err))
+	}
+	return body, httpResp.StatusCode, nil
+}
+
+func (ds *DataSource) promqlHTTPClient(region string, timeout time.Duration) (*http.Client, error) {
+	key := region + "|" + timeout.String()
+	if c, ok := ds.promqlClients.Load(key); ok {
+		return c.(*http.Client), nil
+	}
+
 	timeouts := httpclient.DefaultTimeoutOptions
 	timeouts.Timeout = timeout
 
 	opts := httpclient.Options{
 		Timeouts: &timeouts,
 		SigV4: &httpclient.SigV4Config{
-			AuthType:      authType.String(),
+			AuthType:      ds.Settings.AuthType.String(),
 			Profile:       ds.Settings.Profile,
 			Service:       "monitoring",
 			AccessKey:     ds.Settings.AccessKey,
@@ -65,18 +88,9 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 
 	client, err := NewPromQLHTTPClient(opts)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to build PromQL HTTP client: %w", err)
+		return nil, err
 	}
 
-	httpResp, err := client.Do(httpReq)
-	if err != nil {
-		return nil, 0, backend.DownstreamError(fmt.Errorf("request failed: %w", err))
-	}
-	defer func() { _ = httpResp.Body.Close() }()
-
-	body, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		return nil, 0, backend.DownstreamError(fmt.Errorf("failed to read response body: %w", err))
-	}
-	return body, httpResp.StatusCode, nil
+	actual, _ := ds.promqlClients.LoadOrStore(key, client)
+	return actual.(*http.Client), nil
 }
