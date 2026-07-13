@@ -9,7 +9,7 @@ import (
 )
 
 func Test_external_id_route(t *testing.T) {
-	t.Run("successfully returns an external id from the instance", func(t *testing.T) {
+	t.Run("successfully returns stack external id for legacy datasources", func(t *testing.T) {
 		t.Setenv("AWS_AUTH_EXTERNAL_ID", "mock-external-id")
 		rr := httptest.NewRecorder()
 
@@ -23,6 +23,22 @@ func Test_external_id_route(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.JSONEq(t, `{"externalId":"mock-external-id"}`, rr.Body.String())
+	})
+
+	t.Run("prefers per-datasource grafanaExternalId when set", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.GrafanaSettings.ExternalID = "stack-id"
+			ds.Settings.GrafanaExternalID = "stackABC-dsUid1"
+		})
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.ExternalIdHandler))
+		req := httptest.NewRequest("GET", "/external-id", nil)
+
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.JSONEq(t, `{"externalId":"stackABC-dsUid1"}`, rr.Body.String())
 	})
 
 	t.Run("returns an empty string if there is no external id", func(t *testing.T) {

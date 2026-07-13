@@ -81,6 +81,7 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 		LegacyAuthType:     ds.Settings.AuthType,
 		AssumeRoleARN:      ds.Settings.AssumeRoleARN,
 		ExternalID:         ds.Settings.ExternalID,
+		GrafanaExternalID:  ds.Settings.GrafanaExternalID,
 		Endpoint:           ds.Settings.Endpoint,
 		Region:             region,
 		AccessKey:          ds.Settings.AccessKey,
@@ -132,11 +133,11 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 	ds := &DataSource{
 		Settings: instanceSettings,
 		// this is used to build a custom dialer when secure socks proxy is enabled
-		ProxyOpts:         opts.ProxyOptions,
-		AWSConfigProvider: awsauth.NewConfigProvider(),
-		logger:            backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
-		tagValueCache:          cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
-		schemaMetadataCache:    cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
+		ProxyOpts:           opts.ProxyOptions,
+		AWSConfigProvider:   awsauth.NewConfigProvider(),
+		logger:              backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
+		tagValueCache:       cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		schemaMetadataCache: cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 

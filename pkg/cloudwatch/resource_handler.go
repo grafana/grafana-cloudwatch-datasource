@@ -262,8 +262,12 @@ func (ds *DataSource) LogGroupFieldsHandler(ctx context.Context, parameters url.
 }
 
 func (ds *DataSource) ExternalIdHandler(_ context.Context, _ url.Values) ([]byte, *models.HttpError) {
+	externalID := ds.Settings.GrafanaExternalID
+	if externalID == "" {
+		externalID = ds.Settings.GrafanaSettings.ExternalID
+	}
 	response := map[string]string{
-		"externalId": ds.Settings.GrafanaSettings.ExternalID,
+		"externalId": externalID,
 	}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
