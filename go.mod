@@ -1,6 +1,6 @@
 module github.com/grafana/grafana-cloudwatch-datasource
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.42.1
@@ -13,7 +13,7 @@ require (
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/grafana-aws-sdk v1.4.6
+	github.com/grafana/grafana-aws-sdk v1.5.1
 	github.com/grafana/grafana-plugin-sdk-go v0.292.2
 	github.com/grafana/schemads v0.2.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible

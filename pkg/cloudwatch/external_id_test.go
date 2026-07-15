@@ -25,7 +25,7 @@ func Test_external_id_route(t *testing.T) {
 		assert.JSONEq(t, `{"externalId":"mock-external-id"}`, rr.Body.String())
 	})
 
-	t.Run("prefers per-datasource grafanaExternalId when set", func(t *testing.T) {
+	t.Run("prefers per-datasource grafanaExternalId when mode enabled or legacy unset", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 
 		ds := newTestDatasource(func(ds *DataSource) {
@@ -39,6 +39,24 @@ func Test_external_id_route(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.JSONEq(t, `{"externalId":"stackABC-dsUid1"}`, rr.Body.String())
+	})
+
+	t.Run("uses stack external id when per-datasource mode is disabled", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+		usePerDS := false
+
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.GrafanaSettings.ExternalID = "stack-id"
+			ds.Settings.GrafanaExternalID = "stackABC-dsUid1"
+			ds.Settings.UsePerDatasourceExternalID = &usePerDS
+		})
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.ExternalIdHandler))
+		req := httptest.NewRequest("GET", "/external-id", nil)
+
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.JSONEq(t, `{"externalId":"stack-id"}`, rr.Body.String())
 	})
 
 	t.Run("returns an empty string if there is no external id", func(t *testing.T) {

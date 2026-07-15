@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/clients"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/features"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
@@ -262,10 +263,11 @@ func (ds *DataSource) LogGroupFieldsHandler(ctx context.Context, parameters url.
 }
 
 func (ds *DataSource) ExternalIdHandler(_ context.Context, _ url.Values) ([]byte, *models.HttpError) {
-	externalID := ds.Settings.GrafanaExternalID
-	if externalID == "" {
-		externalID = ds.Settings.GrafanaSettings.ExternalID
-	}
+	externalID := awsds.ResolveGrafanaAssumeRoleExternalID(
+		ds.Settings.UsePerDatasourceExternalID,
+		ds.Settings.GrafanaExternalID,
+		ds.Settings.GrafanaSettings.ExternalID,
+	)
 	response := map[string]string{
 		"externalId": externalID,
 	}
