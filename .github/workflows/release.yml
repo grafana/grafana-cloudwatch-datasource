@@ -15,10 +15,10 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
-      - uses: grafana/plugin-actions/build-plugin@4698961fa64137fcac207108397ebe8a738a33d1 # main
+      - uses: grafana/plugin-actions/build-plugin@d0240a622e21c5321b35732d4cee961a386d2d92 # main
         # Uncomment to enable plugin signing
         # (For more info on how to generate the access policy token see https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin#generate-an-access-policy-token)
         #with:
