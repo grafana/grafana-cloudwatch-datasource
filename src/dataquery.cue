@@ -182,6 +182,8 @@ composableKinds: DataQuery: {
 					logGroups?: [...#LogGroup]
 					// @deprecated use logGroups
 					logGroupNames?: [...string]
+					// Data sources to query
+					logDataSources?: [...#LogDataSource]
 					// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
 					queryLanguage?: #LogsQueryLanguage
 					// Log group selection scope - determines how log groups are selected for the query
@@ -202,6 +204,13 @@ composableKinds: DataQuery: {
 					accountId?: string
 					// Label of the log group
 					accountLabel?: string
+				} @cuetsy(kind="interface")
+
+				#LogDataSource: {
+					// Name of the data source
+					name: string
+					// Type of the data source
+					type: string
 				} @cuetsy(kind="interface")
 
 				#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="type")
