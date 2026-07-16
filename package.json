@@ -87,7 +87,7 @@
     "@grafana/plugin-ui": "^0.13.0",
     "@grafana/prometheus": "13.1.7",
     "@grafana/runtime": "^13.1.0",
-    "@grafana/scenes": "^7.0.0",
+    "@grafana/scenes": "^8.0.0",
     "@grafana/schema": "^13.1.0",
     "@grafana/ui": "^13.1.0",
     "common-tags": "^1.8.2",
