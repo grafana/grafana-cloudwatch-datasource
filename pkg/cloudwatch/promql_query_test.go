@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -67,10 +68,10 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 			{
 				Metric: map[string]string{},
 				Values: [][]interface{}{
-					{float64(1000), "valid"},  // unparseable float — skipped
-					{float64(1001), "99.9"},   // valid
-					{"not-a-ts", "1.0"},       // bad timestamp — skipped
-					{float64(1002)},           // too short — skipped
+					{float64(1000), "valid"}, // unparseable float — skipped
+					{float64(1001), "99.9"},  // valid
+					{"not-a-ts", "1.0"},      // bad timestamp — skipped
+					{float64(1002)},          // too short — skipped
 				},
 			},
 		}
@@ -170,6 +171,37 @@ func TestPromQLQueryModelEffectiveModes(t *testing.T) {
 			assert.Equal(t, tc.wantRange, gotRange)
 		})
 	}
+}
+
+func TestAttachWarnings(t *testing.T) {
+	t.Run("returns frames unchanged when there are no warnings", func(t *testing.T) {
+		frames := convertPromRangeResultToDataFrames(prometheusRangeResponse{Status: "success"}, "A", 60)
+		assert.Empty(t, attachWarnings(frames, "A", nil))
+	})
+
+	t.Run("attaches warnings as notices on the first frame", func(t *testing.T) {
+		resp := prometheusRangeResponse{Status: "success"}
+		resp.Data.Result = []prometheusRangeSeries{
+			{Metric: map[string]string{"__name__": "up"}, Values: [][]interface{}{{float64(1000), "1.0"}}},
+		}
+		frames := convertPromRangeResultToDataFrames(resp, "A", 60)
+
+		out := attachWarnings(frames, "A", []string{"result truncated to 500 series"})
+		require.Len(t, out, 1)
+		require.NotNil(t, out[0].Meta)
+		require.Len(t, out[0].Meta.Notices, 1)
+		assert.Equal(t, data.NoticeSeverityWarning, out[0].Meta.Notices[0].Severity)
+		assert.Equal(t, "result truncated to 500 series", out[0].Meta.Notices[0].Text)
+	})
+
+	t.Run("creates a carrier frame when there are no series", func(t *testing.T) {
+		out := attachWarnings(nil, "A", []string{"heads up"})
+		require.Len(t, out, 1)
+		assert.Equal(t, "A", out[0].RefID)
+		require.NotNil(t, out[0].Meta)
+		require.Len(t, out[0].Meta.Notices, 1)
+		assert.Equal(t, "heads up", out[0].Meta.Notices[0].Text)
+	})
 }
 
 func TestResolveStepSeconds(t *testing.T) {

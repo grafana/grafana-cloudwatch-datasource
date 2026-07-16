@@ -60,8 +60,9 @@ type prometheusRangeResponse struct {
 	Data   struct {
 		Result []prometheusRangeSeries `json:"result"`
 	} `json:"data"`
-	Error     string `json:"error,omitempty"`
-	ErrorType string `json:"errorType,omitempty"`
+	Error     string   `json:"error,omitempty"`
+	ErrorType string   `json:"errorType,omitempty"`
+	Warnings  []string `json:"warnings,omitempty"`
 }
 
 type prometheusInstantResponse struct {
@@ -70,8 +71,9 @@ type prometheusInstantResponse struct {
 		ResultType string                    `json:"resultType"`
 		Result     []prometheusInstantSeries `json:"result"`
 	} `json:"data"`
-	Error     string `json:"error,omitempty"`
-	ErrorType string `json:"errorType,omitempty"`
+	Error     string   `json:"error,omitempty"`
+	ErrorType string   `json:"errorType,omitempty"`
+	Warnings  []string `json:"warnings,omitempty"`
 }
 
 func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -129,7 +131,8 @@ func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("PromQL error (%s): %s", promResp.ErrorType, promResp.Error)))
 	}
 
-	return backend.DataResponse{Frames: convertPromRangeResultToDataFrames(promResp, q.RefID, stepSecs)}
+	frames := convertPromRangeResultToDataFrames(promResp, q.RefID, stepSecs)
+	return backend.DataResponse{Frames: attachWarnings(frames, q.RefID, promResp.Warnings)}
 }
 
 func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expression string, q backend.DataQuery, refID string) backend.DataResponse {
@@ -153,7 +156,36 @@ func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expressi
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("PromQL error (%s): %s", promResp.ErrorType, promResp.Error)))
 	}
 
-	return backend.DataResponse{Frames: convertPromInstantResultToDataFrames(promResp, refID)}
+	frames := convertPromInstantResultToDataFrames(promResp, refID)
+	return backend.DataResponse{Frames: attachWarnings(frames, refID, promResp.Warnings)}
+}
+
+// attachWarnings surfaces any warnings returned by the CloudWatch PromQL API as frame
+// notices so they show up in the panel. The API caps responses (e.g. 500 series) and
+// signals truncation via the warnings field, which users otherwise wouldn't see.
+func attachWarnings(frames data.Frames, refID string, warnings []string) data.Frames {
+	if len(warnings) == 0 {
+		return frames
+	}
+
+	notices := make([]data.Notice, 0, len(warnings))
+	for _, w := range warnings {
+		notices = append(notices, data.Notice{Severity: data.NoticeSeverityWarning, Text: w})
+	}
+
+	// Ensure there's a frame to carry the notices even when no series were returned.
+	if len(frames) == 0 {
+		frame := data.NewFrame(refID)
+		frame.RefID = refID
+		frames = data.Frames{frame}
+	}
+
+	if frames[0].Meta == nil {
+		frames[0].Meta = &data.FrameMeta{}
+	}
+	frames[0].Meta.Notices = append(frames[0].Meta.Notices, notices...)
+
+	return frames
 }
 
 func valueFieldName(labels map[string]string) string {
