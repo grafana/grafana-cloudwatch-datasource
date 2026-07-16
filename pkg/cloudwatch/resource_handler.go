@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/clients"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/features"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
@@ -263,13 +262,10 @@ func (ds *DataSource) LogGroupFieldsHandler(ctx context.Context, parameters url.
 }
 
 func (ds *DataSource) ExternalIdHandler(_ context.Context, _ url.Values) ([]byte, *models.HttpError) {
-	externalID := awsds.ResolveGrafanaAssumeRoleExternalID(
-		ds.Settings.UsePerDatasourceExternalID,
-		ds.Settings.GrafanaExternalID,
-		ds.Settings.GrafanaSettings.ExternalID,
-	)
+	// Always return the stack external ID. ConnectionConfig uses this as the mint/display
+	// base and chooses per-DS vs stack from jsonData (usePerDatasourceExternalId + grafanaExternalId).
 	response := map[string]string{
-		"externalId": externalID,
+		"externalId": ds.Settings.GrafanaSettings.ExternalID,
 	}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
