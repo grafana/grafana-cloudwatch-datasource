@@ -45,6 +45,8 @@ ci/
 
 .eslintcache
 
+.DS_Store
+
 # yarn
 .pnp.*
 .yarn/*
