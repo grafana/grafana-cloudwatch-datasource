@@ -41,6 +41,8 @@ export const PromQLCodeEditor = ({ query, onChange, onRunQuery, datasource, time
     const languageProvider = prometheusDatasourceShim.languageProvider as CloudWatchPromQLLanguageProvider;
     languageProvider.updateRegion(query.region);
     languageProvider.start(timeRange);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prometheusDatasourceShim, query.region]);
 
   const promQuery: PromQuery = {
