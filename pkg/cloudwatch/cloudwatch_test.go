@@ -3,9 +3,10 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -51,7 +53,7 @@ func TestNewInstanceSettings(t *testing.T) {
 					"secretKey": "secret",
 				},
 			},
-			settingCtx: backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+			settingCtx: config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 				awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",
 				awsds.AssumeRoleEnabledEnvVarKeyName:     "false",
 				awsds.SessionDurationEnvVarKeyName:       "10m",
