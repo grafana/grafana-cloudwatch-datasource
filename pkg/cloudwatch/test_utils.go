@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/stretchr/testify/mock"
 )
@@ -267,6 +268,6 @@ func (f fakeSmithyError) ErrorFault() smithy.ErrorFault {
 
 func contextWithFeaturesEnabled(enabled ...string) context.Context {
 	featureString := strings.Join(enabled, ",")
-	cfg := backend.NewGrafanaCfg(map[string]string{featuretoggles.EnabledFeatures: featureString})
-	return backend.WithGrafanaConfig(context.Background(), cfg)
+	cfg := config.NewGrafanaCfg(map[string]string{featuretoggles.EnabledFeatures: featureString})
+	return config.WithGrafanaConfig(context.Background(), cfg)
 }
