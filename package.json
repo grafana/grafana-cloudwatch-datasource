@@ -8,13 +8,24 @@
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache .",
-    "lint:fix": "yarn run lint --fix && prettier --write --list-different .",
+    "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
     "server": "docker compose up --build",
     "sign": "npx --yes --package=@grafana/sign-plugin@3.2.2 sign-plugin"
   },
   "author": "Grafana",
   "license": "Apache-2.0",
+  "overrides": {
+    "eslint-plugin-react": {
+      "eslint": "10.2.0"
+    },
+    "eslint-plugin-react-hooks": {
+      "eslint": "10.2.0"
+    },
+    "eslint-webpack-plugin": {
+      "eslint": "10.2.0"
+    }
+  },
   "devDependencies": {
     "@eslint/compat": "2.0.5",
     "@eslint/js": "10.0.1",
@@ -78,7 +89,8 @@
     "webpack-virtual-modules": "0.6.2"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "npm": ">=11.12.1"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
@@ -94,5 +106,5 @@
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
-  "packageManager": "yarn@4.14.0"
+  "packageManager": "npm@11.18.0"
 }

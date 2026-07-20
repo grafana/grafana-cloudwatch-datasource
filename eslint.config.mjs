@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url);
 const grafanaConfig = require('@grafana/eslint-config/flat.js');
 
 export default defineConfig([
-  globalIgnores(['**/node_modules', '**/build', '**/dist', '.yarn']),
+  globalIgnores(['**/node_modules', '**/build', '**/dist']),
   ...fixupConfigRules([...grafanaConfig, reactPlugin.configs.flat['jsx-runtime']]),
   {
     rules: {
