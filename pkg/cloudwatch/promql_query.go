@@ -11,8 +11,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/intervalv2"
+	prommodels "github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models"
 )
 
 type promQLQueryModel struct {
@@ -30,13 +31,17 @@ func (m promQLQueryModel) effectiveModes() (instant, rangeQuery bool) {
 	return m.Instant, m.Range
 }
 
-func resolveStepSeconds(calculated time.Duration, minStep string) float64 {
-	step := calculated.Seconds()
-	if minStep != "" {
-		if d, err := gtime.ParseIntervalStringToTimeDuration(minStep); err == nil && d.Seconds() > step {
-			step = d.Seconds()
-		}
+// resolveStepSeconds computes the query_range step (in seconds) using the same
+// logic as the Prometheus datasource: the requested min step, the calculated
+// interval, the time range and max data points all feed into the result, and it
+// is clamped so it never exceeds Prometheus' safe resolution limit.
+func resolveStepSeconds(q backend.DataQuery, minStep string) float64 {
+	calculatedStep, err := prommodels.CalculatePrometheusInterval(minStep, "", q.Interval.Milliseconds(), 0, q, intervalv2.NewCalculator())
+	if err != nil {
+		// Fall back to the frontend-calculated interval if parsing fails.
+		calculatedStep = q.Interval
 	}
+	step := calculatedStep.Seconds()
 	if step < 1 {
 		step = 1
 	}
@@ -107,7 +112,7 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 }
 
 func (ds *DataSource) executePromQLRange(ctx context.Context, region, expression, minStep string, q backend.DataQuery) backend.DataResponse {
-	stepSecs := resolveStepSeconds(q.Interval, minStep)
+	stepSecs := resolveStepSeconds(q, minStep)
 
 	params := url.Values{}
 	params.Set("query", expression)

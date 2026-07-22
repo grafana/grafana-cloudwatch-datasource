@@ -4,7 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/intervalv2"
+	prommodels "github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -204,25 +207,62 @@ func TestAttachWarnings(t *testing.T) {
 	})
 }
 
+func rangeQuery(rangeDur time.Duration, maxDataPoints int64, interval time.Duration) backend.DataQuery {
+	from := time.Unix(0, 0)
+	return backend.DataQuery{
+		TimeRange:     backend.TimeRange{From: from, To: from.Add(rangeDur)},
+		MaxDataPoints: maxDataPoints,
+		Interval:      interval,
+	}
+}
+
 func TestResolveStepSeconds(t *testing.T) {
 	tests := []struct {
-		name       string
-		calculated time.Duration
-		minStep    string
-		want       float64
+		name    string
+		query   backend.DataQuery
+		minStep string
+		want    float64
 	}{
-		{"empty min step uses calculated", 30 * time.Second, "", 30},
-		{"min step larger than calculated wins", 30 * time.Second, "1m", 60},
-		{"min step smaller than calculated is ignored", 60 * time.Second, "10s", 60},
-		{"floor of 1s when both are zero", 0, "", 1},
-		{"floor of 1s when calculated is sub-second", 500 * time.Millisecond, "", 1},
-		{"unparseable min step is ignored", 30 * time.Second, "invalid", 30},
-		{"Prometheus duration syntax supported", 30 * time.Second, "1h", 3600},
+		{
+			// range/maxDataPoints yields a sub-minute step, so the 1m min step wins.
+			name:    "min step dominates a short range",
+			query:   rangeQuery(5*time.Minute, 1500, 0),
+			minStep: "1m",
+			want:    60,
+		},
+		{
+			// Prometheus duration syntax is honoured for the min step.
+			name:    "prometheus duration syntax min step",
+			query:   rangeQuery(12*time.Hour, 1500, 0),
+			minStep: "1h",
+			want:    3600,
+		},
+		{
+			// Floors to 1s rather than requesting a sub-second step.
+			name:    "floor of 1s",
+			query:   rangeQuery(0, 1500, 0),
+			minStep: "1s",
+			want:    1,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, resolveStepSeconds(tc.calculated, tc.minStep))
+			assert.Equal(t, tc.want, resolveStepSeconds(tc.query, tc.minStep))
 		})
 	}
+
+	t.Run("clamps to the safe resolution for very large ranges", func(t *testing.T) {
+		// 30 days at a 1s min step would be millions of points; the safe
+		// resolution limit forces a much larger step.
+		q := rangeQuery(30*24*time.Hour, 100000000, 0)
+		assert.Greater(t, resolveStepSeconds(q, "1s"), float64(100))
+	})
+
+	t.Run("matches the Prometheus datasource calculation", func(t *testing.T) {
+		q := rangeQuery(12*time.Hour, 1500, time.Minute)
+		want, err := prommodels.CalculatePrometheusInterval("", "", q.Interval.Milliseconds(), 0, q, intervalv2.NewCalculator())
+		require.NoError(t, err)
+		assert.Equal(t, want.Seconds(), resolveStepSeconds(q, ""))
+	})
 }
