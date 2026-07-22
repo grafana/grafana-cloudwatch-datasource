@@ -1,6 +1,5 @@
+import { Compilation, Compiler, Plugin, Stats } from 'webpack';
 declare module 'replace-in-file-webpack-plugin' {
-  import { Compiler, Plugin } from 'webpack';
-
   interface ReplaceRule {
     search: string | RegExp;
     replace: string | ((match: string) => string);
@@ -24,7 +23,6 @@ declare module 'replace-in-file-webpack-plugin' {
 
 declare module 'webpack-livereload-plugin' {
   import { ServerOptions } from 'https';
-  import { Compiler, Plugin, Stats, Compilation } from 'webpack';
 
   interface Options extends Pick<ServerOptions, 'cert' | 'key' | 'pfx'> {
     /**
