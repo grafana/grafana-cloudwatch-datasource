@@ -17,6 +17,7 @@ module.exports = {
       'mimic-function',
       '@wojtekmaj',
       '@grafana/aws-sdk',
+      '@marcbachmann/cel-js',
     ]),
   ],
 };

@@ -14,7 +14,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/grafana-aws-sdk v1.5.1
-	github.com/grafana/grafana-plugin-sdk-go v0.293.0
+	github.com/grafana/grafana-plugin-sdk-go v0.294.0
 	github.com/grafana/schemads v0.2.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.23.2
