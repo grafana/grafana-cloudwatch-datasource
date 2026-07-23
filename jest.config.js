@@ -21,6 +21,7 @@ module.exports = {
       '@prometheus-io/lezer-promql',
       'monaco-promql',
       '@lezer',
+      '@marcbachmann/cel-js',
     ]),
   ],
 };
