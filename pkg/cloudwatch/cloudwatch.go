@@ -49,6 +49,7 @@ const (
 	annotationQuery = "annotationQuery"
 	logAction       = "logAction"
 	timeSeriesQuery = "timeSeriesQuery"
+	promqlQuery     = "promqlQuery"
 )
 
 type DataQueryJson struct {
@@ -67,6 +68,7 @@ type DataSource struct {
 	schemaMetadataCache    *cache.Cache
 	resourceHandler        backend.CallResourceHandler
 	monitoringAccountCache sync.Map
+	promqlClients          sync.Map
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
@@ -132,11 +134,11 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 	ds := &DataSource{
 		Settings: instanceSettings,
 		// this is used to build a custom dialer when secure socks proxy is enabled
-		ProxyOpts:         opts.ProxyOptions,
-		AWSConfigProvider: awsauth.NewConfigProvider(),
-		logger:            backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
-		tagValueCache:          cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
-		schemaMetadataCache:    cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
+		ProxyOpts:           opts.ProxyOptions,
+		AWSConfigProvider:   awsauth.NewConfigProvider(),
+		logger:              backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
+		tagValueCache:       cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		schemaMetadataCache: cache.New(schemaMetadataCacheExpiration, schemaMetadataCacheExpiration*2),
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 
@@ -216,6 +218,8 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 		result, err = ds.executeAnnotationQuery(ctx, model, q)
 	case logAction:
 		result, err = ds.executeLogActions(ctx, req)
+	case promqlQuery:
+		result, err = ds.executePromQLQuery(ctx, req)
 	case timeSeriesQuery:
 		fallthrough
 	default:

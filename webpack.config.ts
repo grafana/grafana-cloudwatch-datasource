@@ -1,4 +1,4 @@
-import type { Configuration } from 'webpack';
+import webpack, { type Configuration } from 'webpack';
 import { merge } from 'webpack-merge';
 import grafanaConfig from './.config/webpack/webpack.config';
 import path from 'path';
@@ -42,6 +42,15 @@ const config = async (env): Promise<Configuration> => {
     output: {
       asyncChunks: true,
     },
+    plugins: [
+      // @grafana/prometheus bundles monaco-promql which imports monaco-editor CSS files
+      // directly. Grafana already ships Monaco with its own CSS, so we drop these CSS
+      // side-effect imports to avoid the double css-loader processing that breaks webpack.
+      new webpack.IgnorePlugin({
+        resourceRegExp: /\.css$/,
+        contextRegExp: /monaco-editor/,
+      }),
+    ],
   });
 };
 
