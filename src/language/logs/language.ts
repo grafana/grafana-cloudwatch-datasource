@@ -18,8 +18,58 @@ export const LIMIT = 'limit';
 export const PARSE = 'parse';
 export const DEDUP = 'dedup';
 export const ANOMALY = 'anomaly';
+export const ADDTOTALS = 'addtotals';
+export const RELEVANTFIELDS = 'relevantfields';
+export const EXPAND = 'expand';
+export const FILTERINDEX = 'filterIndex';
+export const UNNEST = 'unnest';
+export const UNMASK = 'unmask';
+export const LOOKUP = 'lookup';
+export const JOIN = 'join';
+export const WHERE = 'where';
+export const AUTOREGRESS = 'autoregress';
+export const LOGCOMPARE = 'logcompare';
+export const FILLDOWN = 'filldown';
+export const FILLMISSING = 'fillmissing';
+export const CIDRLOOKUP = 'cidrlookup';
+export const OUTLIER = 'outlier';
+export const ACCUM = 'accum';
+export const APPENDCOLS = 'appendcols';
+export const SESSIONIZE = 'sessionize';
+export const COUNTFREQUENT = 'countFrequent';
 
-export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, PATTERN, STATS, SORT, LIMIT, PARSE, DEDUP, DIFF, ANOMALY];
+export const LOGS_COMMANDS = [
+  DISPLAY,
+  FIELDS,
+  FILTER,
+  WHERE,
+  PATTERN,
+  STATS,
+  SORT,
+  LIMIT,
+  PARSE,
+  DEDUP,
+  DIFF,
+  ANOMALY,
+  ADDTOTALS,
+  RELEVANTFIELDS,
+  EXPAND,
+  FILTERINDEX,
+  UNNEST,
+  UNMASK,
+  LOOKUP,
+  JOIN,
+  AUTOREGRESS,
+  LOGCOMPARE,
+  FILLDOWN,
+  FILLMISSING,
+  CIDRLOOKUP,
+  OUTLIER,
+  ACCUM,
+  APPENDCOLS,
+  SESSIONIZE,
+  COUNTFREQUENT,
+];
 
 export const LOGS_LOGIC_OPERATORS = ['and', 'or', 'not'];
 
@@ -32,15 +82,37 @@ export const LOGS_FUNCTION_OPERATORS = [
   'least',
   'log',
   'sqrt',
+  'round',
+  'haversine',
+  'toNumber',
+  'toInt',
+  'toLong',
+  'toDouble',
   // datetime
   'bin',
   'datefloor',
   'dateceil',
   'fromMillis',
   'toMillis',
+  'now',
+  'parseDate',
+  'formatDate',
+  'strftime',
   // general
   'ispresent',
   'coalesce',
+  'case',
+  'if',
+  'isNumeric',
+  'messageSize',
+  'queryStartTime',
+  'queryEndTime',
+  'queryTimeRange',
+  // json
+  'jsonParse',
+  'jsonStringify',
+  'jsonArraySize',
+  'jsonArrayContains',
   // ip
   'isValidIp',
   'isValidIpV4',
@@ -48,6 +120,10 @@ export const LOGS_FUNCTION_OPERATORS = [
   'isIpInSubnet',
   'isIpv4InSubnet',
   'isIpv6InSubnet',
+  'ipv4ToNumber',
+  'isPrivateIP',
+  'isPublicIP',
+  'isReservedIP',
   // stats aggregation
   'avg',
   'count',
@@ -74,14 +150,34 @@ export const LOGS_FUNCTION_OPERATORS = [
   'tolower',
   'substr',
   'replace',
+  'regexReplace',
   'strcontains',
-  // field
-  'unmask',
+  'startsWith',
+  'endsWith',
+  'split',
+  // encoding
+  'urlencode',
+  'urldecode',
+  'base64encode',
+  'base64decode',
+  // hex
+  'hexToAscii',
+  'hexToDec',
+  'decToHex',
 ];
 
 export const SORT_DIRECTION_KEYWORDS = ['asc', 'desc'];
 export const DIFF_MODIFIERS = ['previousDay', 'previousWeek', 'previousMonth'];
-export const LOGS_KEYWORDS = ['like', 'by', 'in', 'as', ...SORT_DIRECTION_KEYWORDS, ...DIFF_MODIFIERS];
+export const PARSE_FORMATS = ['logfmt'];
+export const LOGS_KEYWORDS = [
+  'like',
+  'by',
+  'in',
+  'as',
+  ...SORT_DIRECTION_KEYWORDS,
+  ...DIFF_MODIFIERS,
+  ...PARSE_FORMATS,
+];
 
 export const language: CloudWatchLogsLanguage = {
   defaultToken: 'invalid',
