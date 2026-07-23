@@ -17,6 +17,11 @@ module.exports = {
       'mimic-function',
       '@wojtekmaj',
       '@grafana/aws-sdk',
+      '@grafana/prometheus',
+      '@prometheus-io/lezer-promql',
+      'monaco-promql',
+      '@lezer',
+      '@marcbachmann/cel-js',
     ]),
   ],
 };

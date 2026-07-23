@@ -1,7 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { getDefaultTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
@@ -21,6 +21,7 @@ import { MetricStatEditor } from '../../shared/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
+import { PromQLCodeEditor } from './PromQLCodeEditor';
 import { SQLBuilderEditor } from './SQLBuilderEditor';
 import { SQLCodeEditor } from './SQLCodeEditor';
 
@@ -33,6 +34,7 @@ export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatch
 const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
   { label: 'Metric Search', value: MetricQueryType.Search },
   { label: 'Metric Insights', value: MetricQueryType.Insights },
+  { label: 'PromQL', value: MetricQueryType.PromQL },
 ];
 const editorModes = [
   { label: 'Builder', value: MetricEditorMode.Builder },
@@ -93,12 +95,14 @@ export const MetricsQueryEditor = (props: Props) => {
 
     extraHeaderElementRight?.(
       <>
-        <RadioButtonGroup
-          options={editorModes}
-          size="sm"
-          value={query.metricEditorMode}
-          onChange={onEditorModeChange}
-        />
+        {query.metricQueryType !== MetricQueryType.PromQL && (
+          <RadioButtonGroup
+            options={editorModes}
+            size="sm"
+            value={query.metricEditorMode}
+            onChange={onEditorModeChange}
+          />
+        )}
         <ConfirmModal
           isOpen={showConfirm}
           title="Are you sure?"
@@ -186,47 +190,63 @@ export const MetricsQueryEditor = (props: Props) => {
           )}
         </>
       )}
-      <Space v={0.5} />
-      <EditorRow>
-        <EditorField
-          label="ID"
-          width={26}
-          optional
-          tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
-          invalid={!!query.id && !/^$|^[a-z][a-zA-Z0-9_]*$/.test(query.id)}
-        >
-          <Input
-            id={`${query.refId}-cloudwatch-metric-query-editor-id`}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...migratedQuery, id: event.target.value })}
-            type="text"
-            value={query.id}
-          />
-        </EditorField>
+      {query.metricQueryType === MetricQueryType.PromQL && (
+        <PromQLCodeEditor
+          query={query}
+          onChange={props.onChange}
+          onRunQuery={props.onRunQuery}
+          datasource={datasource}
+          timeRange={props.range ?? getDefaultTimeRange()}
+          app={props.app}
+        />
+      )}
+      {query.metricQueryType !== MetricQueryType.PromQL && (
+        <>
+          <Space v={0.5} />
+          <EditorRow>
+            <EditorField
+              label="ID"
+              width={26}
+              optional
+              tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
+              invalid={!!query.id && !/^$|^[a-z][a-zA-Z0-9_]*$/.test(query.id)}
+            >
+              <Input
+                id={`${query.refId}-cloudwatch-metric-query-editor-id`}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  onChange({ ...migratedQuery, id: event.target.value })
+                }
+                type="text"
+                value={query.id}
+              />
+            </EditorField>
 
-        <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
-          <Input
-            id={`${query.refId}-cloudwatch-metric-query-editor-period`}
-            value={query.period || ''}
-            placeholder="auto"
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              onChange({ ...migratedQuery, period: event.target.value })
-            }
-          />
-        </EditorField>
+            <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
+              <Input
+                id={`${query.refId}-cloudwatch-metric-query-editor-period`}
+                value={query.period || ''}
+                placeholder="auto"
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  onChange({ ...migratedQuery, period: event.target.value })
+                }
+              />
+            </EditorField>
 
-        <EditorField
-          label="Label"
-          width={26}
-          optional
-          tooltip="Change time series legend name using Dynamic labels. See documentation for details."
-        >
-          <DynamicLabelsField
-            width={52}
-            label={migratedQuery.label ?? ''}
-            onChange={(label) => props.onChange({ ...query, label })}
-          ></DynamicLabelsField>
-        </EditorField>
-      </EditorRow>
+            <EditorField
+              label="Label"
+              width={26}
+              optional
+              tooltip="Change time series legend name using Dynamic labels. See documentation for details."
+            >
+              <DynamicLabelsField
+                width={52}
+                label={migratedQuery.label ?? ''}
+                onChange={(label) => props.onChange({ ...query, label })}
+              ></DynamicLabelsField>
+            </EditorField>
+          </EditorRow>
+        </>
+      )}
     </>
   );
 };

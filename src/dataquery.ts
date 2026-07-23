@@ -89,13 +89,38 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    * When the metric query type is set to `Insights`, this field is used to specify the query string.
    */
   sqlExpression?: string;
+  /**
+   * When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
+   */
+  promqlExpression?: string;
+  /**
+   * When the metric query type is set to `PromQL`, evaluates the expression at a single point in time. Default false.
+   */
+  instant?: boolean;
+  /**
+   * When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
+   */
+  range?: boolean;
+  /**
+   * When the metric query type is set to `PromQL`, an additional lower bound for the step parameter of range queries and for the $__interval and $__rate_interval variables. Accepts duration strings like "10s", "1m". Empty means auto.
+   */
+  interval?: string;
+  /**
+   * When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
+   */
+  format?: 'time_series' | 'table' | 'heatmap';
+  /**
+   * When the metric query type is set to `PromQL`, a template for series names. Supports `{{label}}` placeholders and the special value `__auto`.
+   */
+  legendFormat?: string;
 }
 
 export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
-  Insights = 1,
   Search = 0,
+  Insights = 1,
+  PromQL = 2,
 }
 
 export enum MetricEditorMode {
@@ -226,12 +251,12 @@ export enum LogsQueryLanguage {
 /**
  * Log group selection scope - determines how log groups are selected for the query
  */
-export type LogsQueryScope = ('logGroupName' | 'namePrefix' | 'allLogGroups');
+export type LogsQueryScope = 'logGroupName' | 'namePrefix' | 'allLogGroups';
 
 /**
  * Log group class filter
  */
-export type LogGroupClass = ('STANDARD' | 'INFREQUENT_ACCESS');
+export type LogGroupClass = 'STANDARD' | 'INFREQUENT_ACCESS';
 
 /**
  * Shape of a CloudWatch Logs query
