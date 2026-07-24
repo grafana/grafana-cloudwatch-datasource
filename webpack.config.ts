@@ -42,6 +42,7 @@ const config = async (env): Promise<Configuration> => {
     output: {
       asyncChunks: true,
     },
+    externals: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
     plugins: [
       // @grafana/prometheus bundles monaco-promql which imports monaco-editor CSS files
       // directly. Grafana already ships Monaco with its own CSS, so we drop these CSS
