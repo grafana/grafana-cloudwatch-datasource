@@ -4,11 +4,8 @@
 
 - Add PromQL raw query editor support in [#568](https://github.com/grafana/grafana-cloudwatch-datasource/pull/568)
 - feat(logs): add new CloudWatch Logs Insights commands and functions in [#592](https://github.com/grafana/grafana-cloudwatch-datasource/pull/592)
-- Fix plugin build config broken by create-plugin update in [#596](https://github.com/grafana/grafana-cloudwatch-datasource/pull/596)
-- fix(deps): update grafana monorepo to v13 in [#554](https://github.com/grafana/grafana-cloudwatch-datasource/pull/554)
 - chore: make grafanaDependency prerelease-inclusive in [#567](https://github.com/grafana/grafana-cloudwatch-datasource/pull/567)
 - Bump dependencies in [#598](https://github.com/grafana/grafana-cloudwatch-datasource/pull/598)
-- Bump grafana/* dependencies in [#595](https://github.com/grafana/grafana-cloudwatch-datasource/pull/595)
 - Bump grafana/* dependencies in [#594](https://github.com/grafana/grafana-cloudwatch-datasource/pull/594)
 - fix(deps): update backend dependencies in [#593](https://github.com/grafana/grafana-cloudwatch-datasource/pull/593)
 - fix(deps): update backend dependencies in [#585](https://github.com/grafana/grafana-cloudwatch-datasource/pull/585)
