@@ -250,6 +250,24 @@ func TestNewAWSConfig_passesSessionToken(t *testing.T) {
 	assert.Equal(t, "AQoDYXdzEJr//test-session-token", spy.captured.SessionToken)
 }
 
+func TestNewAWSConfig_passesGrafanaExternalIDFields(t *testing.T) {
+	spy := &spyConfigProvider{}
+	usePerDS := true
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.AWSConfigProvider = spy
+		ds.Settings.AuthType = awsds.AuthTypeGrafanaAssumeRole
+		ds.Settings.AssumeRoleARN = "arn:aws:iam::123456789012:role/test"
+		ds.Settings.GrafanaExternalID = "stackABC-dsUid1"
+		ds.Settings.UsePerDatasourceExternalID = &usePerDS
+	})
+
+	_, err := ds.newAWSConfig(context.Background(), "us-east-1")
+	require.NoError(t, err)
+	assert.Equal(t, "stackABC-dsUid1", spy.captured.GrafanaExternalID)
+	require.NotNil(t, spy.captured.UsePerDatasourceExternalID)
+	assert.True(t, *spy.captured.UsePerDatasourceExternalID)
+}
+
 func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
 	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewCWClient
