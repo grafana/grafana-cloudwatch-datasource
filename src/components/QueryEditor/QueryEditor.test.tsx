@@ -14,7 +14,7 @@ import {
   validMetricSearchCodeQuery,
 } from '../../__mocks__/queries';
 import { CloudWatchDatasource } from '../../datasource';
-import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
+import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_PPL_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType, LogsQueryLanguage } from '../../types';
 
 import { QueryEditor } from './QueryEditor';
@@ -387,6 +387,16 @@ describe('LogsQueryEditor', () => {
         ...logsProps.query,
         queryLanguage: LogsQueryLanguage.SQL,
         expression: DEFAULT_SQL_QUERY_STRING,
+      });
+    });
+    it('should set the correct default PPL expression if query is new', async () => {
+      const emptyQuery = { ...logsProps.query, expression: '' };
+      render(<QueryEditor {...logsProps} query={emptyQuery} />);
+      await selectOptionInTest(screen.getByLabelText(/Query language/), 'OpenSearch PPL');
+      expect(mockOnChange).toHaveBeenCalledWith({
+        ...logsProps.query,
+        queryLanguage: LogsQueryLanguage.PPL,
+        expression: DEFAULT_PPL_QUERY_STRING,
       });
     });
   });
