@@ -1,5 +1,17 @@
 # Changelog
 
+## 12.9.0
+
+- Add PromQL raw query editor support in [#568](https://github.com/grafana/grafana-cloudwatch-datasource/pull/568)
+- feat(logs): add new CloudWatch Logs Insights commands and functions in [#592](https://github.com/grafana/grafana-cloudwatch-datasource/pull/592)
+- chore: make grafanaDependency prerelease-inclusive in [#567](https://github.com/grafana/grafana-cloudwatch-datasource/pull/567)
+- Bump dependencies in [#598](https://github.com/grafana/grafana-cloudwatch-datasource/pull/598)
+- Bump grafana/* dependencies in [#594](https://github.com/grafana/grafana-cloudwatch-datasource/pull/594)
+- fix(deps): update backend dependencies in [#593](https://github.com/grafana/grafana-cloudwatch-datasource/pull/593)
+- fix(deps): update backend dependencies in [#585](https://github.com/grafana/grafana-cloudwatch-datasource/pull/585)
+- chore(deps): update backend dependencies (major) in [#581](https://github.com/grafana/grafana-cloudwatch-datasource/pull/581)
+- chore(deps): update dependency @grafana/scenes to v8 in [#553](https://github.com/grafana/grafana-cloudwatch-datasource/pull/553)
+
 ## 12.8.0
 
 - feat(dsabstraction): add initial support for SQL abstractions in [#513](https://github.com/grafana/grafana-cloudwatch-datasource/pull/513)
