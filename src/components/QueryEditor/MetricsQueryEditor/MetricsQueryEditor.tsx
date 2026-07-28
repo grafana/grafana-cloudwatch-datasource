@@ -1,10 +1,12 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { ChangeEvent, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
-import { getDefaultTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
+import { buildVisualQueryFromString } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
+import { ConfirmModal, Input, RadioButtonGroup, Space, Stack, Switch, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_METRICS_QUERY } from '../../../defaultQueries';
@@ -21,6 +23,7 @@ import { MetricStatEditor } from '../../shared/MetricStatEditor';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
+import { PromQLBuilderEditor } from './PromQLBuilderEditor';
 import { PromQLCodeEditor } from './PromQLCodeEditor';
 import { SQLBuilderEditor } from './SQLBuilderEditor';
 import { SQLCodeEditor } from './SQLCodeEditor';
@@ -44,7 +47,11 @@ const editorModes = [
 export const MetricsQueryEditor = (props: Props) => {
   const { query, datasource, extraHeaderElementLeft, extraHeaderElementRight, onChange } = props;
   const [showConfirm, setShowConfirm] = useState(false);
+  const [promQLParseModalOpen, setPromQLParseModalOpen] = useState(false);
   const [codeEditorIsDirty, setCodeEditorIsDirty] = useState(false);
+  const [showPromQLExplain, setShowPromQLExplain] = useState(false);
+  const promQLExplainSwitchId = useId();
+  const styles = useStyles2(getStyles);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
 
   const onEditorModeChange = useCallback(
@@ -56,6 +63,17 @@ export const MetricsQueryEditor = (props: Props) => {
       ) {
         setShowConfirm(true);
         return;
+      }
+      if (
+        query.metricQueryType === MetricQueryType.PromQL &&
+        query.metricEditorMode === MetricEditorMode.Code &&
+        newMetricEditorMode === MetricEditorMode.Builder
+      ) {
+        const parseResult = buildVisualQueryFromString(query.promqlExpression ?? '');
+        if (parseResult.errors.length > 0) {
+          setPromQLParseModalOpen(true);
+          return;
+        }
       }
       onChange({ ...query, metricEditorMode: newMetricEditorMode });
     },
@@ -75,34 +93,46 @@ export const MetricsQueryEditor = (props: Props) => {
 
   useEffect(() => {
     extraHeaderElementLeft?.(
-      <InlineSelect
-        aria-label="Metric editor mode"
-        value={metricEditorModes.find((m) => m.value === query.metricQueryType)}
-        options={metricEditorModes}
-        onChange={({ value }) => {
-          if (
-            codeEditorIsDirty &&
-            query.metricQueryType === MetricQueryType.Search &&
-            query.metricEditorMode === MetricEditorMode.Builder
-          ) {
-            setShowConfirm(true);
-            return;
-          }
-          onChange({ ...query, metricQueryType: value });
-        }}
-      />
+      <>
+        <InlineSelect
+          aria-label="Metric editor mode"
+          value={metricEditorModes.find((m) => m.value === query.metricQueryType)}
+          options={metricEditorModes}
+          onChange={({ value }) => {
+            if (
+              codeEditorIsDirty &&
+              query.metricQueryType === MetricQueryType.Search &&
+              query.metricEditorMode === MetricEditorMode.Builder
+            ) {
+              setShowConfirm(true);
+              return;
+            }
+            onChange({ ...query, metricQueryType: value });
+          }}
+        />
+        {query.metricQueryType === MetricQueryType.PromQL && (
+          <Stack direction="row" gap={1} alignItems="center">
+            <label htmlFor={promQLExplainSwitchId} className={styles.promQLExplainLabel}>
+              Explain
+            </label>
+            <Switch
+              id={promQLExplainSwitchId}
+              value={showPromQLExplain}
+              onChange={(event) => setShowPromQLExplain(event.currentTarget.checked)}
+            />
+          </Stack>
+        )}
+      </>
     );
 
     extraHeaderElementRight?.(
       <>
-        {query.metricQueryType !== MetricQueryType.PromQL && (
-          <RadioButtonGroup
-            options={editorModes}
-            size="sm"
-            value={query.metricEditorMode}
-            onChange={onEditorModeChange}
-          />
-        )}
+        <RadioButtonGroup
+          options={editorModes}
+          size="sm"
+          value={query.metricEditorMode}
+          onChange={onEditorModeChange}
+        />
         <ConfirmModal
           isOpen={showConfirm}
           title="Are you sure?"
@@ -121,6 +151,18 @@ export const MetricsQueryEditor = (props: Props) => {
           }}
           onDismiss={() => setShowConfirm(false)}
         />
+        <ConfirmModal
+          isOpen={promQLParseModalOpen}
+          title="Parsing error: Switch to builder mode?"
+          body="There is a syntax error, or the query structure cannot be visualized when switching to builder mode. Parts of the query may be lost."
+          confirmText="Continue"
+          dismissText="Cancel"
+          onConfirm={() => {
+            setPromQLParseModalOpen(false);
+            onChange({ ...query, metricEditorMode: MetricEditorMode.Builder });
+          }}
+          onDismiss={() => setPromQLParseModalOpen(false)}
+        />
       </>
     );
 
@@ -136,6 +178,10 @@ export const MetricsQueryEditor = (props: Props) => {
     extraHeaderElementLeft,
     extraHeaderElementRight,
     showConfirm,
+    promQLParseModalOpen,
+    showPromQLExplain,
+    promQLExplainSwitchId,
+    styles.promQLExplainLabel,
     onEditorModeChange,
   ]);
 
@@ -191,14 +237,32 @@ export const MetricsQueryEditor = (props: Props) => {
         </>
       )}
       {query.metricQueryType === MetricQueryType.PromQL && (
-        <PromQLCodeEditor
-          query={query}
-          onChange={props.onChange}
-          onRunQuery={props.onRunQuery}
-          datasource={datasource}
-          timeRange={props.range ?? getDefaultTimeRange()}
-          app={props.app}
-        />
+        <>
+          {query.metricEditorMode === MetricEditorMode.Code && (
+            <PromQLCodeEditor
+              query={query}
+              onChange={props.onChange}
+              onRunQuery={props.onRunQuery}
+              datasource={datasource}
+              timeRange={props.range ?? getDefaultTimeRange()}
+              app={props.app}
+              showExplain={showPromQLExplain}
+              data={props.data}
+            />
+          )}
+          {query.metricEditorMode === MetricEditorMode.Builder && (
+            <PromQLBuilderEditor
+              query={query}
+              onChange={props.onChange}
+              onRunQuery={props.onRunQuery}
+              datasource={datasource}
+              timeRange={props.range ?? getDefaultTimeRange()}
+              app={props.app}
+              showExplain={showPromQLExplain}
+              data={props.data}
+            />
+          )}
+        </>
       )}
       {query.metricQueryType !== MetricQueryType.PromQL && (
         <>
@@ -250,3 +314,14 @@ export const MetricsQueryEditor = (props: Props) => {
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  promQLExplainLabel: css({
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    fontSize: theme.typography.bodySmall.fontSize,
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
+});

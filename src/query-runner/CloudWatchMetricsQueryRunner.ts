@@ -14,6 +14,7 @@ import {
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
+  TimeRange,
 } from '@grafana/data';
 import { transformV2, type PromQuery } from '@grafana/prometheus';
 import { TemplateSrv, getAppEvents } from '@grafana/runtime';
@@ -120,15 +121,19 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
     const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map((q) => {
       const migratedQuery = migrateMetricQuery(q);
-      const migratedAndIterpolatedQuery = this.interpolateMetricsQueryVariables(migratedQuery, options.scopedVars);
+      const migratedAndInterpolatedQuery = this.interpolateMetricsQueryVariables(
+        migratedQuery,
+        options.scopedVars,
+        options.range
+      );
 
       return {
         timezoneUTCOffset,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
-        ...migratedAndIterpolatedQuery,
+        ...migratedAndInterpolatedQuery,
         type:
-          migratedAndIterpolatedQuery.metricQueryType === MetricQueryType.PromQL ? 'promqlQuery' : 'timeSeriesQuery',
+          migratedAndInterpolatedQuery.metricQueryType === MetricQueryType.PromQL ? 'promqlQuery' : 'timeSeriesQuery',
         datasource: this.ref,
       };
     });
@@ -163,7 +168,28 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     return responses.length === 1 ? responses[0] : merge(...responses);
   };
 
-  interpolateMetricsQueryVariables(query: CloudWatchMetricsQuery, scopedVars: ScopedVars): CloudWatchMetricsQuery {
+  interpolateMetricsQueryVariables(
+    query: CloudWatchMetricsQuery,
+    scopedVars: ScopedVars,
+    range?: TimeRange
+  ): CloudWatchMetricsQuery {
+    const intervalMs = Number(scopedVars?.__interval_ms?.value) || 60000;
+    const rateIntervalMs = Math.max(intervalMs, 60000);
+    const rateIntervalSeconds = Math.round(rateIntervalMs / 1000);
+    const rateInterval = `${rateIntervalSeconds}s`;
+    const promQLScopedVars: ScopedVars = {
+      ...scopedVars,
+      __rate_interval: { text: rateInterval, value: rateInterval },
+      __rate_interval_ms: { text: rateIntervalMs, value: rateIntervalMs },
+    };
+    if (range) {
+      const rangeMs = range.to.valueOf() - range.from.valueOf();
+      const rangeSeconds = Math.round(rangeMs / 1000);
+      promQLScopedVars.__range = { text: `${rangeSeconds}s`, value: `${rangeSeconds}s` };
+      promQLScopedVars.__range_s = { text: rangeSeconds, value: rangeSeconds };
+      promQLScopedVars.__range_ms = { text: rangeMs, value: rangeMs };
+    }
+
     return {
       ...query,
       region: this.templateSrv.replace(this.getActualRegion(query.region), scopedVars),
@@ -174,7 +200,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       expression: this.templateSrv.replace(query.expression, scopedVars),
       sqlExpression: this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw'),
       promqlExpression: query.promqlExpression
-        ? this.templateSrv.replace(query.promqlExpression, scopedVars)
+        ? this.templateSrv.replace(query.promqlExpression, promQLScopedVars)
         : query.promqlExpression,
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
       statistic: this.templateSrv.replace(query.statistic, scopedVars),
