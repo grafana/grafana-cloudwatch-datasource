@@ -53,7 +53,13 @@ export function useCloudWatchPrometheusDatasource(
     const languageProvider = shim.languageProvider as CloudWatchPromQLLanguageProvider;
     languageProvider.updateRegion(region);
     languageProvider.start(timeRange);
-  }, [shim, region, timeRange]);
+
+    // timeRange is intentionally excluded: with a relative range (e.g. now-6h) it's a new object
+    // on every render, which would restart the provider and fire a burst of resource requests on
+    // each tick. start() only seeds the initial caches; autocomplete queries the current range on
+    // demand via queryLabelKeys/queryLabelValues.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shim, region]);
 
   return shim;
 }

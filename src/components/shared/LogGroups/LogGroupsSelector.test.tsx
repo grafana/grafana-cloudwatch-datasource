@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import lodash from 'lodash';
 import selectEvent from 'react-select-event';
@@ -108,7 +108,7 @@ describe('LogGroupsSelector', () => {
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText('log group search'), 'something');
+    fireEvent.change(screen.getByLabelText('log group search'), { target: { value: 'something' } });
     await waitFor(() => screen.getByDisplayValue('something'));
     expect(fetchLogGroups).toHaveBeenCalledWith({ accountId: 'all', logGroupPattern: 'something' });
   });
