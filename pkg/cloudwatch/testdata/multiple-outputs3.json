@@ -14,37 +14,23 @@
           "2021-01-15T20:29:00Z",
           "2021-01-15T20:44:00Z"
         ],
-        "Values": [
-          0.1333395078879982,
-          0.244268469636633,
-          0.15574387947267768,
-          0.14447563659125626,
-          0.15519743138527173
-        ]
+        "Values": [0.1333395078879982, 0.244268469636633, 0.15574387947267768, 0.14447563659125626, 0.15519743138527173]
       },
       {
         "Id": "a",
         "Label": "label2",
         "Messages": null,
         "StatusCode": "Complete",
-        "Timestamps": [
-          "2021-01-15T19:44:00Z"
-        ],
-        "Values": [
-          0.1333395078879982
-        ]
+        "Timestamps": ["2021-01-15T19:44:00Z"],
+        "Values": [0.1333395078879982]
       },
       {
         "Id": "b",
         "Label": "label2",
         "Messages": null,
         "StatusCode": "Complete",
-        "Timestamps": [
-          "2021-01-15T19:44:00Z"
-        ],
-        "Values": [
-          0.1333395078879982
-        ]
+        "Timestamps": ["2021-01-15T19:44:00Z"],
+        "Values": [0.1333395078879982]
       }
     ],
     "NextToken": null
@@ -70,37 +56,23 @@
           "2021-01-15T20:29:00Z",
           "2021-01-15T20:44:00Z"
         ],
-        "Values": [
-          0.1333395078879982,
-          0.244268469636633,
-          0.15574387947267768,
-          0.14447563659125626,
-          0.15519743138527173
-        ]
+        "Values": [0.1333395078879982, 0.244268469636633, 0.15574387947267768, 0.14447563659125626, 0.15519743138527173]
       },
       {
         "Id": "a",
         "Label": "label2",
         "Messages": null,
         "StatusCode": "Complete",
-        "Timestamps": [
-          "2021-01-15T19:44:00Z"
-        ],
-        "Values": [
-          0.1333395078879982
-        ]
+        "Timestamps": ["2021-01-15T19:44:00Z"],
+        "Values": [0.1333395078879982]
       },
       {
         "Id": "b",
         "Label": "label2",
         "Messages": null,
         "StatusCode": "Complete",
-        "Timestamps": [
-          "2021-01-15T19:44:00Z"
-        ],
-        "Values": [
-          0.1333395078879982
-        ]
+        "Timestamps": ["2021-01-15T19:44:00Z"],
+        "Values": [0.1333395078879982]
       }
     ],
     "NextToken": null
@@ -120,28 +92,20 @@
           "2021-01-15T20:29:00Z",
           "2021-01-15T20:44:00Z"
         ],
-        "Values": [
-          0.1333395078879982,
-          0.244268469636633,
-          0.15574387947267768,
-          0.14447563659125626,
-          0.15519743138527173
-        ]
+        "Values": [0.1333395078879982, 0.244268469636633, 0.15574387947267768, 0.14447563659125626, 0.15519743138527173]
       },
       {
         "Id": "b",
         "Label": "label2",
-        "Messages": [{
-          "Code": "ArithmeticError",
-          "Value": "One or more data-points have been dropped due to non-numeric values (NaN, -Infinite, +Infinite)"
-        }],
-        "StatusCode": "Partial",
-        "Timestamps": [
-          "2021-01-15T19:44:00Z"
+        "Messages": [
+          {
+            "Code": "ArithmeticError",
+            "Value": "One or more data-points have been dropped due to non-numeric values (NaN, -Infinite, +Infinite)"
+          }
         ],
-        "Values": [
-          0.1333395078879982
-        ]
+        "StatusCode": "Partial",
+        "Timestamps": ["2021-01-15T19:44:00Z"],
+        "Values": [0.1333395078879982]
       }
     ],
     "NextToken": null

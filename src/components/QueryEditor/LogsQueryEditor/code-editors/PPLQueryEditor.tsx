@@ -97,21 +97,21 @@ export const PPLQueryEditor = (props: LogsCodeEditorProps) => {
   };
   return (
     <>
-    <CodeEditor
-      {...codeEditorCommonProps}
-      language={language.id}
-      value={query.expression ?? ''}
-      onBlur={(value: string) => {
-        if (value !== query.expression) {
-          onChangeQuery(value);
-        }
-        disposalRef.current?.dispose();
-      }}
-      onFocus={onFocus}
-      onBeforeEditorMount={onBeforeEditorMount}
-      onEditorDidMount={onEditorMount}
-      onEditorWillUnmount={() => disposalRef.current?.dispose()}
-    />
+      <CodeEditor
+        {...codeEditorCommonProps}
+        language={language.id}
+        value={query.expression ?? ''}
+        onBlur={(value: string) => {
+          if (value !== query.expression) {
+            onChangeQuery(value);
+          }
+          disposalRef.current?.dispose();
+        }}
+        onFocus={onFocus}
+        onBeforeEditorMount={onBeforeEditorMount}
+        onEditorDidMount={onEditorMount}
+        onEditorWillUnmount={() => disposalRef.current?.dispose()}
+      />
     </>
   );
 };
