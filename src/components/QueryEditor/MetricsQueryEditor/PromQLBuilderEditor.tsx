@@ -1,5 +1,6 @@
 import { CoreApp, PanelData, TimeRange } from '@grafana/data';
-import { PromQueryBuilderExplained, PromQueryBuilderOptions, PromQueryField, type PromQuery } from '@grafana/prometheus';
+import { PromQueryBuilderContainer, PromQueryBuilderOptions } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus/dist/types/types';
 import { Stack } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
@@ -7,7 +8,7 @@ import { CloudWatchMetricsQuery } from '../../../types';
 
 import { useCloudWatchPrometheusDatasource } from './cloudWatchPrometheusDatasourceShim';
 
-export interface Props {
+export interface PromQLBuilderEditorProps {
   query: CloudWatchMetricsQuery;
   onChange: (query: CloudWatchMetricsQuery) => void;
   onRunQuery: () => void;
@@ -18,7 +19,7 @@ export interface Props {
   data?: PanelData;
 }
 
-export const PromQLCodeEditor = ({
+export const PromQLBuilderEditor = ({
   query,
   onChange,
   onRunQuery,
@@ -27,7 +28,7 @@ export const PromQLCodeEditor = ({
   app,
   showExplain,
   data,
-}: Props) => {
+}: PromQLBuilderEditorProps) => {
   const prometheusDatasourceShim = useCloudWatchPrometheusDatasource(datasource, query.region, timeRange);
 
   const promQuery: PromQuery = {
@@ -54,17 +55,14 @@ export const PromQLCodeEditor = ({
 
   return (
     <Stack direction="column" gap={0.5}>
-      <PromQueryField
-        datasource={prometheusDatasourceShim}
+      <PromQueryBuilderContainer
         query={promQuery}
+        datasource={prometheusDatasourceShim}
         onChange={handleChange}
         onRunQuery={onRunQuery}
-        history={[]}
-        range={timeRange}
-        app={app}
+        showExplain={showExplain}
         data={data}
       />
-      {showExplain && <PromQueryBuilderExplained query={promQuery.expr} />}
       <PromQueryBuilderOptions
         query={promQuery}
         app={app}

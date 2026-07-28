@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { dateTime, CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
+import { dateTime, CustomVariableModel, getFrameDisplayName, TimeRange, VariableHide } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 
 import {
@@ -555,6 +555,77 @@ describe('CloudWatchMetricsQueryRunner', () => {
         {}
       );
       expect(result.accountId).toBe(accountIdVariable.current.value);
+    });
+
+    it('synthesizes $__rate_interval and $__rate_interval_ms from intervalMs', () => {
+      const { runner, templateService } = setupMockedMetricsQueryRunner();
+      const query = { ...validMetricSearchBuilderQuery, promqlExpression: '$__rate_interval' };
+
+      runner.interpolateMetricsQueryVariables(query, {
+        __interval_ms: { text: '120000', value: 120000 },
+      });
+
+      expect(templateService.replace).toHaveBeenCalledWith(
+        '$__rate_interval',
+        expect.objectContaining({
+          __rate_interval: { text: '120s', value: '120s' },
+          __rate_interval_ms: { text: 120000, value: 120000 },
+        })
+      );
+    });
+
+    it('applies a 60s floor to $__rate_interval when intervalMs is shorter', () => {
+      const { runner, templateService } = setupMockedMetricsQueryRunner();
+      const query = { ...validMetricSearchBuilderQuery, promqlExpression: '$__rate_interval' };
+
+      runner.interpolateMetricsQueryVariables(query, {
+        __interval_ms: { text: '15000', value: 15000 },
+      });
+
+      expect(templateService.replace).toHaveBeenCalledWith(
+        '$__rate_interval',
+        expect.objectContaining({
+          __rate_interval: { text: '60s', value: '60s' },
+          __rate_interval_ms: { text: 60000, value: 60000 },
+        })
+      );
+    });
+
+    it('synthesizes $__range / $__range_s / $__range_ms from the provided range', () => {
+      const { runner, templateService } = setupMockedMetricsQueryRunner();
+      const query = { ...validMetricSearchBuilderQuery, promqlExpression: '$__range' };
+      const range = {
+        from: { valueOf: () => 1_000_000 },
+        to: { valueOf: () => 1_000_000 + 3_600_000 },
+        raw: { from: 'now-1h', to: 'now' },
+      } as unknown as TimeRange;
+
+      runner.interpolateMetricsQueryVariables(query, {}, range);
+
+      expect(templateService.replace).toHaveBeenCalledWith(
+        '$__range',
+        expect.objectContaining({
+          __range: { text: '3600s', value: '3600s' },
+          __range_s: { text: 3600, value: 3600 },
+          __range_ms: { text: 3_600_000, value: 3_600_000 },
+        })
+      );
+    });
+
+    it('omits $__range* when no range is provided', () => {
+      const { runner, templateService } = setupMockedMetricsQueryRunner();
+      const query = { ...validMetricSearchBuilderQuery, promqlExpression: '$__range' };
+
+      runner.interpolateMetricsQueryVariables(query, {});
+
+      const promQLReplaceCall = (templateService.replace as jest.Mock).mock.calls.find(
+        ([input]) => input === '$__range'
+      );
+      expect(promQLReplaceCall).toBeDefined();
+      const scopedVarsArg = promQLReplaceCall![1];
+      expect(scopedVarsArg).not.toHaveProperty('__range');
+      expect(scopedVarsArg).not.toHaveProperty('__range_s');
+      expect(scopedVarsArg).not.toHaveProperty('__range_ms');
     });
 
     it('leaves accountId undefined when not specified', () => {
