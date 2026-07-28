@@ -16,3 +16,6 @@ jobs:
     uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v10.1.0
     with:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+      playwright-secrets: |
+        ACCESS_KEY=cloudwatch:secure_accessKey
+        SECRET_KEY=cloudwatch:secure_secretKey
