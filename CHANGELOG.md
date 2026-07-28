@@ -1,5 +1,12 @@
 # Changelog
 
+## 12.10.0
+
+- Add promql visual query builder support in [#569](https://github.com/grafana/grafana-cloudwatch-datasource/pull/569)
+- CloudWatch Logs: Add support for querying by data source name and type in [#586](https://github.com/grafana/grafana-cloudwatch-datasource/pull/586)
+- Prefer per-datasource grafanaExternalId for Assume Role and /external-id in [#582](https://github.com/grafana/grafana-cloudwatch-datasource/pull/582)
+- Bump @grafana/* to 13.1.1 and update dependencies in [#602](https://github.com/grafana/grafana-cloudwatch-datasource/pull/602)
+
 ## 12.9.0
 
 - Add PromQL raw query editor support in [#568](https://github.com/grafana/grafana-cloudwatch-datasource/pull/568)
