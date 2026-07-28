@@ -10,6 +10,7 @@ const LIVE_QUERY = 'stats count(*) as event_count';
 async function selectLogsMode(queryEditor: Locator) {
   const queryMode = queryEditor.getByLabel('Query mode');
   await queryMode.fill('CloudWatch Logs');
+  await queryMode.press('ArrowDown');
   await queryMode.press('Enter');
   await expect(queryEditor.getByText('Query scope', { exact: true })).toBeVisible();
 }
