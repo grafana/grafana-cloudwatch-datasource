@@ -19,5 +19,8 @@ services:
 configs:
   grafana_custom_ini:
     content: |
+      [feature_toggles]
+      externalCorePlugins = true
+
       [plugin.cloudwatch]
       as_external = true

@@ -7,11 +7,10 @@ const LIVE_DATA_SOURCE = { name: 'amazon_eks', type: 'audit' };
 const LIVE_DATA_SOURCE_KEY = `${LIVE_DATA_SOURCE.name}.${LIVE_DATA_SOURCE.type}`;
 const LIVE_QUERY = 'stats count(*) as event_count';
 
-async function selectLogsMode(queryEditor: Locator) {
+async function selectLogsMode(page: Page, queryEditor: Locator) {
   const queryMode = queryEditor.getByLabel('Query mode');
-  await queryMode.fill('CloudWatch Logs');
-  await queryMode.press('ArrowDown');
-  await queryMode.press('Enter');
+  await queryMode.click();
+  await page.getByRole('option', { name: 'CloudWatch Logs', exact: true }).click();
   await expect(queryEditor.getByText('Query scope', { exact: true })).toBeVisible();
 }
 
@@ -38,20 +37,22 @@ test.describe('Query editor', () => {
     await panelEditPage.datasource.set(ds.name);
   });
 
-  test('smoke: should render the query editor', { tag: '@plugins' }, async ({ panelEditPage, selectors }) => {
+  test('smoke: should render the query editor', { tag: '@plugins' }, async ({ panelEditPage, page }) => {
     const queryEditor = panelEditPage.getQueryEditorRow('A');
     await expect(queryEditor.getByLabel('Query mode')).toBeVisible();
     await expect(queryEditor.getByLabel('Region:')).toBeVisible();
 
-    await queryEditor.getByLabel('Query mode').press('ArrowDown');
-    const queryModeOptions = panelEditPage.getByGrafanaSelector(selectors.components.Select.option);
-    await expect(queryModeOptions.getByText('CloudWatch Metrics', { exact: true })).toBeVisible();
-    await expect(queryModeOptions.getByText('CloudWatch Logs', { exact: true })).toBeVisible();
+    await queryEditor.getByLabel('Query mode').click();
+    await expect(page.getByRole('option', { name: 'CloudWatch Metrics', exact: true })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'CloudWatch Logs', exact: true })).toBeVisible();
   });
 
-  test('should render log group and data source selectors for Logs Insights queries', async ({ panelEditPage }) => {
+  test('should render log group and data source selectors for Logs Insights queries', async ({
+    panelEditPage,
+    page,
+  }) => {
     const queryEditor = panelEditPage.getQueryEditorRow('A');
-    await selectLogsMode(queryEditor);
+    await selectLogsMode(page, queryEditor);
 
     await expect(queryEditor.getByLabel('Logs Mode:')).toBeVisible();
     await expect(queryEditor.getByLabel('Query language:')).toBeVisible();
@@ -61,7 +62,7 @@ test.describe('Query editor', () => {
 
   test('should filter and select CloudWatch Logs data sources by name or type', async ({ panelEditPage, page }) => {
     const queryEditor = panelEditPage.getQueryEditorRow('A');
-    await selectLogsMode(queryEditor);
+    await selectLogsMode(page, queryEditor);
     await selectLiveDataSource(page, queryEditor);
 
     await expect(queryEditor.getByText(LIVE_DATA_SOURCE_KEY, { exact: true })).toBeVisible();
@@ -75,7 +76,7 @@ test.describe('Query editor', () => {
   }) => {
     const queryEditor = panelEditPage.getQueryEditorRow('A');
     await panelEditPage.setVisualization('Table');
-    await selectLogsMode(queryEditor);
+    await selectLogsMode(page, queryEditor);
     await selectLiveDataSource(page, queryEditor);
 
     const editor = panelEditPage.getByGrafanaSelector(selectors.components.CodeEditor.container, {
