@@ -17,26 +17,25 @@ Make sure you have the following dependencies installed first:
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Mage](https://magefile.org/)
 - [Node.js (Long Term Support)](https://nodejs.org)
-- [Yarn](https://yarnpkg.com)
 
 ## Frontend
 
 1. Install dependencies
 
    ```bash
-   yarn install
+   npm ci
    ```
 
 2. Build plugin in development mode or run in watch mode
 
    ```bash
-   yarn dev
+   npm run dev
    ```
 
 3. Build plugin in production mode
 
    ```bash
-   yarn build
+   npm run build
    ```
 
 ## Backend
@@ -49,9 +48,9 @@ Make sure you have the following dependencies installed first:
 
 ## E2E Tests
 
-1. `yarn playwright install --with-deps`
-1. `yarn server`
-1. `yarn e2e`
+1. `npm run playwright install --with-deps`
+1. `npm run server`
+1. `npm run e2e`
 
 ## Build a release for the CloudWatch data source plugin
 
