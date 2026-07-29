@@ -45,16 +45,17 @@ test.describe('Config editor', () => {
   });
 
   test.describe('save & test', () => {
-    test('should pass health check for the provisioned datasource', async ({
-      readProvisionedDataSource,
-      gotoDataSourceConfigPage,
-    }) => {
-      const ds = await readProvisionedDataSource({ fileName: PROVISIONED_FILE });
-      const configPage = await gotoDataSourceConfigPage(ds.uid);
+    test(
+      'should pass health check for the provisioned datasource',
+      { tag: '@aws' },
+      async ({ readProvisionedDataSource, gotoDataSourceConfigPage }) => {
+        const ds = await readProvisionedDataSource({ fileName: PROVISIONED_FILE });
+        const configPage = await gotoDataSourceConfigPage(ds.uid);
 
-      const response = await configPage.saveAndTest();
-      expect(response.ok()).toBe(true);
-    });
+        const response = await configPage.saveAndTest();
+        expect(response.ok()).toBe(true);
+      }
+    );
 
     test('should show an authentication error for invalid access and secret keys', async ({
       createDataSourceConfigPage,

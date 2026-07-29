@@ -49,9 +49,32 @@ Make sure you have the following dependencies installed first:
 
 ## E2E Tests
 
-1. `yarn playwright install --with-deps`
-1. `yarn server`
-1. `yarn e2e`
+The E2E test suite uses the CloudWatch data source provisioned for the Data Sources team's AWS test environment. Export its credentials before starting Grafana.
+
+1. Install the Playwright browser:
+
+   ```bash
+   yarn playwright install --with-deps
+   ```
+
+2. Export the provisioned data source credentials:
+
+   ```bash
+   export ACCESS_KEY=<access-key>
+   export SECRET_KEY=<secret-key>
+   ```
+
+3. Start Grafana:
+
+   ```bash
+   yarn server
+   ```
+
+4. Run the E2E tests:
+
+   ```bash
+   yarn e2e
+   ```
 
 ## Build a release for the CloudWatch data source plugin
 

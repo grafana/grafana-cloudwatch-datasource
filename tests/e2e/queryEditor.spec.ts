@@ -60,65 +60,69 @@ test.describe('Query editor', () => {
     await expect(queryEditor.getByRole('button', { name: 'Select data sources', exact: true })).toBeVisible();
   });
 
-  test('should filter and select CloudWatch Logs data sources by name or type', async ({ panelEditPage, page }) => {
-    const queryEditor = panelEditPage.getQueryEditorRow('A');
-    await selectLogsMode(page, queryEditor);
-    await selectLiveDataSource(page, queryEditor);
+  test(
+    'should filter and select CloudWatch Logs data sources by name or type',
+    { tag: '@aws' },
+    async ({ panelEditPage, page }) => {
+      const queryEditor = panelEditPage.getQueryEditorRow('A');
+      await selectLogsMode(page, queryEditor);
+      await selectLiveDataSource(page, queryEditor);
 
-    await expect(queryEditor.getByText(LIVE_DATA_SOURCE_KEY, { exact: true })).toBeVisible();
-    await expect(queryEditor.getByRole('button', { name: 'Clear selection', exact: true })).toBeVisible();
-  });
+      await expect(queryEditor.getByText(LIVE_DATA_SOURCE_KEY, { exact: true })).toBeVisible();
+      await expect(queryEditor.getByRole('button', { name: 'Clear selection', exact: true })).toBeVisible();
+    }
+  );
 
-  test('should scope a Logs Insights query to the selected data source name and type', async ({
-    panelEditPage,
-    page,
-    selectors,
-  }) => {
-    const queryEditor = panelEditPage.getQueryEditorRow('A');
-    await panelEditPage.setVisualization('Table');
-    await selectLogsMode(page, queryEditor);
-    await selectLiveDataSource(page, queryEditor);
+  test(
+    'should scope a Logs Insights query to the selected data source name and type',
+    { tag: '@aws' },
+    async ({ panelEditPage, page, selectors }) => {
+      const queryEditor = panelEditPage.getQueryEditorRow('A');
+      await panelEditPage.setVisualization('Table');
+      await selectLogsMode(page, queryEditor);
+      await selectLiveDataSource(page, queryEditor);
 
-    const editor = panelEditPage.getByGrafanaSelector(selectors.components.CodeEditor.container, {
-      root: queryEditor,
-    });
-    const editorInput = editor.getByRole('textbox');
-    await editorInput.click();
-    await page.keyboard.press('Control+A');
-    await page.keyboard.insertText(LIVE_QUERY);
-    await expect(editorInput).toHaveValue(LIVE_QUERY);
+      const editor = panelEditPage.getByGrafanaSelector(selectors.components.CodeEditor.container, {
+        root: queryEditor,
+      });
+      const editorInput = editor.getByRole('textbox');
+      await editorInput.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.insertText(LIVE_QUERY);
+      await expect(editorInput).toHaveValue(LIVE_QUERY);
 
-    let responseBody: Partial<BackendDataSourceResponse> | undefined;
-    const requestPromise = panelEditPage.waitForQueryDataRequest(
-      (request) => request.postDataJSON()?.queries?.[0]?.subtype === 'StartQuery'
-    );
-    // Logs Insights queries poll GetQueryResults after StartQuery, so wait for
-    // the final response before asserting on the panel data.
-    const responsePromise = panelEditPage.refreshPanel({
-      waitForResponsePredicateCallback: async (response) => {
-        if (!response.url().includes(selectors.apis.DataSource.query)) {
+      let responseBody: Partial<BackendDataSourceResponse> | undefined;
+      const requestPromise = panelEditPage.waitForQueryDataRequest(
+        (request) => request.postDataJSON()?.queries?.[0]?.subtype === 'StartQuery'
+      );
+      // Logs Insights queries poll GetQueryResults after StartQuery, so wait for
+      // the final response before asserting on the panel data.
+      const responsePromise = panelEditPage.refreshPanel({
+        waitForResponsePredicateCallback: async (response) => {
+          if (!response.url().includes(selectors.apis.DataSource.query)) {
+            return false;
+          }
+
+          const body = (await response.json().catch(() => undefined)) as Partial<BackendDataSourceResponse> | undefined;
+          const result = body?.results?.A;
+          const status = result?.frames?.[0]?.schema?.meta?.custom?.Status;
+          if (result?.error || status === 'Complete') {
+            responseBody = body;
+            return true;
+          }
           return false;
-        }
+        },
+      });
+      const [request, response] = await Promise.all([requestPromise, responsePromise]);
+      const requestBody = request.postDataJSON();
+      const result = responseBody?.results?.A;
 
-        const body = (await response.json().catch(() => undefined)) as Partial<BackendDataSourceResponse> | undefined;
-        const result = body?.results?.A;
-        const status = result?.frames?.[0]?.schema?.meta?.custom?.Status;
-        if (result?.error || status === 'Complete') {
-          responseBody = body;
-          return true;
-        }
-        return false;
-      },
-    });
-    const [request, response] = await Promise.all([requestPromise, responsePromise]);
-    const requestBody = request.postDataJSON();
-    const result = responseBody?.results?.A;
-
-    expect(response.ok()).toBe(true);
-    expect(requestBody.queries[0].logDataSources).toEqual([LIVE_DATA_SOURCE]);
-    expect(result?.error).toBeUndefined();
-    expect(result?.frames?.[0]?.schema?.meta?.custom?.Status).toBe('Complete');
-    await expect(panelEditPage.panel.fieldNames).toContainText(['event_count']);
-    await expect(panelEditPage.panel.data.filter({ hasText: /^[1-9]\d*$/ })).toHaveCount(1);
-  });
+      expect(response.ok()).toBe(true);
+      expect(requestBody.queries[0].logDataSources).toEqual([LIVE_DATA_SOURCE]);
+      expect(result?.error).toBeUndefined();
+      expect(result?.frames?.[0]?.schema?.meta?.custom?.Status).toBe('Complete');
+      await expect(panelEditPage.panel.fieldNames).toContainText(['event_count']);
+      await expect(panelEditPage.panel.data.filter({ hasText: /^[1-9]\d*$/ })).toHaveCount(1);
+    }
+  );
 });
