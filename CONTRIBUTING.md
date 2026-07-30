@@ -48,7 +48,7 @@ Make sure you have the following dependencies installed first:
 
 ## E2E Tests
 
-1. `npm run playwright install --with-deps`
+1. `npm exec -- playwright install --with-deps`
 1. `npm run server`
 1. `npm run e2e`
 
