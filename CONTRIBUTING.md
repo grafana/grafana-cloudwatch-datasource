@@ -18,6 +18,42 @@ Make sure you have the following dependencies installed first:
 - [Mage](https://magefile.org/)
 - [Node.js (Long Term Support)](https://nodejs.org)
 
+### Package manager version
+
+This repository defines the required package manager and its exact version in the
+`packageManager` field of `package.json`. Enable [Corepack](https://github.com/nodejs/corepack)
+to make your terminal automatically use that version:
+
+Corepack is included with many Node.js distributions. Check whether it is
+available:
+
+```bash
+corepack --version
+```
+
+If the command is unavailable, install the standalone Corepack package:
+
+```bash
+npm install --global --ignore-scripts corepack
+```
+
+Then enable its npm shim:
+
+```bash
+corepack enable npm
+```
+
+Restart your terminal after enabling Corepack. No directory-change hook is
+required: Corepack reads the nearest `package.json` whenever you run `npm`.
+You can verify the selected version from the repository directory:
+
+```bash
+npm --version
+```
+
+Corepack manages the package manager version only; it does not install or select
+the Node.js version specified by the `engines` field.
+
 ## Frontend
 
 1. Install dependencies
