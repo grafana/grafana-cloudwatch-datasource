@@ -17,26 +17,61 @@ Make sure you have the following dependencies installed first:
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Mage](https://magefile.org/)
 - [Node.js (Long Term Support)](https://nodejs.org)
-- [Yarn](https://yarnpkg.com)
+
+### Package manager version
+
+This repository defines the required package manager and its exact version in the
+`packageManager` field of `package.json`. Enable [Corepack](https://github.com/nodejs/corepack)
+to make your terminal automatically use that version:
+
+Corepack is included with many Node.js distributions. Check whether it is
+available:
+
+```bash
+corepack --version
+```
+
+If the command is unavailable, install the standalone Corepack package:
+
+```bash
+npm install --global --ignore-scripts corepack
+```
+
+Then enable its npm shim:
+
+```bash
+corepack enable npm
+```
+
+Restart your terminal after enabling Corepack. No directory-change hook is
+required: Corepack reads the nearest `package.json` whenever you run `npm`.
+You can verify the selected version from the repository directory:
+
+```bash
+npm --version
+```
+
+Corepack manages the package manager version only; it does not install or select
+the Node.js version specified by the `engines` field.
 
 ## Frontend
 
 1. Install dependencies
 
    ```bash
-   yarn install
+   npm ci
    ```
 
 2. Build plugin in development mode or run in watch mode
 
    ```bash
-   yarn dev
+   npm run dev
    ```
 
 3. Build plugin in production mode
 
    ```bash
-   yarn build
+   npm run build
    ```
 
 ## Backend
@@ -54,7 +89,7 @@ The E2E test suite uses the CloudWatch data source provisioned for the Data Sour
 1. Install the Playwright browser:
 
    ```bash
-   yarn playwright install --with-deps
+   npm exec -- playwright install --with-deps
    ```
 
 2. Export the provisioned data source credentials:
@@ -67,13 +102,13 @@ The E2E test suite uses the CloudWatch data source provisioned for the Data Sour
 3. Start Grafana:
 
    ```bash
-   yarn server
+   npm run server
    ```
 
 4. Run the E2E tests:
 
    ```bash
-   yarn e2e
+   npm run e2e
    ```
 
 ## Build a release for the CloudWatch data source plugin

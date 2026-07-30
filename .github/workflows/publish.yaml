@@ -30,7 +30,7 @@ jobs:
       pull-requests: read
       id-token: write
       attestations: write
-    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@ci-cd-workflows/v10.1.0
+    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@ci-cd-workflows/v10.2.0
     with:
       branch: ${{ github.event.inputs.branch }}
       environment: 'prod'

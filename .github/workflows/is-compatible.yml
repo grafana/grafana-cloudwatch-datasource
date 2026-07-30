@@ -15,11 +15,11 @@ jobs:
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: '.nvmrc'
-          cache: 'yarn'
+          cache: 'npm'
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm ci --ignore-scripts
       - name: Build plugin
-        run: yarn run build
+        run: npm run build
       - name: Find module.ts or module.tsx
         id: find-module-ts
         run: >-

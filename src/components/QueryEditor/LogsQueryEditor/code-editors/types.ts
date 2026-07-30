@@ -1,6 +1,5 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
-
 export type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
 

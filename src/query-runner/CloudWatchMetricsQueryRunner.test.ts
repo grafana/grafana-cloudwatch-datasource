@@ -704,9 +704,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
       );
       expect(queryMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          targets: expect.arrayContaining([
-            expect.objectContaining({ promqlExpression: 'rate(CPUUtilization[5m])' }),
-          ]),
+          targets: expect.arrayContaining([expect.objectContaining({ promqlExpression: 'rate(CPUUtilization[5m])' })]),
         })
       );
     });
