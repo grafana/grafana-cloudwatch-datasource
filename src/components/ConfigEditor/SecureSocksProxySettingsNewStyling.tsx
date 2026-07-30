@@ -3,8 +3,10 @@ import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana
 import { ConfigSection } from '@grafana/plugin-ui';
 import { Field, Switch } from '@grafana/ui';
 
-export interface Props<T extends DataSourceJsonData>
-  extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
+export interface Props<T extends DataSourceJsonData> extends Pick<
+  DataSourcePluginOptionsEditorProps<T>,
+  'options' | 'onOptionsChange'
+> {}
 
 export interface SecureSocksProxyConfig extends DataSourceJsonData {
   enableSecureSocksProxy?: boolean;

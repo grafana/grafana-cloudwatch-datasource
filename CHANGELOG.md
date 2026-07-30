@@ -5,7 +5,7 @@
 - Add promql visual query builder support in [#569](https://github.com/grafana/grafana-cloudwatch-datasource/pull/569)
 - CloudWatch Logs: Add support for querying by data source name and type in [#586](https://github.com/grafana/grafana-cloudwatch-datasource/pull/586)
 - Prefer per-datasource grafanaExternalId for Assume Role and /external-id in [#582](https://github.com/grafana/grafana-cloudwatch-datasource/pull/582)
-- Bump @grafana/* to 13.1.1 and update dependencies in [#602](https://github.com/grafana/grafana-cloudwatch-datasource/pull/602)
+- Bump @grafana/\* to 13.1.1 and update dependencies in [#602](https://github.com/grafana/grafana-cloudwatch-datasource/pull/602)
 
 ## 12.9.0
 
@@ -13,7 +13,7 @@
 - feat(logs): add new CloudWatch Logs Insights commands and functions in [#592](https://github.com/grafana/grafana-cloudwatch-datasource/pull/592)
 - chore: make grafanaDependency prerelease-inclusive in [#567](https://github.com/grafana/grafana-cloudwatch-datasource/pull/567)
 - Bump dependencies in [#598](https://github.com/grafana/grafana-cloudwatch-datasource/pull/598)
-- Bump grafana/* dependencies in [#594](https://github.com/grafana/grafana-cloudwatch-datasource/pull/594)
+- Bump grafana/\* dependencies in [#594](https://github.com/grafana/grafana-cloudwatch-datasource/pull/594)
 - fix(deps): update backend dependencies in [#593](https://github.com/grafana/grafana-cloudwatch-datasource/pull/593)
 - fix(deps): update backend dependencies in [#585](https://github.com/grafana/grafana-cloudwatch-datasource/pull/585)
 - chore(deps): update backend dependencies (major) in [#581](https://github.com/grafana/grafana-cloudwatch-datasource/pull/581)
@@ -120,7 +120,7 @@
 - chore(deps): update dependency css-loader to v7.1.3 in [#404](https://github.com/grafana/grafana-cloudwatch-datasource/pull/404)
 - chore(deps): update dependency @swc/core to v1.15.11 in [#405](https://github.com/grafana/grafana-cloudwatch-datasource/pull/405)
 - chore(deps): update actions/checkout digest to de0fac2 in [#409](https://github.com/grafana/grafana-cloudwatch-datasource/pull/409)
-- CloudWatch Logs: Select log groups with the log group selector and $__logGroups macro for OpenSearch Structured Query Language queries in [#401](https://github.com/grafana/grafana-cloudwatch-datasource/pull/401)
+- CloudWatch Logs: Select log groups with the log group selector and $\_\_logGroups macro for OpenSearch Structured Query Language queries in [#401](https://github.com/grafana/grafana-cloudwatch-datasource/pull/401)
 - fix(deps): update module github.com/aws/aws-sdk-go-v2/service/ec2 to v1.283.0 in [#407](https://github.com/grafana/grafana-cloudwatch-datasource/pull/407)
 - chore(deps): update dependency @playwright/test to v1.58.0 in [#391](https://github.com/grafana/grafana-cloudwatch-datasource/pull/391)
 - chore(deps): update dependency @grafana/plugin-e2e to v3.2.1 in [#403](https://github.com/grafana/grafana-cloudwatch-datasource/pull/403)
