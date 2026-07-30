@@ -1,5 +1,5 @@
-import { Token } from "@grafana/ui";
-import Prism from "prismjs";
+import { Token } from '@grafana/ui';
+import Prism from 'prismjs';
 
 export function flattenTokens(token: string | Prism.Token | Array<string | Prism.Token>) {
   const tokens = flattenToken(token);

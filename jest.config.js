@@ -5,10 +5,17 @@ process.env.TZ = 'UTC';
 module.exports = {
   // Jest configuration provided by Grafana scaffolding
   ...require('./.config/jest.config'),
+  // Override the scaffolded react-inlinesvg mock with our own copy so it survives
+  // `@grafana/create-plugin` scaffolding updates resetting .config/jest/mocks/react-inlinesvg.tsx
+  moduleNameMapper: {
+    ...require('./.config/jest.config').moduleNameMapper,
+    'react-inlinesvg': require('path').resolve(__dirname, 'jest', 'mocks', 'react-inlinesvg.tsx'),
+  },
   // Ensure ESM-only packages are transformed (e.g., monaco-editor)
   transformIgnorePatterns: [
     require('./.config/jest/utils').nodeModulesToTransform([
       ...require('./.config/jest/utils').grafanaESModules,
+      '@grafana/plugin-ui',
       'monaco-editor',
       'marked',
       'react-calendar',

@@ -1,5 +1,10 @@
 import { CoreApp, PanelData, TimeRange } from '@grafana/data';
-import { PromQueryBuilderExplained, PromQueryBuilderOptions, PromQueryField, type PromQuery } from '@grafana/prometheus';
+import {
+  PromQueryBuilderExplained,
+  PromQueryBuilderOptions,
+  PromQueryField,
+  type PromQuery,
+} from '@grafana/prometheus';
 import { Stack } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';

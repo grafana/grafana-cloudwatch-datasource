@@ -48,7 +48,12 @@ describe('CloudWatchPromQLLanguageProvider', () => {
     it('maps the labels endpoint to getPromQLLabelKeys with parsed params', async () => {
       const { provider, resources } = setup();
 
-      const result = await provider.request('/api/v1/labels', { start: '100', end: '200', limit: '5', 'match[]': 'up' });
+      const result = await provider.request('/api/v1/labels', {
+        start: '100',
+        end: '200',
+        limit: '5',
+        'match[]': 'up',
+      });
 
       expect(resources.getPromQLLabelKeys).toHaveBeenCalledWith('us-east-1', 'up', 100, 200, 5);
       expect(result).toEqual(['instance', 'job']);
@@ -59,7 +64,14 @@ describe('CloudWatchPromQLLanguageProvider', () => {
 
       const result = await provider.request('/api/v1/label/foo%2Fbar/values', { start: '100' });
 
-      expect(resources.getPromQLLabelValues).toHaveBeenCalledWith('us-east-1', 'foo/bar', undefined, 100, undefined, undefined);
+      expect(resources.getPromQLLabelValues).toHaveBeenCalledWith(
+        'us-east-1',
+        'foo/bar',
+        undefined,
+        100,
+        undefined,
+        undefined
+      );
       expect(result).toEqual(['host-a', 'host-b']);
     });
 
@@ -86,7 +98,13 @@ describe('CloudWatchPromQLLanguageProvider', () => {
 
       await provider.request('/api/v1/labels', {});
 
-      expect(resources.getPromQLLabelKeys).toHaveBeenCalledWith('eu-west-2', undefined, undefined, undefined, undefined);
+      expect(resources.getPromQLLabelKeys).toHaveBeenCalledWith(
+        'eu-west-2',
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      );
     });
   });
 

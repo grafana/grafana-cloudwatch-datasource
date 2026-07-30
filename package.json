@@ -8,7 +8,7 @@
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --ignore-pattern ./.gitignore --ext .js,.jsx,.ts,.tsx .",
-    "lint:fix": "yarn run lint --fix && prettier --write --list-different .",
+    "lint:fix": "prettier --write --list-different . && npm run lint -- --fix",
     "e2e": "playwright test",
     "server": "docker compose up --build",
     "sign": "sign-plugin"
@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/compat": "2.0.5",
-    "@eslint/js": "10.0.1",
+    "@eslint/js": "9.39.5",
     "@grafana/e2e-selectors": "13.1.1",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.10.0",
@@ -31,9 +31,9 @@
     "@swc/helpers": "0.5.21",
     "@swc/jest": "0.2.39",
     "@testing-library/dom": "10.4.1",
-    "@testing-library/jest-dom": "6.9.1",
-    "@testing-library/react": "16.3.2",
-    "@testing-library/user-event": "14.6.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/common-tags": "1.8.4",
     "@types/jest": "30.0.0",
     "@types/jsurl": "0.1.2",
@@ -46,12 +46,12 @@
     "@typescript-eslint/parser": "8.58.1",
     "copy-webpack-plugin": "14.0.0",
     "css-loader": "7.1.4",
-    "eslint": "10.2.0",
+    "eslint": "9.39.5",
     "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-jsdoc": "62.9.0",
+    "eslint-plugin-jsdoc": "63.2.0",
     "eslint-plugin-react": "7.37.5",
-    "eslint-plugin-react-hooks": "7.0.1",
-    "eslint-webpack-plugin": "5.0.3",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-webpack-plugin": "6.0.0",
     "fork-ts-checker-webpack-plugin": "9.1.0",
     "glob": "13.0.6",
     "identity-obj-proxy": "3.0.0",
@@ -78,7 +78,8 @@
     "webpack-virtual-modules": "^0.6.2"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24",
+    "npm": ">=11.16.0"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
@@ -86,9 +87,9 @@
     "@grafana/data": "13.1.1",
     "@grafana/i18n": "13.1.1",
     "@grafana/plugin-ui": "0.17.3",
-    "@grafana/prometheus": "13.1.10",
+    "@grafana/prometheus": "13.1.11",
     "@grafana/runtime": "13.1.1",
-    "@grafana/scenes": "8.13.4",
+    "@grafana/scenes": "8.13.3",
     "@grafana/schema": "13.1.1",
     "@grafana/ui": "13.1.1",
     "common-tags": "^1.8.2",
@@ -96,5 +97,5 @@
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
-  "packageManager": "yarn@4.14.0"
+  "packageManager": "npm@11.16.0"
 }
