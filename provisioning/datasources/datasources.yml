@@ -1,14 +1,21 @@
 apiVersion: 1
 
+deleteDatasources:
+  - name: 'grafana-cloudwatch-datasource'
+    orgId: 1
+
 datasources:
   - name: 'grafana-cloudwatch-datasource'
-    type: 'cloudwatch'
+    type: cloudwatch
+    uid: cloudwatch-e2e
     access: proxy
     isDefault: false
     orgId: 1
     version: 1
     editable: true
     jsonData:
-      path: '/resources'
+      authType: keys
+      defaultRegion: us-east-2
     secureJsonData:
-      apiKey: 'api-key'
+      accessKey: $ACCESS_KEY
+      secretKey: $SECRET_KEY

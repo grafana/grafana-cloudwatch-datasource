@@ -3,3 +3,24 @@ services:
     extends:
       file: .config/docker-compose-base.yaml
       service: grafana
+    build:
+      args:
+        grafana_version: ${GRAFANA_VERSION:-latest}
+    environment:
+      # Prevent Grafana 13's splash screen from blocking Playwright.
+      GF_FEATURE_TOGGLES_splashScreen: 'false'
+      ACCESS_KEY: ${ACCESS_KEY:-}
+      SECRET_KEY: ${SECRET_KEY:-}
+    configs:
+      # Load this repository's plugin instead of Grafana's bundled core plugin.
+      - source: grafana_custom_ini
+        target: /etc/grafana/grafana.ini
+
+configs:
+  grafana_custom_ini:
+    content: |
+      [feature_toggles]
+      externalCorePlugins = true
+
+      [plugin.cloudwatch]
+      as_external = true

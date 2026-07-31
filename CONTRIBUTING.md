@@ -84,9 +84,32 @@ the Node.js version specified by the `engines` field.
 
 ## E2E Tests
 
-1. `npm exec -- playwright install --with-deps`
-1. `npm run server`
-1. `npm run e2e`
+The E2E test suite uses the CloudWatch data source provisioned for the Data Sources team's AWS test environment. Export its credentials before starting Grafana.
+
+1. Install the Playwright browser:
+
+   ```bash
+   npm exec -- playwright install --with-deps
+   ```
+
+2. Export the provisioned data source credentials:
+
+   ```bash
+   export ACCESS_KEY=<access-key>
+   export SECRET_KEY=<secret-key>
+   ```
+
+3. Start Grafana:
+
+   ```bash
+   npm run server
+   ```
+
+4. Run the E2E tests:
+
+   ```bash
+   npm run e2e
+   ```
 
 ## Build a release for the CloudWatch data source plugin
 
