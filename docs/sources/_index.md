@@ -22,10 +22,10 @@ Grafana includes native support for the Amazon CloudWatch plugin, so there's no 
 
 The following documents will help you get started working with the CloudWatch data source:
 
-- [Configure the CloudWatch data source](/docs/plugins/grafana-cloudwatch-datasource/<CLOUDWATCH_VERSION>/configure/)
-- [CloudWatch query editor](/docs/plugins/grafana-cloudwatch-datasource/<CLOUDWATCH_VERSION>/query-editor/)
-- [Templates and variables](/docs/plugins/grafana-cloudwatch-datasource/<CLOUDWATCH_VERSION>/template-variables/)
-- [Configure AWS authentication](/docs/plugins/grafana-cloudwatch-datasource/<CLOUDWATCH_VERSION>/aws-authentication/)
+- [Configure the CloudWatch data source](/docs/plugins/cloudwatch/<CLOUDWATCH_VERSION>/configure/)
+- [CloudWatch query editor](/docs/plugins/cloudwatch/<CLOUDWATCH_VERSION>/query-editor/)
+- [Templates and variables](/docs/plugins/cloudwatch/<CLOUDWATCH_VERSION>/template-variables/)
+- [Configure AWS authentication](/docs/plugins/cloudwatch/<CLOUDWATCH_VERSION>/aws-authentication/)
 
 ## Import pre-configured dashboards
 
@@ -46,7 +46,7 @@ To import curated dashboards:
 
 1. Click **Import** for each dashboard you want to import.
 
-![CloudWatch pre-configured dashboards Grafana v12.1](/media//docs/cloudwatch/preconfigured-dashboards-cloudwatch-v12.1.png) CloudWatch pre-configured dashboards
+![CloudWatch pre-configured dashboards Grafana v12.1](/media/docs/cloudwatch/preconfigured-dashboards-cloudwatch-v12.1.png) CloudWatch pre-configured dashboards
 
 To customize one of these dashboards, Grafana recommends saving it under a different name; otherwise, Grafana upgrades will overwrite your customizations with the new version.
 
@@ -54,12 +54,12 @@ To customize one of these dashboards, Grafana recommends saving it under a diffe
 
 After installing and configuring the Amazon CloudWatch data source, you can:
 
-- Create a wide variety of [visualizations](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/)
-- Configure and use [templates and variables](https://grafana.com/docs/grafana/latest/dashboards/variables/)
-- Add [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/)
-- Add [annotations](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/)
-- Set up [alerting](https://grafana.com/docs/grafana/latest/alerting/)
-- Optimize performance with [query caching](https://grafana.com/docs/grafana/latest/administration/data-source-management/#query-and-resource-caching)
+- Create a wide variety of [visualizations](/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/)
+- Configure and use [templates and variables](/docs/grafana/latest/dashboards/variables/)
+- Add [transformations](/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/)
+- Add [annotations](/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/)
+- Set up [alerting](/docs/grafana/latest/alerting/)
+- Optimize performance with [query caching](/docs/grafana/latest/administration/data-source-management/#query-and-resource-caching)
 
 ## Control pricing
 
