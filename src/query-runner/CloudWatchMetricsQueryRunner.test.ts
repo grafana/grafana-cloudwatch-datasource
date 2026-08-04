@@ -510,6 +510,22 @@ describe('CloudWatchMetricsQueryRunner', () => {
         ]);
       });
     });
+    it('defaults statistic to empty string when undefined for math expression queries', () => {
+      const { runner } = setupMockedMetricsQueryRunner();
+      const result = runner.interpolateMetricsQueryVariables(
+        {
+          id: 'e1',
+          refId: 'B',
+          region: 'us-east-2',
+          expression: 'METRICS("m1") * 2',
+          statistic: undefined,
+          metricEditorMode: MetricEditorMode.Code,
+          metricQueryType: MetricQueryType.Search,
+        } as CloudWatchMetricsQuery,
+        {}
+      );
+      expect(result.statistic).toBe('');
+    });
   });
 
   describe('interpolateMetricsQueryVariables', () => {
