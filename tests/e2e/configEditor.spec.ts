@@ -6,6 +6,10 @@ import { type CloudWatchJsonData } from '../../src/types';
 const PLUGIN_TYPE = 'cloudwatch';
 const PROVISIONED_FILE = 'datasources.yml';
 
+// GRAFANA_URL is set only by the Cloud cron workflow (playwright-cloud); its presence signals
+// a run against the shared Cloud instance rather than local/PR CI.
+const isCloudRun = !!process.env.GRAFANA_URL;
+
 // Selects a Private Data Source Connect network in the datasource config editor. The
 // combobox is a Grafana-core element, present only when PDC is available on the instance
 // (i.e. the shared Cloud instance), so it is called only when a network name is injected.
@@ -38,6 +42,12 @@ test.describe('Config editor', () => {
   });
 
   test.describe('provisioned datasource', () => {
+    // The shared Cloud instance doesn't apply the local provisioning/datasources/datasources.yml,
+    // so this assertion of the provisioned region can't run there (grafana/clickhouse-datasource#1934).
+    test.beforeEach(() => {
+      test.skip(isCloudRun, 'Provisioned-datasource assertions require local provisioning, not applied on Cloud.');
+    });
+
     test('should load the provisioned default region', async ({
       readProvisionedDataSource,
       gotoDataSourceConfigPage,
@@ -58,6 +68,7 @@ test.describe('Config editor', () => {
       'should pass health check for the provisioned datasource',
       { tag: '@aws' },
       async ({ readProvisionedDataSource, gotoDataSourceConfigPage }) => {
+        test.skip(isCloudRun, 'Health-checks the locally-provisioned datasource, not applied on Cloud.');
         const ds = await readProvisionedDataSource({ fileName: PROVISIONED_FILE });
         const configPage = await gotoDataSourceConfigPage(ds.uid);
 
