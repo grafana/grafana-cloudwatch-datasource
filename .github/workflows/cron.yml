@@ -27,10 +27,12 @@ jobs:
     with:
       # Nightly Cloud E2E run, labelled with the DER run_stage vocabulary.
       run-stage: nightly
-      # TODO(onboarding): map this datasource's AWS test-account credentials from Vault,
-      # in get-vault-secrets repo_secrets format (cf clickhouse-datasource cron.yml for the shape). e.g.:
-      # repo-secrets: |
-      #   AWS_ACCESS_KEY_ID=ds-instance:access_key_id
-      #   AWS_SECRET_ACCESS_KEY=ds-instance:secret_access_key
-      #   AWS_DEFAULT_REGION=ds-instance:region
-      # CloudWatch tests hit the public AWS API, so PDC is not expected to be needed.
+      # The provisioned CloudWatch test instance is reached over PDC (aws network).
+      pdc-network-name: datasources-pdc-network-aws-datasourcese2e
+      # AWS test-account credentials, published to the data-sources Vault mount and
+      # read via get-vault-secrets (outputKey `cloudwatch`; see grafana/data-sources
+      # docs/security/vault-secrets-for-plugins.md for the payload schema).
+      repo-secrets: |
+        AWS_ACCESS_KEY_ID=cloudwatch:secure_accessKey
+        AWS_SECRET_ACCESS_KEY=cloudwatch:secure_secretKey
+        AWS_DEFAULT_REGION=cloudwatch:json_defaultRegion
