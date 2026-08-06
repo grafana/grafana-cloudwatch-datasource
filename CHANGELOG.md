@@ -1,5 +1,14 @@
 # Changelog
 
+## 12.10.1
+
+- fix(security): bump vulnerable deps (brace-expansion, immutable, fast-uri, ip-address) in [#612](https://github.com/grafana/grafana-cloudwatch-datasource/pull/612)
+- tests: add e2e tests for cloudwatch logs query by data source name and type in [#605](https://github.com/grafana/grafana-cloudwatch-datasource/pull/605)
+- Add documentation for cloudwatch promql support in [#606](https://github.com/grafana/grafana-cloudwatch-datasource/pull/606)
+- Chore: Set engine-strict in [#608](https://github.com/grafana/grafana-cloudwatch-datasource/pull/608)
+- Chore: Use npm as package manager in [#601](https://github.com/grafana/grafana-cloudwatch-datasource/pull/601)
+- Update dependencies in [#607](https://github.com/grafana/grafana-cloudwatch-datasource/pull/607)
+
 ## 12.10.0
 
 - Add promql visual query builder support in [#569](https://github.com/grafana/grafana-cloudwatch-datasource/pull/569)
