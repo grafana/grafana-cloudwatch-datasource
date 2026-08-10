@@ -9,6 +9,9 @@ services:
     environment:
       # Prevent Grafana 13's splash screen from blocking Playwright.
       GF_FEATURE_TOGGLES_splashScreen: 'false'
+      # Nightly enables dashboardNewLayouts; plugin-e2e 3.10.0 still times out on
+      # the configure-panel selector in that layout. Keep the classic path for e2e.
+      GF_FEATURE_TOGGLES_dashboardNewLayouts: 'false'
       ACCESS_KEY: ${ACCESS_KEY:-}
       SECRET_KEY: ${SECRET_KEY:-}
     configs:
