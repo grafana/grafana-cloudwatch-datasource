@@ -1,6 +1,6 @@
 {
   "name": "grafana-cloudwatch-datasource",
-  "version": "12.10.0",
+  "version": "12.10.1",
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
