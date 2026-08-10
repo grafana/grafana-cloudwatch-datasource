@@ -1,0 +1,38 @@
+name: Scheduled Cloud E2E tests
+
+on:
+  # Run nightly against the shared Cloud instance
+  schedule:
+    - cron: '0 9 * * *' # Daily at 09:00 UTC
+
+  # Allow engineers to run Cloud E2E on-demand (useful for debugging)
+  workflow_dispatch:
+
+# Reusable workflows can only narrow caller permissions, not escalate.
+# `id-token: write` is needed by the Vault OIDC step in playwright-cloud.yml.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  playwright-cloud:
+    # Intentionally pinned to @main: data-sources-ci-workflows does not
+    # publish versioned tags for this workflow yet. Allowed by the zizmor
+    # policy (`grafana/*: any`); review periodically.
+    uses: grafana/data-sources-ci-workflows/.github/workflows/playwright-cloud.yml@main
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      # Nightly Cloud E2E run, labelled with the DER run_stage vocabulary.
+      run-stage: nightly
+      # The provisioned CloudWatch test instance is reached over PDC (aws network).
+      pdc-network-name: datasources-pdc-network-aws-datasourcese2e
+      # AWS test-account credentials, published to the data-sources Vault mount and
+      # read via get-vault-secrets (outputKey `cloudwatch`; see grafana/data-sources
+      # docs/security/vault-secrets-for-plugins.md for the payload schema).
+      repo-secrets: |
+        AWS_ACCESS_KEY_ID=cloudwatch:secure_accessKey
+        AWS_SECRET_ACCESS_KEY=cloudwatch:secure_secretKey
+        AWS_DEFAULT_REGION=cloudwatch:json_defaultRegion
