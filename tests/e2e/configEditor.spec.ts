@@ -95,35 +95,44 @@ test.describe('Config editor', () => {
       await expect(configPage).toHaveAlert('error');
     });
 
-    test(
-      'valid injected credentials should pass the health check',
-      { tag: '@aws' },
-      async ({ createDataSourceConfigPage, page }) => {
-        // Consumes the AWS test-account credentials injected by the Cloud cron workflow
-        // (playwright-cloud) from the data-sources Vault mount as AWS_ACCESS_KEY_ID /
-        // AWS_SECRET_ACCESS_KEY / AWS_DEFAULT_REGION. Skipped when they are absent (fork PRs,
-        // or local runs with no Vault access).
-        const accessKey = process.env.AWS_ACCESS_KEY_ID;
-        const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
-        const region = process.env.AWS_DEFAULT_REGION;
-        test.skip(!accessKey || !secretKey || !region, 'Requires the injected AWS credentials (Cloud cron / CI Vault)');
+    // Trace capture is off here because a trace records the request body that carries the
+    // injected credentials. They also stay out of the DOM, because the datasource is created
+    // through the API: core renders Secret Access Key as a plain input, not a password input.
+    test.describe('injected credentials', () => {
+      test.use({ trace: 'off' });
 
-        const configPage = await createDataSourceConfigPage({ type: PLUGIN_TYPE });
+      test(
+        'valid injected credentials should pass the health check',
+        { tag: '@aws' },
+        async ({ createDataSource, gotoDataSourceConfigPage, page }) => {
+          // Consumes the AWS test-account credentials injected by the Cloud cron workflow
+          // (playwright-cloud) from the data-sources Vault mount as AWS_ACCESS_KEY_ID /
+          // AWS_SECRET_ACCESS_KEY / AWS_DEFAULT_REGION. Skipped when they are absent (fork PRs,
+          // or local runs with no Vault access).
+          const accessKey = process.env.AWS_ACCESS_KEY_ID;
+          const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
+          const region = process.env.AWS_DEFAULT_REGION;
+          test.skip(
+            !accessKey || !secretKey || !region,
+            'Requires the injected AWS credentials (Cloud cron / CI Vault)'
+          );
 
-        await page.getByRole('combobox', { name: 'Authentication Provider', exact: true }).click();
-        await page.getByText('Access & secret key', { exact: true }).click();
-        await page.getByLabel('Access Key ID').fill(accessKey ?? '');
-        await page.getByLabel('Secret Access Key').fill(secretKey ?? '');
-        await page.getByLabel('Default Region').click();
-        await page.getByText(region ?? '', { exact: true }).click();
+          // Mirrors provisioning/datasources/datasources.yml, which is the same auth shape.
+          const ds = await createDataSource({
+            type: PLUGIN_TYPE,
+            jsonData: { authType: 'keys', defaultRegion: region ?? '' },
+            secureJsonData: { accessKey: accessKey ?? '', secretKey: secretKey ?? '' },
+          });
+          const configPage = await gotoDataSourceConfigPage(ds.uid);
 
-        if (process.env.DS_PDC_NETWORK_NAME) {
-          await configurePDC(page, process.env.DS_PDC_NETWORK_NAME);
+          if (process.env.DS_PDC_NETWORK_NAME) {
+            await configurePDC(page, process.env.DS_PDC_NETWORK_NAME);
+          }
+
+          const response = await configPage.saveAndTest();
+          expect(response.ok()).toBe(true);
         }
-
-        const response = await configPage.saveAndTest();
-        expect(response.ok()).toBe(true);
-      }
-    );
+      );
+    });
   });
 });
