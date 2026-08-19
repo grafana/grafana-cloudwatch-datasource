@@ -124,15 +124,7 @@ func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 	}
 
 	sort.Strings(dimensionNamesWithoutKnownValues)
-	// Listing multiple quoted dimension names in SEARCH (one per wildcard) tends to
-	// require metrics that publish all of those dimensions; namespace-wide schema
-	// injection (e.g. grafanaSQL) can list many keys with "*", which then matches
-	// nothing. Omit that fragment when there is no concrete filter and more than
-	// one wildcard dimension—same broad SEARCH as an empty dimension map. A single
-	// wildcard dimension keeps the previous behavior (one quoted name in SEARCH).
-	if len(knownDimensions) > 0 || len(dimensionNamesWithoutKnownValues) <= 1 {
-		searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`))
-	}
+	searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`))
 	namespace := fmt.Sprintf("Namespace=%q", query.Namespace)
 	namespaceSearchTermAndAccount := strings.TrimSpace(strings.Join([]string{namespace, searchTerm, account}, " "))
 	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('%s', '%s', %d))`, namespaceSearchTermAndAccount, stat, query.Period)

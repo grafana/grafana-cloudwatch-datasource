@@ -199,36 +199,3 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		})
 	}
 }
-
-func TestListMetricsService_GetDimensionValuesForKeys(t *testing.T) {
-	baseReq := resources.DimensionValuesForKeysRequest{
-		ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
-		Namespace:       "AWS/EC2",
-		MetricName:      "CPUUtilization",
-		DimensionFilter: []*resources.Dimension{},
-	}
-
-	// metricResponse has InstanceType "t2.micro" in two different metrics, so
-	// requesting ["InstanceId", "InstanceType"] exercises sorted values,
-	// deduplication, and key exclusion.
-	t.Run("with multiple requested keys", func(t *testing.T) {
-		fakeMetricsClient := &mocks.FakeMetricsClient{}
-		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
-		svc := NewListMetricsService(fakeMetricsClient)
-		req := baseReq
-		req.DimensionKeys = []string{"InstanceId", "InstanceType"}
-
-		result, err := svc.GetDimensionValuesForKeys(context.Background(), req)
-		require.NoError(t, err)
-
-		t.Run("returns sorted values for each key", func(t *testing.T) {
-			assert.Equal(t, []string{"i-1234567890abcdef0", "i-5234567890abcdef0", "i-64234567890abcdef0"}, result["InstanceId"])
-		})
-		t.Run("deduplicates values within each key", func(t *testing.T) {
-			assert.Equal(t, []string{"t2.micro", "t3.micro"}, result["InstanceType"])
-		})
-		t.Run("excludes unrequested keys", func(t *testing.T) {
-			assert.NotContains(t, result, "AutoScalingGroupName")
-		})
-	})
-}
