@@ -4,6 +4,12 @@ import { dirname } from 'node:path';
 
 const pluginE2eAuth = `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`;
 
+// GRAFANA_URL is set only by the Cloud cron workflow (playwright-cloud). A Cloud page boots far
+// more slowly than local Grafana: the shell fetches its settings asynchronously and pulls the
+// plugin module from a CDN, where local Grafana inlines the settings and serves the plugin itself.
+// The default 5s expect and 30s test budgets do not cover that, so raise them for Cloud only.
+const isCloudRun = !!process.env.GRAFANA_URL;
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -15,6 +21,8 @@ const pluginE2eAuth = `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`;
  */
 export default defineConfig<PluginOptions>({
   testDir: './tests/e2e',
+  timeout: isCloudRun ? 90_000 : 30_000,
+  expect: { timeout: isCloudRun ? 20_000 : 5_000 },
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
