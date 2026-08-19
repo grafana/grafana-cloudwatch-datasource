@@ -81,6 +81,7 @@ test.describe('Config editor', () => {
       createDataSourceConfigPage,
       page,
     }) => {
+      test.skip(isCloudRun, 'Save & test on an ad-hoc datasource does not complete on Cloud (#619).');
       const configPage = await createDataSourceConfigPage({ type: PLUGIN_TYPE });
 
       await page.getByRole('combobox', { name: 'Authentication Provider', exact: true }).click();
@@ -107,6 +108,7 @@ test.describe('Config editor', () => {
         const secretKey = process.env.AWS_SECRET_ACCESS_KEY;
         const region = process.env.AWS_DEFAULT_REGION;
         test.skip(!accessKey || !secretKey || !region, 'Requires the injected AWS credentials (Cloud cron / CI Vault)');
+        test.skip(isCloudRun, 'Save & test on an ad-hoc datasource does not complete on Cloud (#619).');
 
         const configPage = await createDataSourceConfigPage({ type: PLUGIN_TYPE });
 

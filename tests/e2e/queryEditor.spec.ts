@@ -36,11 +36,15 @@ async function selectLiveDataSource(page: Page, queryEditor: Locator) {
 }
 
 test.describe('Query editor', () => {
-  test.beforeEach(async ({ panelEditPage, readProvisionedDataSource, createDataSource }) => {
+  let dataSourceName: string;
+
+  // This hook deliberately does NOT request panelEditPage. Fixtures are set up when a hook first
+  // asks for them, so keeping panelEditPage out of this one means the datasource exists before
+  // that fixture navigates. Create it after the page has loaded and the picker's list still
+  // predates it, so the name matches nothing and the selection below silently does nothing.
+  test.beforeEach(async ({ readProvisionedDataSource, createDataSource }) => {
     // The Cloud instance does not apply the local provisioning, so the provisioned name matches
-    // nothing there. DataSourcePicker.set() asserts nothing about what it selected, so the miss is
-    // silent and the panel keeps the instance default, which makes every CloudWatch control below
-    // fail to render. Create the datasource through the API for a Cloud run instead. The name is
+    // nothing there. Create the datasource through the API for a Cloud run instead. The name is
     // auto-generated and unique, which the shared instance requires, and the credentials travel by
     // API rather than through the DOM.
     const provisioned = await readProvisionedDataSource({ fileName: PROVISIONED_FILE });
@@ -54,10 +58,15 @@ test.describe('Query editor', () => {
           },
         })
       : provisioned;
-    await panelEditPage.datasource.set(ds.name);
+    dataSourceName = ds.name;
+  });
 
-    // Fails here with a clear message if the picker kept a different datasource, rather than
-    // further down on a missing CloudWatch control.
+  test.beforeEach(async ({ panelEditPage }) => {
+    await panelEditPage.datasource.set(dataSourceName);
+
+    // DataSourcePicker.set() asserts nothing about what it selected, so a miss leaves the panel on
+    // the instance default and every CloudWatch control below fails to render. Fail here instead,
+    // with a message that names the cause.
     await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Query mode')).toBeVisible();
   });
 
