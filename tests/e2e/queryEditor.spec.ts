@@ -3,6 +3,10 @@ import { type Locator, type Page } from '@playwright/test';
 import { type BackendDataSourceResponse } from '@grafana/runtime';
 
 const PROVISIONED_FILE = 'datasources.yml';
+
+// GRAFANA_URL is set only by the Cloud cron workflow (playwright-cloud); its presence signals
+// a run against the shared Cloud instance rather than local/PR CI.
+const isCloudRun = !!process.env.GRAFANA_URL;
 const LIVE_DATA_SOURCE = { name: 'amazon_eks', type: 'audit' };
 const LIVE_DATA_SOURCE_KEY = `${LIVE_DATA_SOURCE.name}.${LIVE_DATA_SOURCE.type}`;
 const LIVE_QUERY = 'stats count(*) as event_count';
@@ -32,9 +36,29 @@ async function selectLiveDataSource(page: Page, queryEditor: Locator) {
 }
 
 test.describe('Query editor', () => {
-  test.beforeEach(async ({ panelEditPage, readProvisionedDataSource }) => {
-    const ds = await readProvisionedDataSource({ fileName: PROVISIONED_FILE });
+  test.beforeEach(async ({ panelEditPage, readProvisionedDataSource, createDataSource }) => {
+    // The Cloud instance does not apply the local provisioning, so the provisioned name matches
+    // nothing there. DataSourcePicker.set() asserts nothing about what it selected, so the miss is
+    // silent and the panel keeps the instance default, which makes every CloudWatch control below
+    // fail to render. Create the datasource through the API for a Cloud run instead. The name is
+    // auto-generated and unique, which the shared instance requires, and the credentials travel by
+    // API rather than through the DOM.
+    const provisioned = await readProvisionedDataSource({ fileName: PROVISIONED_FILE });
+    const ds = isCloudRun
+      ? await createDataSource({
+          type: provisioned.type,
+          jsonData: { authType: 'keys', defaultRegion: process.env.AWS_DEFAULT_REGION ?? '' },
+          secureJsonData: {
+            accessKey: process.env.AWS_ACCESS_KEY_ID ?? '',
+            secretKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+          },
+        })
+      : provisioned;
     await panelEditPage.datasource.set(ds.name);
+
+    // Fails here with a clear message if the picker kept a different datasource, rather than
+    // further down on a missing CloudWatch control.
+    await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Query mode')).toBeVisible();
   });
 
   test('smoke: should render the query editor', { tag: '@plugins' }, async ({ panelEditPage, page }) => {
@@ -78,7 +102,15 @@ test.describe('Query editor', () => {
     { tag: '@aws' },
     async ({ panelEditPage, page, selectors }) => {
       const queryEditor = panelEditPage.getQueryEditorRow('A');
-      await panelEditPage.setVisualization('Table');
+      // The Table visualization is needed only for the two panel-DOM assertions at the end. Setting
+      // it goes through plugin-e2e's visualization picker, which probes the panel editor with
+      // count() and isVisible(), neither of which waits. That reads the editor too early on the
+      // slower Cloud page and the Table item never arrives, so skip it there. The request and
+      // response assertions below carry the signal that matters for the Cloud gate, which is that a
+      // live Logs Insights query runs and completes.
+      if (!isCloudRun) {
+        await panelEditPage.setVisualization('Table');
+      }
       await selectLogsMode(page, queryEditor);
       await selectLiveDataSource(page, queryEditor);
 
@@ -121,8 +153,11 @@ test.describe('Query editor', () => {
       expect(requestBody.queries[0].logDataSources).toEqual([LIVE_DATA_SOURCE]);
       expect(result?.error).toBeUndefined();
       expect(result?.frames?.[0]?.schema?.meta?.custom?.Status).toBe('Complete');
-      await expect(panelEditPage.panel.fieldNames).toContainText(['event_count']);
-      await expect(panelEditPage.panel.data.filter({ hasText: /^[1-9]\d*$/ })).toHaveCount(1);
+      // Both read table-grid roles, so they need the Table visualization set above.
+      if (!isCloudRun) {
+        await expect(panelEditPage.panel.fieldNames).toContainText(['event_count']);
+        await expect(panelEditPage.panel.data.filter({ hasText: /^[1-9]\d*$/ })).toHaveCount(1);
+      }
     }
   );
 });
