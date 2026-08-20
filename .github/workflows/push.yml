@@ -23,6 +23,12 @@ on:
 
 permissions: {}
 
+concurrency:
+  # Supersede an in-flight run on the same ref, except on main. A main run can be
+  # publishing to the dev catalog or cutting a release, so it must never be cancelled.
+  group: plugins-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   ci:
     name: CI
