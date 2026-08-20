@@ -7,7 +7,7 @@
 # tag and the GitHub release, and the docs publish hangs off that release event.
 
 name: Plugins - Publish plugin
-run-name: Publish ${{ inputs.branch }} to ${{ inputs.environment }} by @${{ github.actor }}
+run-name: Publish ${{ inputs.branch }} scoped to ${{ inputs.scope }} by @${{ github.actor }}
 
 on:
   release:
@@ -17,8 +17,12 @@ on:
       branch:
         description: Branch to publish from. Can be used to deploy PRs to dev
         default: main
-      environment:
-        description: Environment will always publish to all waves (dev + ops + prod). Cloud will publish scoped only to Grafana Cloud, On Prem will publish with Universal scope. Please use Cloud unless emergency fix needed for On Prem customer.
+      # Named `scope` rather than `environment`, because it selects catalog
+      # visibility and not the rollout target. cd.yml treats those as two separate
+      # inputs, and this one feeds `scopes`. The rollout target stays `prod` below,
+      # which publishes to all waves.
+      scope:
+        description: Publishing always targets all waves (dev + ops + prod). Cloud publishes scoped only to Grafana Cloud, On Prem publishes with Universal scope. Please use Cloud unless an emergency fix is needed for an On Prem customer.
         required: true
         type: choice
         default: 'cloud (recommended)'
@@ -48,8 +52,10 @@ jobs:
       # shared workflow's docs job reads github.event.release and ignores these,
       # and only its manual job reads them.
       branch: ${{ github.event.inputs.branch }}
+      # The rollout target, which is cd.yml's own meaning of the word: publish to
+      # every catalog wave. Distinct from the scope selector above.
       environment: prod
-      scopes: ${{ github.event.inputs.environment == 'cloud (recommended)' && 'grafana_cloud' || 'universal' }}
+      scopes: ${{ github.event.inputs.scope == 'cloud (recommended)' && 'grafana_cloud' || 'universal' }}
       # A string comparison rather than fromJSON: on a release event the input is
       # empty, and fromJSON('') fails the whole expression.
       docs-only: ${{ github.event.inputs.docs-only == 'true' }}
