@@ -30,7 +30,6 @@ type RequestContext struct {
 type ListMetricsProvider interface {
 	GetDimensionKeysByDimensionFilter(ctx context.Context, r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error)
 	GetDimensionValuesByDimensionFilter(ctx context.Context, r resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error)
-	GetDimensionValuesForKeys(ctx context.Context, r resources.DimensionValuesForKeysRequest) (map[string][]string, error)
 	GetMetricsByNamespace(ctx context.Context, r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error)
 }
 
