@@ -956,7 +956,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 		t.Run(name, func(t *testing.T) {
 			average := "Average"
 
-			queryToMigrate := MetricsDataQuery{
+			queryToMigrate := metricsDataQuery{
 				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
 					Region:     "us-east-1",
 					Namespace:  "ec2",
