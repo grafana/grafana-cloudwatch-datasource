@@ -203,7 +203,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         ? this.templateSrv.replace(query.promqlExpression, promQLScopedVars)
         : query.promqlExpression,
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
-      statistic: this.templateSrv.replace(query.statistic, scopedVars),
+      statistic: this.templateSrv.replace(query.statistic ?? '', scopedVars),
       id: this.templateSrv.replace(query.id, scopedVars),
       accountId: query.accountId ? this.templateSrv.replace(query.accountId, scopedVars) : query.accountId,
     };
