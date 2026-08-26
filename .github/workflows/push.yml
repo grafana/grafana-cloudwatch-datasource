@@ -1,0 +1,84 @@
+# Description:
+# Thin caller for the shared datasource CI/CD pipeline in
+# grafana/data-sources-ci-workflows, which owns release-please and the prod publish.
+#
+# CI is called directly rather than through the shared workflow, for two reasons.
+# A called workflow prefixes its checks with the calling job's name, so routing CI
+# through datasource-cicd.yml reports every check as "CI/CD / CI / <job>" instead
+# of "CI / <job>", and this repo's branch rulesets require the two-segment names.
+# The shared workflow also passes only plugin-version-suffix to ci.yml, so the
+# playwright-config and playwright-secrets inputs below would be silently dropped.
+#
+# The dev-catalog publish is also a direct cd-dev.yml call, so the
+# reusable-workflow chain stays within GitHub's 4-level nesting cap. It is gated on
+# the shared workflow's release_created output so a Release Please merge (which
+# cicd publishes to prod) does not also double-publish to the dev catalog.
+
+name: Plugins - CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  # Supersede an in-flight run on the same ref, except on main. A main run can be
+  # publishing to the dev catalog or cutting a release, so it must never be cancelled.
+  group: plugins-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  ci:
+    name: CI
+    if: github.event_name == 'pull_request'
+    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v10.2.0
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      # Ensure PR builds produce unique plugin versions.
+      plugin-version-suffix: ${{ github.event.pull_request.head.sha }}
+      # Forks cannot read the AWS secrets, so they run the smoke config instead.
+      playwright-config: ${{ github.event.pull_request.head.repo.fork && 'playwright.smoke.config.ts' || 'playwright.config.ts' }}
+      playwright-secrets: |
+        ACCESS_KEY=cloudwatch:secure_accessKey
+        SECRET_KEY=cloudwatch:secure_secretKey
+
+  cicd:
+    name: CI/CD
+    # Release path only. On pull requests every job in the shared workflow is
+    # skipped, so CI above is the only pull-request path.
+    if: github.ref == 'refs/heads/main'
+    # Intentionally pinned to @main: data-sources-ci-workflows publishes no
+    # versioned tags for datasource-cicd.yml yet. Review periodically.
+    uses: grafana/data-sources-ci-workflows/.github/workflows/datasource-cicd.yml@main
+    # These are a ceiling for the called workflow, not a grant to each of its jobs.
+    # Every job there declares its own permissions, which cannot exceed this block.
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      pull-requests: read
+    secrets: inherit
+
+  publish-dev:
+    name: Publish to Dev Catalog and Deploy
+    needs: cicd
+    # Normal pushes to main publish the latest build to the dev catalog. Skipped
+    # when release-please cut a release, because cicd already published that
+    # version to prod.
+    if: github.ref == 'refs/heads/main' && needs.cicd.outputs.release_created != 'true'
+    # Intentionally pinned to @main: see the note on cicd above.
+    uses: grafana/data-sources-ci-workflows/.github/workflows/cd-dev.yml@main
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+      pull-requests: read
+    with:
+      # Both inputs are required by cd-dev.yml. These values reproduce what ci.yml
+      # resolves today: go-version from go.mod, and the shared golangci-lint default.
+      go-version: '1.26.5'
+      golangci-lint-version: '2.12.2'

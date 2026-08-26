@@ -111,11 +111,30 @@ The E2E test suite uses the CloudWatch data source provisioned for the Data Sour
    npm run e2e
    ```
 
-## Build a release for the CloudWatch data source plugin
+## Release the CloudWatch data source plugin
 
-You need to have commit rights to the GitHub repository to publish a release.
+Releases are automated with [release-please](https://github.com/googleapis/release-please). The version number and the changelog both come from commit messages, so there is nothing to edit by hand.
 
-1. Update the version number in the `package.json` file.
-2. Update the `CHANGELOG.md` with the changes contained in the release.
-3. Commit the changes to master and push to GitHub.
-4. Follow the release process that you can find [here](https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#cd_1)
+### What you do
+
+Title your pull request as a [Conventional Commit](https://www.conventionalcommits.org/). The `PR Title` check enforces this, and because the repository squash-merges, the PR title becomes the commit subject that release-please reads.
+
+| Prefix | Effect on the next release |
+| --- | --- |
+| `fix:` | patch version |
+| `feat:` | minor version |
+| `feat!:`, or a `BREAKING CHANGE:` footer | major version |
+| `chore:` | no release, hidden from the changelog |
+| `docs:`, `test:`, `build:`, `ci:`, `refactor:`, `perf:`, `revert:` | no version bump, listed in the changelog |
+
+### What happens next
+
+1. release-please opens a `chore(main): release X.Y.Z` pull request and keeps it up to date as more commits land.
+2. Merging that pull request creates the tag and the GitHub release, and publishes the plugin to the prod catalog.
+3. Every other push to `main` publishes to the dev catalog instead.
+
+### Do not
+
+Do not edit the version in `package.json`, and do not write `CHANGELOG.md` entries by hand. release-please owns both files, and a manual edit puts `package.json` out of step with `.release-please-manifest.json`, which makes the next release pick a wrong version.
+
+To release a specific version, add a `Release-As: X.Y.Z` footer to a commit rather than editing the version.
