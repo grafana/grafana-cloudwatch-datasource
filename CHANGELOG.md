@@ -1,5 +1,22 @@
 # Changelog
 
+## [12.10.2](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.1...v12.10.2) (2026-08-27)
+
+
+### 🐛 Bug Fixes
+
+* **e2e:** create the Cloud datasource before the panel edit page loads ([#620](https://github.com/grafana/grafana-cloudwatch-datasource/issues/620)) ([a5c21b8](https://github.com/grafana/grafana-cloudwatch-datasource/commit/a5c21b877b4db6d8a8e6ad5c07e90946f777e783))
+* **e2e:** create the query-editor datasource through the API on Cloud runs ([#618](https://github.com/grafana/grafana-cloudwatch-datasource/issues/618)) ([609394f](https://github.com/grafana/grafana-cloudwatch-datasource/commit/609394f80224001964b6f726db042fbb8ab15292))
+* **metrics:** default statistic to empty string when omitted on math expression queries ([#611](https://github.com/grafana/grafana-cloudwatch-datasource/issues/611)) ([4774cdb](https://github.com/grafana/grafana-cloudwatch-datasource/commit/4774cdbcec96992f16807793fcf16f2ef8b654e1))
+
+
+### 🤖 Continuous Integration
+
+* add a dispatch-only caller for the bundled image pipeline ([#624](https://github.com/grafana/grafana-cloudwatch-datasource/issues/624)) ([c82b709](https://github.com/grafana/grafana-cloudwatch-datasource/commit/c82b7099e4df412bb4a9cd3213e88a595c486921))
+* enrol in release-please and conventional commits ([#622](https://github.com/grafana/grafana-cloudwatch-datasource/issues/622)) ([132edbd](https://github.com/grafana/grafana-cloudwatch-datasource/commit/132edbddb6167df4dbb9d7d2eabaa662e7f7408a))
+* onboard to the shared Cloud E2E workflow ([#614](https://github.com/grafana/grafana-cloudwatch-datasource/issues/614)) ([6dd9c5f](https://github.com/grafana/grafana-cloudwatch-datasource/commit/6dd9c5fc36c8d78c5b309dc81e26acde9a69ca6b))
+* ship merges to dev0 and releases to the full rollout through the bundled pipeline ([#629](https://github.com/grafana/grafana-cloudwatch-datasource/issues/629)) ([8e569ec](https://github.com/grafana/grafana-cloudwatch-datasource/commit/8e569ec7f6fb1c2d5c4e2fea5e39e424517c7c10))
+
 ## 12.10.1
 
 - fix(security): bump vulnerable deps (brace-expansion, immutable, fast-uri, ip-address) in [#612](https://github.com/grafana/grafana-cloudwatch-datasource/pull/612)
