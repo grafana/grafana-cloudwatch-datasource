@@ -961,7 +961,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 					Region:     "us-east-1",
 					Namespace:  "ec2",
 					MetricName: utils.Pointer("CPUUtilization"),
-					Alias:      utils.Pointer(tc.inputAlias),
+					Alias:      utils.Pointer(tc.inputAlias), //nolint:staticcheck // the deprecated field is the input this migration test exercises
 					Dimensions: &dataquery.Dimensions{
 						"InstanceId": dataquery.StringOrArrayOfString{ArrayOfString: []string{"test"}},
 					},
