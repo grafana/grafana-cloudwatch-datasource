@@ -1,6 +1,6 @@
 module github.com/grafana/grafana-cloudwatch-datasource
 
-go 1.26.5
+go 1.26.7
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.46.0
