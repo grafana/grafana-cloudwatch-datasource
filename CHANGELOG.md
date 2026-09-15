@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.10.3](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.2...v12.10.3) (2026-09-15)
+
+
+### 🐛 Bug Fixes
+
+* **cloudwatch:** disable go-cache janitor to stop per-instance goroutine leak ([#634](https://github.com/grafana/grafana-cloudwatch-datasource/issues/634)) ([c83d4d8](https://github.com/grafana/grafana-cloudwatch-datasource/commit/c83d4d8ac165dcae33f1b2d91a9249ade622fc40))
+
 ## [12.10.2](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.1...v12.10.2) (2026-09-10)
 
 
