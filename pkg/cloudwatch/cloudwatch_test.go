@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 
@@ -110,6 +111,51 @@ func TestNewInstanceSettings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewDatasource_DoesNotLeakGoroutines(t *testing.T) {
+	settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+		awsds.AllowedAuthProvidersEnvVarKeyName: "foo , bar,baz",
+		awsds.AssumeRoleEnabledEnvVarKeyName:    "false",
+		awsds.SessionDurationEnvVarKeyName:      "10m",
+	}))
+	settings := backend.DataSourceInstanceSettings{
+		JSONData: []byte(`{
+			"profile": "foo",
+			"defaultRegion": "us-east2",
+			"authType": "keys"
+		}`),
+		DecryptedSecureJSONData: map[string]string{
+			"accessKey": "A123",
+			"secretKey": "secret",
+		},
+	}
+
+	runtime.Gosched()
+	before := runtime.NumGoroutine()
+
+	// Instances are kept alive here to mirror the plugin SDK's instance
+	// manager, which retains every DataSource it creates for the life of the
+	// process (it only ever replaces an entry, never evicts one) -- without
+	// that, a discarded instance's cache would just get GC'd immediately and
+	// this test would pass regardless of whether the janitor leaks.
+	const instanceCount = 200
+	instances := make([]*DataSource, instanceCount)
+	for i := range instanceCount {
+		instance, err := NewDatasource(settingCtx, settings)
+		require.NoError(t, err)
+		instances[i] = instance.(*DataSource)
+	}
+
+	// give any spawned background goroutines a moment to start before counting
+	time.Sleep(50 * time.Millisecond)
+	after := runtime.NumGoroutine()
+	runtime.KeepAlive(instances)
+
+	// A per-instance background goroutine (such as a cache janitor with no
+	// disposal path) grows roughly linearly with instanceCount; constructing
+	// a datasource shouldn't spawn one at all.
+	assert.Less(t, after-before, instanceCount, "NewDatasource should not spawn a goroutine per instance")
 }
 
 func Test_CheckHealth(t *testing.T) {
