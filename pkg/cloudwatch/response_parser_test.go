@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/features"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -333,6 +334,11 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "lb1", frames[0].Fields[1].Labels["LoadBalancer"])
 		assert.Equal(t, "some label", frames[1].Name)
 		assert.Equal(t, "lb2", frames[1].Fields[1].Labels["LoadBalancer"])
+
+		assert.Equal(t, data.FieldTypeTime, frames[0].Fields[0].Type())
+		assert.Equal(t, data.FieldTypeFloat64, frames[0].Fields[1].Type())
+		assert.Equal(t, data.FieldTypeTime, frames[1].Fields[0].Type())
+		assert.Equal(t, data.FieldTypeFloat64, frames[1].Fields[1].Type())
 	})
 
 	t.Run("when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
