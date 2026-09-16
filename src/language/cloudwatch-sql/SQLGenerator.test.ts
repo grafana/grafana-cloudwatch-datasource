@@ -166,10 +166,40 @@ describe('SQLGenerator', () => {
       const where = createArray([createOperator('Instance-Id', '=', 'I-123')]);
       assertQueryEndsWith({ sql: { where }, accountId: 'all' }, `WHERE "Instance-Id" = 'I-123'`);
     });
-    // TODO: We should handle this scenario
-    it.skip('should not add WHERE clause when the operator is incomplete', () => {
+    it('should not add WHERE clause when the operator is incomplete', () => {
       const where = createArray([createOperator('Instance-Id', '=')]);
       expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, where })).not.toContain('WHERE');
+    });
+
+    it('should only include the complete operator when a sibling operator is incomplete', () => {
+      const where = createArray([createOperator('InstanceId', '=', 'I-123'), createOperator('Type', '!=')]);
+      assertQueryEndsWith({ sql: { where } }, `WHERE InstanceId = 'I-123'`);
+    });
+
+    it('should not add a dangling AND when accountId is defined and the filter is incomplete', () => {
+      const where = createArray([createOperator('Instance-Id', '=')]);
+      assertQueryEndsWith({ sql: { where }, accountId: '12345' }, `WHERE AWS.AccountId = '12345'`);
+    });
+
+    it('should not add WHERE clause when a top level OR filter only has incomplete operators', () => {
+      const where = createArray([createOperator('Instance-Id', '=')], QueryEditorExpressionType.Or);
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, where })).not.toContain('WHERE');
+    });
+
+    it('should not add a dangling AND when accountId is defined and a top level OR filter is incomplete', () => {
+      const where = createArray([createOperator('Instance-Id', '=')], QueryEditorExpressionType.Or);
+      assertQueryEndsWith({ sql: { where }, accountId: '12345' }, `WHERE AWS.AccountId = '12345'`);
+    });
+
+    it('should handle a nested incomplete-only OR filter alongside a complete top level filter', () => {
+      const filter = createArray(
+        [
+          createOperator('InstanceId', '=', 'I-123'),
+          createArray([createOperator('Type', '!=')], QueryEditorExpressionType.Or),
+        ],
+        QueryEditorExpressionType.And
+      );
+      assertQueryEndsWith({ sql: { where: filter } }, `WHERE InstanceId = 'I-123'`);
     });
 
     it('should handle one top level filter with AND', () => {
