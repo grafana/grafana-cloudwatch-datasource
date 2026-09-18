@@ -1,5 +1,18 @@
 # Changelog
 
+## [12.10.3](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.2...v12.10.3) (2026-09-18)
+
+
+### 🐛 Bug Fixes
+
+* **cloudwatch:** disable go-cache janitor to stop per-instance goroutine leak ([#634](https://github.com/grafana/grafana-cloudwatch-datasource/issues/634)) ([c83d4d8](https://github.com/grafana/grafana-cloudwatch-datasource/commit/c83d4d8ac165dcae33f1b2d91a9249ade622fc40))
+* **deps:** bump @grafana/aws-sdk to 0.12.2 ([#639](https://github.com/grafana/grafana-cloudwatch-datasource/issues/639)) ([1bc185f](https://github.com/grafana/grafana-cloudwatch-datasource/commit/1bc185f62c084f01fdfaf72cd54d63c11390bb3f))
+
+
+### ✅ Tests
+
+* **e2e:** bump @grafana/plugin-e2e to 3.12.0 and notify Slack when the nightly Cloud run fails ([#637](https://github.com/grafana/grafana-cloudwatch-datasource/issues/637)) ([9dce61c](https://github.com/grafana/grafana-cloudwatch-datasource/commit/9dce61c98fc6c6775e3c2c4c1bf0b820c3299270))
+
 ## [12.10.2](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.1...v12.10.2) (2026-09-10)
 
 
