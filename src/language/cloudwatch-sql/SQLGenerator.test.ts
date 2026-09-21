@@ -191,6 +191,17 @@ describe('SQLGenerator', () => {
       assertQueryEndsWith({ sql: { where }, accountId: '12345' }, `WHERE AWS.AccountId = '12345'`);
     });
 
+    it('should add where clauses with AND when accountId is defined and a top level OR filter is complete', () => {
+      const where = createArray(
+        [createOperator('InstanceId', '=', 'I-123'), createOperator('InstanceId', '!=', 'I-456')],
+        QueryEditorExpressionType.Or
+      );
+      assertQueryEndsWith(
+        { sql: { where }, accountId: '12345' },
+        `WHERE AWS.AccountId = '12345' AND InstanceId = 'I-123' OR InstanceId != 'I-456'`
+      );
+    });
+
     it('should handle a nested incomplete-only OR filter alongside a complete top level filter', () => {
       const filter = createArray(
         [

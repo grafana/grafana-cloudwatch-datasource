@@ -180,8 +180,9 @@ func stableGoroutineCount(t *testing.T) int {
 		}
 		if time.Now().After(deadline) {
 			// The count never settled. The caller's assertion allows for a
-			// margin of hundreds of goroutines, so a best-effort sample is
-			// still usable -- don't fail the test over sampling noise.
+			// margin of up to instanceCount goroutines, so a best-effort
+			// sample is still usable -- don't fail the test over sampling
+			// noise.
 			t.Logf("goroutine count did not stabilize within %s, using last sample %d", pollTimeout, last)
 			return last
 		}
@@ -338,13 +339,27 @@ func TestNewAWSConfig_passesProxyOptions_whenSecureSocksProxyEnabled(t *testing.
 	assert.Same(t, proxyOpts, spy.captured.ProxyOptions)
 }
 
-func TestNewAWSConfig_omitsProxyOptions_whenSecureSocksProxyDisabled(t *testing.T) {
+func TestNewAWSConfig_omitsProxyOptions_whenGrafanaSecureSocksProxyDisabled(t *testing.T) {
 	spy := &spyConfigProvider{}
 	ds := newTestDatasource(func(ds *DataSource) {
 		ds.AWSConfigProvider = spy
 		ds.ProxyOpts = &proxy.Options{Enabled: true}
 		ds.Settings.SecureSocksProxyEnabled = true
 		ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled = false
+	})
+
+	_, err := ds.newAWSConfig(context.Background(), "us-east-1")
+	require.NoError(t, err)
+	assert.Nil(t, spy.captured.ProxyOptions)
+}
+
+func TestNewAWSConfig_omitsProxyOptions_whenDatasourceSecureSocksProxyDisabled(t *testing.T) {
+	spy := &spyConfigProvider{}
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.AWSConfigProvider = spy
+		ds.ProxyOpts = &proxy.Options{Enabled: true}
+		ds.Settings.SecureSocksProxyEnabled = false
+		ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled = true
 	})
 
 	_, err := ds.newAWSConfig(context.Background(), "us-east-1")

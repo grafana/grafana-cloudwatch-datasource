@@ -176,14 +176,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await userEvent.click(screen.getByText('Cancel'));
-    expect(onChange).not.toHaveBeenCalledWith([
-      {
-        name: 'logGroup2',
-        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
-        accountId: '456',
-        accountLabel: 'Account Name 456',
-      },
-    ]);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   const labelText =
