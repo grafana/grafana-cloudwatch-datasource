@@ -198,8 +198,48 @@ describe('SQLGenerator', () => {
       );
       assertQueryEndsWith(
         { sql: { where }, accountId: '12345' },
-        `WHERE AWS.AccountId = '12345' AND InstanceId = 'I-123' OR InstanceId != 'I-456'`
+        `WHERE AWS.AccountId = '12345' AND (InstanceId = 'I-123' OR InstanceId != 'I-456')`
       );
+    });
+
+    it('should parenthesize a nested OR filter when accountId is defined and it is the only top level filter', () => {
+      const where = createArray(
+        [
+          createArray(
+            [createOperator('InstanceId', '=', 'I-123'), createOperator('InstanceId', '!=', 'I-456')],
+            QueryEditorExpressionType.Or
+          ),
+        ],
+        QueryEditorExpressionType.And
+      );
+      assertQueryEndsWith(
+        { sql: { where }, accountId: '12345' },
+        `WHERE AWS.AccountId = '12345' AND (InstanceId = 'I-123' OR InstanceId != 'I-456')`
+      );
+    });
+
+    it('should parenthesize an OR filter nested inside a single top level OR filter when accountId is defined', () => {
+      const where = createArray(
+        [
+          createArray(
+            [createOperator('InstanceId', '=', 'I-123'), createOperator('InstanceId', '!=', 'I-456')],
+            QueryEditorExpressionType.Or
+          ),
+        ],
+        QueryEditorExpressionType.Or
+      );
+      assertQueryEndsWith(
+        { sql: { where }, accountId: '12345' },
+        `WHERE AWS.AccountId = '12345' AND (InstanceId = 'I-123' OR InstanceId != 'I-456')`
+      );
+    });
+
+    it('should not parenthesize a top level OR filter when accountId is not defined', () => {
+      const where = createArray(
+        [createOperator('InstanceId', '=', 'I-123'), createOperator('InstanceId', '!=', 'I-456')],
+        QueryEditorExpressionType.Or
+      );
+      assertQueryEndsWith({ sql: { where } }, `WHERE InstanceId = 'I-123' OR InstanceId != 'I-456'`);
     });
 
     it('should handle a nested incomplete-only OR filter alongside a complete top level filter', () => {

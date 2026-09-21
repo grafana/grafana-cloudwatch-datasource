@@ -71,7 +71,7 @@ export default class SQLGenerator {
 
     if (filter.type === QueryEditorExpressionType.And) {
       const andParts: string[] = [];
-      filter.expressions.map((exp) => this.appendWhere(exp, andParts, false, topLevelExpressionsCount));
+      filter.expressions.map((exp) => this.appendWhere(exp, andParts, false, topLevelExpressionsCount, accountId));
       if (andParts.length === 0) {
         return;
       }
@@ -85,7 +85,7 @@ export default class SQLGenerator {
 
     if (filter.type === QueryEditorExpressionType.Or) {
       const orParts: string[] = [];
-      filter.expressions.map((exp) => this.appendWhere(exp, orParts, false, topLevelExpressionsCount));
+      filter.expressions.map((exp) => this.appendWhere(exp, orParts, false, topLevelExpressionsCount, accountId));
       if (orParts.length === 0) {
         return;
       }
@@ -93,7 +93,10 @@ export default class SQLGenerator {
         parts.push(isAccountIdDefined(accountId) ? 'AND' : 'WHERE');
       }
       const orCombined = orParts.join(' OR ');
-      const wrapInParentheses = !isTopLevelExpression && topLevelExpressionsCount > 1 && orParts.length > 1;
+      const hasPrecedingClause = isTopLevelExpression
+        ? isAccountIdDefined(accountId)
+        : topLevelExpressionsCount > 1 || isAccountIdDefined(accountId);
+      const wrapInParentheses = orParts.length > 1 && hasPrecedingClause;
       parts.push(wrapInParentheses ? `(${orCombined})` : orCombined);
       return;
     }
