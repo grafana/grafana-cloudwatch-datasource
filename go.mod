@@ -13,7 +13,7 @@ require (
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/grafana-aws-sdk v1.5.3
+	github.com/grafana/grafana-aws-sdk v1.5.5
 	github.com/grafana/grafana-plugin-sdk-go v0.296.4
 	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.19
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -137,7 +137,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.56.0 // indirect
-	golang.org/x/exp v0.0.0-20260813180055-c1d0aacb2297 // indirect
+	golang.org/x/exp v0.0.0-20260824195058-e88cd73687aa // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
