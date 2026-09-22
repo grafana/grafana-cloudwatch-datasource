@@ -131,8 +131,7 @@ func TestNewDatasource_DoesNotSpawnGoroutinePerInstance(t *testing.T) {
 		},
 	}
 
-	runtime.Gosched()
-	before := runtime.NumGoroutine()
+	before := stableGoroutineCount(t)
 
 	// The instances stay reachable until the goroutines are counted. Once an
 	// instance is garbage collected, go-cache's finalizer stops its janitor, so
@@ -146,15 +145,49 @@ func TestNewDatasource_DoesNotSpawnGoroutinePerInstance(t *testing.T) {
 		instances[i] = instance.(*DataSource)
 	}
 
-	// give any spawned background goroutines a moment to start before counting
-	time.Sleep(50 * time.Millisecond)
-	after := runtime.NumGoroutine()
+	after := stableGoroutineCount(t)
 	runtime.KeepAlive(instances)
 
 	// A per-instance background goroutine (such as a cache janitor) grows
 	// linearly with instanceCount; constructing a datasource shouldn't spawn
 	// one at all.
 	assert.Less(t, after-before, instanceCount, "NewDatasource should not spawn a goroutine per instance")
+}
+
+// stableGoroutineCount samples runtime.NumGoroutine() until it stops
+// changing across consecutive polls, or pollTimeout elapses, and returns
+// the last sample. This avoids depending on a fixed sleep to guess when
+// background goroutines have started/settled.
+func stableGoroutineCount(t *testing.T) int {
+	t.Helper()
+	const (
+		pollInterval  = 5 * time.Millisecond
+		pollTimeout   = 2 * time.Second
+		stableSamples = 5
+	)
+
+	last, streak := -1, 0
+	deadline := time.Now().Add(pollTimeout)
+	for {
+		runtime.Gosched()
+		if current := runtime.NumGoroutine(); current == last {
+			streak++
+			if streak >= stableSamples {
+				return last
+			}
+		} else {
+			last, streak = current, 1
+		}
+		if time.Now().After(deadline) {
+			// The count never settled. The caller's assertion allows for a
+			// margin of up to instanceCount goroutines, so a best-effort
+			// sample is still usable -- don't fail the test over sampling
+			// noise.
+			t.Logf("goroutine count did not stabilize within %s, using last sample %d", pollTimeout, last)
+			return last
+		}
+		time.Sleep(pollInterval)
+	}
 }
 
 func Test_CheckHealth(t *testing.T) {
@@ -249,27 +282,6 @@ func Test_CheckHealth(t *testing.T) {
 	})
 }
 
-func TestGetAWSConfig_passes_authSettings(t *testing.T) {
-	// TODO: update this for the new auth structure, or remove it
-	t.Skip()
-	ctxDuration := 15 * time.Minute
-	expectedSettings := awsds.AuthSettings{
-		AllowedAuthProviders:      []string{"foo", "bar", "baz"},
-		AssumeRoleEnabled:         false,
-		SessionDuration:           &ctxDuration,
-		ExternalID:                "mock_id",
-		ListMetricsPageLimit:      50,
-		SecureSocksDSProxyEnabled: true,
-	}
-	ds := newTestDatasource(func(ds *DataSource) {
-		ds.Settings.Region = "us-east-1"
-		ds.Settings.GrafanaSettings = expectedSettings
-	})
-
-	_, err := ds.getAWSConfig(context.Background(), "us-east-1")
-	require.NoError(t, err)
-}
-
 type spyConfigProvider struct {
 	captured awsauth.Settings
 }
@@ -310,6 +322,49 @@ func TestNewAWSConfig_passesGrafanaExternalIDFields(t *testing.T) {
 	assert.Equal(t, "stackABC-dsUid1", spy.captured.GrafanaExternalID)
 	require.NotNil(t, spy.captured.UsePerDatasourceExternalID)
 	assert.True(t, *spy.captured.UsePerDatasourceExternalID)
+}
+
+func TestNewAWSConfig_passesProxyOptions_whenSecureSocksProxyEnabled(t *testing.T) {
+	spy := &spyConfigProvider{}
+	proxyOpts := &proxy.Options{Enabled: true, DatasourceType: "cloudwatch"}
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.AWSConfigProvider = spy
+		ds.ProxyOpts = proxyOpts
+		ds.Settings.SecureSocksProxyEnabled = true
+		ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled = true
+	})
+
+	_, err := ds.newAWSConfig(context.Background(), "us-east-1")
+	require.NoError(t, err)
+	assert.Same(t, proxyOpts, spy.captured.ProxyOptions)
+}
+
+func TestNewAWSConfig_omitsProxyOptions_whenGrafanaSecureSocksProxyDisabled(t *testing.T) {
+	spy := &spyConfigProvider{}
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.AWSConfigProvider = spy
+		ds.ProxyOpts = &proxy.Options{Enabled: true}
+		ds.Settings.SecureSocksProxyEnabled = true
+		ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled = false
+	})
+
+	_, err := ds.newAWSConfig(context.Background(), "us-east-1")
+	require.NoError(t, err)
+	assert.Nil(t, spy.captured.ProxyOptions)
+}
+
+func TestNewAWSConfig_omitsProxyOptions_whenDatasourceSecureSocksProxyDisabled(t *testing.T) {
+	spy := &spyConfigProvider{}
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.AWSConfigProvider = spy
+		ds.ProxyOpts = &proxy.Options{Enabled: true}
+		ds.Settings.SecureSocksProxyEnabled = false
+		ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled = true
+	})
+
+	_, err := ds.newAWSConfig(context.Background(), "us-east-1")
+	require.NoError(t, err)
+	assert.Nil(t, spy.captured.ProxyOptions)
 }
 
 func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {

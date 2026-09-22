@@ -12,13 +12,13 @@ const defaultProps = {
   selectedLogGroups: [],
   accountOptions: [
     {
-      value: 'account-id123',
-      descriptions: 'account-id123',
+      value: '123',
+      description: '123',
       label: 'Account Name 123',
     },
     {
-      value: 'account-id456',
-      descriptions: 'account-id456',
+      value: '456',
+      description: '456',
       label: 'Account Name 456',
     },
   ],
@@ -139,7 +139,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     secondCall.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toHaveBeenCalledWith({ accountId: 'account-id123', logGroupPattern: '' });
+    expect(fetchLogGroups).toHaveBeenCalledWith({ accountId: '123', logGroupPattern: '' });
   });
 
   it('shows a log group as checked after the user checks it', async () => {
@@ -164,7 +164,7 @@ describe('LogGroupsSelector', () => {
         name: 'logGroup2',
         arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
         accountId: '456',
-        accountLabel: undefined,
+        accountLabel: 'Account Name 456',
       },
     ]);
   });
@@ -176,14 +176,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await userEvent.click(screen.getByText('Cancel'));
-    expect(onChange).not.toHaveBeenCalledWith([
-      {
-        name: 'logGroup2',
-        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
-        accountId: '456',
-        accountLabel: undefined,
-      },
-    ]);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   const labelText =
@@ -298,7 +291,7 @@ describe('LogGroupsSelector', () => {
     await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     expect(screen.getByText('Account label')).toBeInTheDocument();
-    waitFor(() => expect(screen.getByText('Account Name 123')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Account Name 123')).toBeInTheDocument());
   });
 
   it('should not display account label if account options prop doesnt has values', async () => {
@@ -306,6 +299,6 @@ describe('LogGroupsSelector', () => {
     await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     expect(screen.queryByText('Account label')).not.toBeInTheDocument();
-    waitFor(() => expect(screen.queryByText('Account Name 123')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText('Account Name 123')).not.toBeInTheDocument());
   });
 });
