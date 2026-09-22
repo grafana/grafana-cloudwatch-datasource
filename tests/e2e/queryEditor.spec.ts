@@ -37,6 +37,7 @@ async function selectLiveDataSource(page: Page, queryEditor: Locator) {
 
 test.describe('Query editor', () => {
   let dataSourceName: string;
+  let createdDataSourceUid: string | undefined;
 
   // This hook deliberately does NOT request panelEditPage. Fixtures are set up when a hook first
   // asks for them, so keeping panelEditPage out of this one means the datasource exists before
@@ -59,15 +60,27 @@ test.describe('Query editor', () => {
         })
       : provisioned;
     dataSourceName = ds.name;
+    createdDataSourceUid = isCloudRun ? ds.uid : undefined;
+  });
+
+  test.afterEach(async ({ grafanaAPIClient }) => {
+    if (!createdDataSourceUid) {
+      return;
+    }
+    await grafanaAPIClient.deleteDataSourceByUID(createdDataSourceUid).catch(() => undefined);
+    createdDataSourceUid = undefined;
   });
 
   test.beforeEach(async ({ panelEditPage }) => {
-    await panelEditPage.datasource.set(dataSourceName);
-
-    // DataSourcePicker.set() asserts nothing about what it selected, so a miss leaves the panel on
-    // the instance default and every CloudWatch control below fails to render. Fail here instead,
-    // with a message that names the cause.
-    await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Query mode')).toBeVisible();
+    test.slow(isCloudRun, 'Cloud datasource selection may retry for up to 60s');
+    // DataSourcePicker.set() commits with Enter before the option list re-filters on a slow page,
+    // and asserts nothing about what it picked, so re-pick until the CloudWatch editor renders.
+    await expect(async () => {
+      await panelEditPage.datasource.set(dataSourceName);
+      await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Query mode')).toBeVisible({
+        timeout: 5_000,
+      });
+    }).toPass({ timeout: isCloudRun ? 60_000 : 20_000 });
   });
 
   test('smoke: should render the query editor', { tag: '@plugins' }, async ({ panelEditPage, page }) => {
