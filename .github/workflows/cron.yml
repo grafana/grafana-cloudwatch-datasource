@@ -27,7 +27,9 @@ jobs:
     with:
       # Nightly Cloud E2E run, labelled with the DER run_stage vocabulary.
       run-stage: nightly
-      bench-execute-cmd: npx playwright test --grep-invert @quarantine
+      # Bench executes from tests/. npm runs the script from the package root so
+      # Playwright loads our config, including the base URL and auth project.
+      bench-execute-cmd: npm run e2e -- --grep-invert @quarantine
       # The provisioned CloudWatch test instance is reached over PDC (aws network).
       pdc-network-name: datasources-pdc-network-aws-datasourcese2e
       # AWS test-account credentials, published to the data-sources Vault mount and
