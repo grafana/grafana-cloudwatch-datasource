@@ -120,7 +120,13 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		ProxyOpts:         opts.ProxyOptions,
 		AWSConfigProvider: awsauth.NewConfigProvider(),
 		logger:            backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
-		tagValueCache:     cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+		// cleanupInterval 0 keeps go-cache from starting a background janitor goroutine for
+		// this cache. Every DataSource instance owns one of these caches and the plugin SDK
+		// creates an instance per datasource and tenant, so a nonzero interval means one
+		// parked goroutine per live instance (thousands on a busy multi-tenant pod) that only
+		// stops once the instance is garbage collected. Expired entries are still skipped on
+		// Get, just not proactively swept.
+		tagValueCache: cache.New(tagValueCacheExpiration, 0),
 	}
 	ds.resourceHandler = httpadapter.New(ds.newResourceMux())
 	return ds, nil
