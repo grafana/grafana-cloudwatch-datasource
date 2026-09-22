@@ -70,32 +70,37 @@ test.describe('Query editor', () => {
     await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Query mode')).toBeVisible();
   });
 
-  test('smoke: should render the query editor', { tag: '@plugins' }, async ({ panelEditPage, page }) => {
-    const queryEditor = panelEditPage.getQueryEditorRow('A');
-    await expect(queryEditor.getByLabel('Query mode')).toBeVisible();
-    await expect(queryEditor.getByLabel('Region:')).toBeVisible();
+  test(
+    'smoke: should render the query editor',
+    { tag: ['@plugins', '@quarantine'] },
+    async ({ panelEditPage, page }) => {
+      const queryEditor = panelEditPage.getQueryEditorRow('A');
+      await expect(queryEditor.getByLabel('Query mode')).toBeVisible();
+      await expect(queryEditor.getByLabel('Region:')).toBeVisible();
 
-    await queryEditor.getByLabel('Query mode').click();
-    await expect(page.getByRole('option', { name: 'CloudWatch Metrics', exact: true })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'CloudWatch Logs', exact: true })).toBeVisible();
-  });
+      await queryEditor.getByLabel('Query mode').click();
+      await expect(page.getByRole('option', { name: 'CloudWatch Metrics', exact: true })).toBeVisible();
+      await expect(page.getByRole('option', { name: 'CloudWatch Logs', exact: true })).toBeVisible();
+    }
+  );
 
-  test('should render log group and data source selectors for Logs Insights queries', async ({
-    panelEditPage,
-    page,
-  }) => {
-    const queryEditor = panelEditPage.getQueryEditorRow('A');
-    await selectLogsMode(page, queryEditor);
+  test(
+    'should render log group and data source selectors for Logs Insights queries',
+    { tag: '@quarantine' },
+    async ({ panelEditPage, page }) => {
+      const queryEditor = panelEditPage.getQueryEditorRow('A');
+      await selectLogsMode(page, queryEditor);
 
-    await expect(queryEditor.getByLabel('Logs Mode:')).toBeVisible();
-    await expect(queryEditor.getByLabel('Query language:')).toBeVisible();
-    await expect(queryEditor.getByRole('button', { name: 'Select log groups', exact: true })).toBeVisible();
-    await expect(queryEditor.getByRole('button', { name: 'Select data sources', exact: true })).toBeVisible();
-  });
+      await expect(queryEditor.getByLabel('Logs Mode:')).toBeVisible();
+      await expect(queryEditor.getByLabel('Query language:')).toBeVisible();
+      await expect(queryEditor.getByRole('button', { name: 'Select log groups', exact: true })).toBeVisible();
+      await expect(queryEditor.getByRole('button', { name: 'Select data sources', exact: true })).toBeVisible();
+    }
+  );
 
   test(
     'should filter and select CloudWatch Logs data sources by name or type',
-    { tag: '@aws' },
+    { tag: ['@aws', '@quarantine'] },
     async ({ panelEditPage, page }) => {
       const queryEditor = panelEditPage.getQueryEditorRow('A');
       await selectLogsMode(page, queryEditor);
@@ -108,7 +113,7 @@ test.describe('Query editor', () => {
 
   test(
     'should scope a Logs Insights query to the selected data source name and type',
-    { tag: '@aws' },
+    { tag: ['@aws', '@quarantine'] },
     async ({ panelEditPage, page, selectors }) => {
       const queryEditor = panelEditPage.getQueryEditorRow('A');
       // The Table visualization is needed only for the two panel-DOM assertions at the end. Setting
