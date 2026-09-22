@@ -113,7 +113,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	}
 }
 
-func TestNewDatasource_DoesNotLeakGoroutines(t *testing.T) {
+func TestNewDatasource_DoesNotSpawnGoroutinePerInstance(t *testing.T) {
 	settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 		awsds.AllowedAuthProvidersEnvVarKeyName: "foo , bar,baz",
 		awsds.AssumeRoleEnabledEnvVarKeyName:    "false",
@@ -134,11 +134,10 @@ func TestNewDatasource_DoesNotLeakGoroutines(t *testing.T) {
 	runtime.Gosched()
 	before := runtime.NumGoroutine()
 
-	// Instances are kept alive here to mirror the plugin SDK's instance
-	// manager, which retains every DataSource it creates for the life of the
-	// process (it only ever replaces an entry, never evicts one) -- without
-	// that, a discarded instance's cache would just get GC'd immediately and
-	// this test would pass regardless of whether the janitor leaks.
+	// The instances stay reachable until the goroutines are counted. Once an
+	// instance is garbage collected, go-cache's finalizer stops its janitor, so
+	// counting after dropping the instances would pass regardless of the
+	// cleanup interval.
 	const instanceCount = 200
 	instances := make([]*DataSource, instanceCount)
 	for i := range instanceCount {
@@ -152,9 +151,9 @@ func TestNewDatasource_DoesNotLeakGoroutines(t *testing.T) {
 	after := runtime.NumGoroutine()
 	runtime.KeepAlive(instances)
 
-	// A per-instance background goroutine (such as a cache janitor with no
-	// disposal path) grows roughly linearly with instanceCount; constructing
-	// a datasource shouldn't spawn one at all.
+	// A per-instance background goroutine (such as a cache janitor) grows
+	// linearly with instanceCount; constructing a datasource shouldn't spawn
+	// one at all.
 	assert.Less(t, after-before, instanceCount, "NewDatasource should not spawn a goroutine per instance")
 }
 
