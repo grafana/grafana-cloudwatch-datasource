@@ -72,6 +72,9 @@ test.describe('Query editor', () => {
   });
 
   test.beforeEach(async ({ panelEditPage }) => {
+    test.slow(isCloudRun, 'Cloud datasource selection may retry for up to 60s');
+    // DataSourcePicker.set() commits with Enter before the option list re-filters on a slow page,
+    // and asserts nothing about what it picked, so re-pick until the CloudWatch editor renders.
     await expect(async () => {
       await panelEditPage.datasource.set(dataSourceName);
       await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Query mode')).toBeVisible({
