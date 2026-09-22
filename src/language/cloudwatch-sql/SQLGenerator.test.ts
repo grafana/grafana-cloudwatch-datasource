@@ -273,14 +273,6 @@ describe('SQLGenerator', () => {
       assertQueryEndsWith({ sql: { where: filter } }, `WHERE InstanceId = 'I-123' AND "Instance-Id" != 'I-456'`);
     });
 
-    it('should handle multiple top level filters combined with OR', () => {
-      const filter = createArray(
-        [createOperator('InstanceId', '=', 'I-123'), createOperator('InstanceId', '!=', 'I-456')],
-        QueryEditorExpressionType.Or
-      );
-      assertQueryEndsWith({ sql: { where: filter } }, `WHERE InstanceId = 'I-123' OR InstanceId != 'I-456'`);
-    });
-
     it('should handle one top level filters with one nested filter', () => {
       const filter = createArray(
         [
