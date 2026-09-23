@@ -35,7 +35,12 @@ async function selectLiveDataSource(page: Page, queryEditor: Locator) {
   await page.getByRole('button', { name: 'Apply selection', exact: true }).click();
 }
 
-test.describe('Query editor', () => {
+// Quarantined on the shared Cloud instance. There the query editor row never shows the CloudWatch
+// controls after `datasource.set()`, and a minute of re-picking does not change that. Every test in
+// this block fails on the guard in the second beforeEach. The tag takes the block out of the Cloud
+// gating run and reports it under the quarantine suite. Local and PR CI run without the tag filter.
+// Tracked in #619.
+test.describe('Query editor', { tag: '@quarantine' }, () => {
   let dataSourceName: string;
   let createdDataSourceUid: string | undefined;
 
