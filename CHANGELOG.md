@@ -1,5 +1,24 @@
 # Changelog
 
+## [12.10.3](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.2...v12.10.3) (2026-09-23)
+
+
+### 🐛 Bug Fixes
+
+* **cloudwatch:** disable go-cache janitor to stop per-instance goroutine leak ([#634](https://github.com/grafana/grafana-cloudwatch-datasource/issues/634)) ([c83d4d8](https://github.com/grafana/grafana-cloudwatch-datasource/commit/c83d4d8ac165dcae33f1b2d91a9249ade622fc40))
+* **cloudwatch:** use non-nullable types in empty metric frames ([#625](https://github.com/grafana/grafana-cloudwatch-datasource/issues/625)) ([acd1a1f](https://github.com/grafana/grafana-cloudwatch-datasource/commit/acd1a1fe50c81332b7bccac4b08e81572fef580f))
+* **deps:** bump @grafana/aws-sdk to 0.12.2 ([#639](https://github.com/grafana/grafana-cloudwatch-datasource/issues/639)) ([1bc185f](https://github.com/grafana/grafana-cloudwatch-datasource/commit/1bc185f62c084f01fdfaf72cd54d63c11390bb3f))
+* **deps:** bump grafana-aws-sdk from 1.5.3 to 1.5.5 ([#640](https://github.com/grafana/grafana-cloudwatch-datasource/issues/640)) ([9712a68](https://github.com/grafana/grafana-cloudwatch-datasource/commit/9712a688ecff883cd043d6085be6b4374ba2c777))
+* **sql:** drop dangling WHERE/AND for incomplete filters, plus test fixes ([#636](https://github.com/grafana/grafana-cloudwatch-datasource/issues/636)) ([a8674eb](https://github.com/grafana/grafana-cloudwatch-datasource/commit/a8674eb2ff750f4a5441312d8b9882e789f553dc))
+
+
+### ✅ Tests
+
+* **e2e:** bump @grafana/plugin-e2e to 3.12.0 and notify Slack when the nightly Cloud run fails ([#637](https://github.com/grafana/grafana-cloudwatch-datasource/issues/637)) ([9dce61c](https://github.com/grafana/grafana-cloudwatch-datasource/commit/9dce61c98fc6c6775e3c2c4c1bf0b820c3299270))
+* **e2e:** quarantine the Query editor tests on the Cloud run ([#644](https://github.com/grafana/grafana-cloudwatch-datasource/issues/644)) ([713246f](https://github.com/grafana/grafana-cloudwatch-datasource/commit/713246ff1f4ffa61e8215fc622be9bac26f9e377))
+* **e2e:** retry the Cloud datasource selection until it lands, and clean up after ([#642](https://github.com/grafana/grafana-cloudwatch-datasource/issues/642)) ([8c4b577](https://github.com/grafana/grafana-cloudwatch-datasource/commit/8c4b57768c9a3c52f5ccb0617e04cd2956292377))
+* **e2e:** run one Playwright worker on CI ([#638](https://github.com/grafana/grafana-cloudwatch-datasource/issues/638)) ([14fd5e3](https://github.com/grafana/grafana-cloudwatch-datasource/commit/14fd5e32bd099fc15b4732ac1cd02b8d6b0dc985))
+
 ## [12.10.2](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.1...v12.10.2) (2026-09-10)
 
 
