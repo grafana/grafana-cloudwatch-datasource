@@ -29,6 +29,8 @@ jobs:
       run-stage: nightly
       # Bench executes from tests/. npm runs the script from the package root so
       # Playwright loads our config, including the base URL and auth project.
+      # The @quarantine filter lives in the e2e:cloud script, not here: Bench
+      # appends `-- --reporter=json`, and a second `--` would clash with it.
       bench-execute-cmd: npm run e2e:cloud
       # The provisioned CloudWatch test instance is reached over PDC (aws network).
       pdc-network-name: datasources-pdc-network-aws-datasourcese2e

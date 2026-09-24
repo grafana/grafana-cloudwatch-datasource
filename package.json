@@ -10,6 +10,7 @@
     "lint": "eslint --cache --ignore-pattern ./.gitignore --ext .js,.jsx,.ts,.tsx .",
     "lint:fix": "prettier --write --list-different . && npm run lint -- --fix",
     "e2e": "playwright test",
+    "e2e:cloud": "playwright test --grep-invert @quarantine",
     "server": "docker compose up --build",
     "sign": "sign-plugin"
   },
