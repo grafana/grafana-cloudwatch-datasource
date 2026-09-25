@@ -104,5 +104,5 @@
     },
     "react-router@6": "6.30.6"
   },
-  "packageManager": "npm@11.16.0"
+  "packageManager": "npm@12.1.0"
 }
