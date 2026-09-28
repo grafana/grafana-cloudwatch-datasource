@@ -360,7 +360,7 @@ describe('LogGroupsSelector', () => {
 
     await waitFor(() => expect(screen.getByText('logGroup2')).toBeInTheDocument());
     expect(screen.getByText('logGroup1')).toBeInTheDocument();
-    expect(fetchLogGroups).toBeCalledTimes(2);
+    expect(fetchLogGroups).toHaveBeenCalledTimes(2);
     expect(fetchLogGroups).toHaveBeenLastCalledWith({
       logGroupPattern: '',
       accountId: 'all',
