@@ -1,5 +1,20 @@
 # Changelog
 
+## [12.11.0](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.3...v12.11.0) (2026-09-30)
+
+
+### 🎉 Features
+
+* add ap-southeast-6, us-northeast-1 and four ISO partition regions ([08fdc09](https://github.com/grafana/grafana-cloudwatch-datasource/commit/08fdc0936170fda321bd66953a43a057dcdda9b4))
+* **logs:** load more log groups in the log group selector ([08fdc09](https://github.com/grafana/grafana-cloudwatch-datasource/commit/08fdc0936170fda321bd66953a43a057dcdda9b4))
+* **logs:** return a next-page token from the log groups resource ([08fdc09](https://github.com/grafana/grafana-cloudwatch-datasource/commit/08fdc0936170fda321bd66953a43a057dcdda9b4))
+
+
+### 🐛 Bug Fixes
+
+* **a11y:** render external links with the accessible TextLink component ([08fdc09](https://github.com/grafana/grafana-cloudwatch-datasource/commit/08fdc0936170fda321bd66953a43a057dcdda9b4))
+* **ci:** load Playwright config for Cloud E2E tests ([#643](https://github.com/grafana/grafana-cloudwatch-datasource/issues/643)) ([bc9eaff](https://github.com/grafana/grafana-cloudwatch-datasource/commit/bc9eaff63db5b8d854bbd79197e799c44edfec2b))
+
 ## [12.10.3](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.2...v12.10.3) (2026-09-23)
 
 
