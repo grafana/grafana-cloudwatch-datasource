@@ -63,6 +63,10 @@ import { GraphDrawStyle } from '@grafana/schema';
 export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
 export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
+// Matches a CWLI query that begins with a SOURCE command. Mirrors the backend regex in
+// pkg/cloudwatch/log_actions.go (sourceCommandRegex).
+const SOURCE_COMMAND_REGEX = /^\s*source\s+/i;
+
 // This class handles execution of CloudWatch logs query data queries
 export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   logsTimeout: string;
@@ -579,12 +583,18 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const usesAllLogGroupsScope = isCWLIQuery && query.logsQueryScope === 'allLogGroups';
     const isSQLQuery = query.queryLanguage === 'SQL';
 
+    // A CWLI query can select its own log groups via a SOURCE command (e.g. `SOURCE logGroups(namePrefix: [...])`),
+    // which lets it target more than the 50 log groups the StartQuery API accepts. Such a query is valid without
+    // any log groups selected in the UI. See https://github.com/grafana/grafana-cloudwatch-datasource/issues/307
+    const usesSourceCommand = isCWLIQuery && SOURCE_COMMAND_REGEX.test(query.expression ?? '');
+
     const hasValidLogGroupSelection =
       !hasMissingLogGroups ||
       !hasMissingLogDataSources ||
       !hasMissingLegacyLogGroupNames ||
       usesNamePrefixScope ||
       usesAllLogGroupsScope ||
+      usesSourceCommand ||
       isSQLQuery;
 
     if (!hasValidLogGroupSelection || hasMissingQueryString) {
