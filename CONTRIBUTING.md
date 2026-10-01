@@ -111,6 +111,22 @@ The E2E test suite uses the CloudWatch data source provisioned for the Data Sour
    npm run e2e
    ```
 
+### Test quarantine
+
+When a test defect is identified — a test that fails or flakes due to environment, timing, or selector issues rather than a real product bug — demote it with the `@quarantine` tag:
+
+```ts
+test('the flaky test', { tag: '@quarantine' }, async ({ page }) => {
+  // ...
+});
+```
+
+Quarantined tests are excluded from the Cloud gating run (`npm run e2e:cloud` and the in-Argo bench gate) and run separately in a non-gating quarantine suite. This keeps the release gate green while the defect is tracked.
+
+Re-promote a test by removing `{ tag: '@quarantine' }` once the underlying issue is fixed.
+
+See the [test-signal taxonomy](https://github.com/grafana/data-sources/blob/main/docs/testing/test-signal-taxonomy.md) for the full quarantine policy.
+
 ## Release the CloudWatch data source plugin
 
 Releases are automated with [release-please](https://github.com/googleapis/release-please). The version number and the changelog both come from commit messages, so there is nothing to edit by hand.
