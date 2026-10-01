@@ -234,12 +234,12 @@ This table summarizes common Metrics Insights query keywords:
 
 ### PromQL queries
 
-The **PromQL** query type lets you query CloudWatch metrics using [Prometheus Query Language (PromQL)](https://prometheus.io/docs/prometheus/latest/querying/basics/). This uses [Amazon CloudWatch's managed PromQL support](https://aws.amazon.com/blogs/mt/introducing-opentelemetry-promql-support-in-amazon-cloudwatch/), which exposes CloudWatch metrics through a Prometheus-compatible query API.
+The **PromQL** query type lets you query metrics that Amazon CloudWatch has ingested through its OpenTelemetry (OTLP) endpoint, using [Prometheus Query Language (PromQL)](https://prometheus.io/docs/prometheus/latest/querying/basics/). CloudWatch stores these OTLP-ingested metrics in a high-cardinality metrics store and exposes them through a Prometheus-compatible query API. This query type targets your OTLP-ingested metrics. It does not query standard CloudWatch metrics. For more information about availability and CloudWatch's PromQL implementation, see [Introducing OpenTelemetry and PromQL support in Amazon CloudWatch](https://aws.amazon.com/blogs/mt/introducing-opentelemetry-promql-support-in-amazon-cloudwatch/).
 
-Select **PromQL** from the query type drop-down in the upper middle of the query editor. No data source configuration changes are required. The plugin sends signed requests to the CloudWatch endpoint for the selected **Region**, so PromQL queries use the same authentication and region settings as your other CloudWatch queries.
+To use this query type, select **PromQL** from the query type drop-down in the upper middle of the query editor. No data source configuration changes are required. The plugin sends signed requests to the CloudWatch endpoint for the selected **Region**, so PromQL queries use the same authentication and region settings as your other CloudWatch queries.
 
 {{< admonition type="note" >}}
-PromQL support must be available for your metrics in the selected AWS region. For details on availability and CloudWatch's PromQL implementation, refer to the [AWS documentation](https://aws.amazon.com/blogs/mt/introducing-opentelemetry-promql-support-in-amazon-cloudwatch/).
+Querying with PromQL requires OTLP metrics ingestion and OTel enrichment to be enabled on your account. This feature must also be available in the selected AWS Region.
 {{< /admonition >}}
 
 The PromQL query type has two editing modes. Use the **Builder**/**Code** toggle in the query editor header to switch between them:
