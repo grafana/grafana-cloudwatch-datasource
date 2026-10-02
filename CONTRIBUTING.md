@@ -113,15 +113,18 @@ The E2E test suite uses the CloudWatch data source provisioned for the Data Sour
 
 ### Test quarantine
 
-When a test defect is identified — a test that fails or flakes due to environment, timing, or selector issues rather than a real product bug — demote it with the `@quarantine` tag:
+Quarantine a test when its failure is a test defect, not a product bug. Examples include a test that assumes local provisioning, relies on a hard-coded data source name, or uses a timeout too short for the shared Cloud instance while the plugin itself is healthy. Infrastructure faults such as the shared instance recycling are retried in Argo rather than quarantined.
+
+Add the `@quarantine` tag and a comment with the reason and tracking issue:
 
 ```ts
+// Quarantined: flaky Cloud selector — tracked in #619
 test('the flaky test', { tag: '@quarantine' }, async ({ page }) => {
   // ...
 });
 ```
 
-Quarantined tests are excluded from the Cloud gating run (`npm run e2e:cloud` and the in-Argo bench gate) and run separately in a non-gating quarantine suite. This keeps the release gate green while the defect is tracked.
+The tag changes only the Cloud runs. Local `npm run e2e` and PR CI still run quarantined tests unfiltered. The nightly `e2e:cloud` run skips them entirely. The in-Argo bench gate runs them in a separate non-gating quarantine suite so failures are visible without blocking the release.
 
 Re-promote a test by removing `{ tag: '@quarantine' }` once the underlying issue is fixed.
 
