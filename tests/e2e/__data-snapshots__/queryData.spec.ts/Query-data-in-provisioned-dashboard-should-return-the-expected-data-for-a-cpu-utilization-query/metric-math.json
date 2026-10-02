@@ -1,0 +1,835 @@
+{
+  "errors": [],
+  "schemaVersion": 1,
+  "series": [
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-02...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-02...",
+          "labels": {
+            "InstanceId": "i-02...",
+            "Series": "i-02..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.47540983610374,
+            1.47540983600832,
+            1.47540983600832
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-02...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-03...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-03...",
+          "labels": {
+            "InstanceId": "i-03...",
+            "Series": "i-03..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.0495277125293618,
+            1.0495277125293618,
+            1.0495277125293618
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-03...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-03...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-03...",
+          "labels": {
+            "InstanceId": "i-03...",
+            "Series": "i-03..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            0.0499101617089239,
+            0.0415344486717283,
+            0.0499101617089239
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-03...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-03...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-03...",
+          "labels": {
+            "InstanceId": "i-03...",
+            "Series": "i-03..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.0662401705984272,
+            1.0662401705984272,
+            1.05
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-03...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-04...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-04...",
+          "labels": {
+            "InstanceId": "i-04...",
+            "Series": "i-04..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.5161360190599955,
+            1.5166666666666666,
+            1.5161107593882244
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-04...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-04...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-04...",
+          "labels": {
+            "InstanceId": "i-04...",
+            "Series": "i-04..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            6.55737704918033,
+            6.66666666666667,
+            6.66666666666667
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-04...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-05...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-05...",
+          "labels": {
+            "InstanceId": "i-05...",
+            "Series": "i-05..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            0.166666666676368,
+            0.166666666676368,
+            0.166666666676368
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-05...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-05...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-05...",
+          "labels": {
+            "InstanceId": "i-05...",
+            "Series": "i-05..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            0.9995335510095288,
+            1,
+            1
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-05...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-07...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-07...",
+          "labels": {
+            "InstanceId": "i-07...",
+            "Series": "i-07..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            0.9671179883945842,
+            0.9833333333333332,
+            0.9833333333333332
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-07...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-08...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-08...",
+          "labels": {
+            "InstanceId": "i-08...",
+            "Series": "i-08..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.0171922159782556,
+            1.01714133262189,
+            1.0171922159782556
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-08...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-09...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-09...",
+          "labels": {
+            "InstanceId": "i-09...",
+            "Series": "i-09..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.0330406384857624,
+            1.0330406384857624,
+            1.0333333333333334
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-09...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-0b...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-0b...",
+          "labels": {
+            "InstanceId": "i-0b...",
+            "Series": "i-0b..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-0b...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-0b...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-0b...",
+          "labels": {
+            "InstanceId": "i-0b...",
+            "Series": "i-0b..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.0328685424892132,
+            1.0337813052322673,
+            1.0333333333333334
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-0b...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-0c...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-0c...",
+          "labels": {
+            "InstanceId": "i-0c...",
+            "Series": "i-0c..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.33333333341094,
+            1.33333333341094,
+            1.33333333341094
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-0c...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-0d...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-0d...",
+          "labels": {
+            "InstanceId": "i-0d...",
+            "Series": "i-0d..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-0d...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-0e...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-0e...",
+          "labels": {
+            "InstanceId": "i-0e...",
+            "Series": "i-0e..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            0.9666666666666668,
+            0.9661674801352634,
+            0.9504910870616485
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-0e...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-0e...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-0e...",
+          "labels": {
+            "InstanceId": "i-0e...",
+            "Series": "i-0e..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            3.0321204851392776,
+            3.0321710011162386,
+            3.048780487804878
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-0e...",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "i-0f...",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27%7B%5C%22AWS%2FEC2%5C%22%2C%5C%22InstanceId%5C%22%7D+MetricName%3D%5C%22CPUUtilization%5C%22%27%2C+%27Minimum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "i-0f...",
+          "labels": {
+            "InstanceId": "i-0f...",
+            "Series": "i-0f..."
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1.2,
+            1.1916666666666669,
+            1.1995201919232308
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "i-0f...",
+      "refId": "A"
+    }
+  ],
+  "state": "Done"
+}
