@@ -1,6 +1,6 @@
 {
   "name": "grafana-cloudwatch-datasource",
-  "version": "12.11.0",
+  "version": "12.11.1",
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
@@ -102,7 +102,8 @@
     "@types/slate": {
       "immutable": "4.3.9"
     },
-    "react-router@6": "6.30.6"
+    "react-router@6": "6.30.6",
+    "basic-ftp": "^6.2.1"
   },
   "packageManager": "npm@11.16.0"
 }
