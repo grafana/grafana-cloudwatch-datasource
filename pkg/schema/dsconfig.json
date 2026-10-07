@@ -1,0 +1,204 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/dsconfig/refs/tags/dsconfig/v0.0.13/dsconfig/schema.json",
+  "schemaVersion": "v1",
+  "pluginType": "cloudwatch",
+  "pluginName": "CloudWatch",
+  "docURL": "https://grafana.com/docs/plugins/cloudwatch/latest/",
+  "baseFields": [
+    {
+      "from": "aws_sdk_settings"
+    }
+  ],
+  "fields": [
+    {
+      "id": "jsonData_customMetricsNamespaces",
+      "key": "customMetricsNamespaces",
+      "label": "Namespaces of Custom Metrics",
+      "description": "Comma-separated list of custom CloudWatch metric namespaces to offer in addition to the built-in AWS namespaces.",
+      "valueType": "string",
+      "target": "jsonData",
+      "ui": {
+        "component": "input",
+        "placeholder": "Namespace1,Namespace2"
+      }
+    },
+    {
+      "id": "jsonData_enableSecureSocksProxy",
+      "key": "enableSecureSocksProxy",
+      "label": "Secure Socks Proxy",
+      "description": "Route requests to this data source through Grafana's Secure Socks Proxy, which backs Private Data source Connect (PDC). Only shown in the editor, and only takes effect, when the Grafana instance has the secure socks data source proxy configured.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "jsonData_logsTimeout",
+      "key": "logsTimeout",
+      "label": "Query Result Timeout",
+      "description": "Grafana polls for CloudWatch Logs results every second until a Done status is returned from AWS or this timeout is exceeded, in which case an error is returned. For alerting, the timeout from the Grafana config file takes precedence. Must be a valid duration string such as \"30m\", \"30s\" or \"2000ms\". Empty or zero uses the default of 30 minutes.",
+      "valueType": "string",
+      "target": "jsonData",
+      "defaultValue": "30m",
+      "ui": {
+        "component": "input",
+        "placeholder": "30m"
+      }
+    },
+    {
+      "id": "jsonData_logGroups",
+      "key": "logGroups",
+      "label": "Default Log Groups",
+      "description": "Optionally, default log groups for CloudWatch Logs queries. Written and read by the config editor and query editor only; the backend does not read it from the data source settings.",
+      "valueType": "array",
+      "target": "jsonData",
+      "item": {
+        "valueType": "object",
+        "fields": [
+          {
+            "id": "jsonData_logGroups.item.arn",
+            "key": "arn",
+            "label": "ARN",
+            "valueType": "string",
+            "isItemField": true,
+            "required": true
+          },
+          {
+            "id": "jsonData_logGroups.item.name",
+            "key": "name",
+            "label": "Name",
+            "valueType": "string",
+            "isItemField": true,
+            "required": true
+          },
+          {
+            "id": "jsonData_logGroups.item.accountId",
+            "key": "accountId",
+            "label": "Account ID",
+            "valueType": "string",
+            "isItemField": true
+          },
+          {
+            "id": "jsonData_logGroups.item.accountLabel",
+            "key": "accountLabel",
+            "label": "Account Label",
+            "valueType": "string",
+            "isItemField": true
+          }
+        ]
+      },
+      "tags": [
+        "frontend-only"
+      ]
+    },
+    {
+      "id": "jsonData_defaultLogGroups",
+      "key": "defaultLogGroups",
+      "label": "Default Log Groups (legacy)",
+      "description": "Deprecated: use logGroups. Previous storage shape, an array of log group names. The config editor clears it when logGroups is saved.",
+      "valueType": "array",
+      "target": "jsonData",
+      "item": {
+        "valueType": "string"
+      },
+      "tags": [
+        "frontend-only",
+        "legacy"
+      ]
+    },
+    {
+      "id": "jsonData_tracingDatasourceUid",
+      "key": "tracingDatasourceUid",
+      "label": "X-Ray data source",
+      "description": "UID of the Application Signals / X-Ray data source containing traces, used to create trace links from logs. Frontend-only.",
+      "valueType": "string",
+      "target": "jsonData",
+      "tags": [
+        "frontend-only"
+      ]
+    },
+    {
+      "id": "jsonData_assumeRoleARN_legacy",
+      "key": "assumeRoleARN",
+      "label": "Assume Role ARN (legacy casing)",
+      "description": "Backend-only. Mirrors the upstream awsds struct tag so the schema stays in sync. Use aws_sdk_settings.assumeRoleArn instead: the editor only writes that spelling, and the backend reads either because encoding/json matches the key case-insensitively.",
+      "valueType": "string",
+      "target": "jsonData",
+      "tags": [
+        "backend-only",
+        "legacy"
+      ]
+    },
+    {
+      "id": "jsonData_region",
+      "key": "region",
+      "label": "Region",
+      "description": "Backend-only. Read by the AWS SDK settings loader; when empty or set to the default region marker it falls back to defaultRegion. The config editor never writes it; use defaultRegion.",
+      "valueType": "string",
+      "target": "jsonData",
+      "tags": [
+        "backend-only"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "additional-settings",
+      "title": "Additional settings",
+      "order": 1,
+      "optional": true,
+      "fieldRefs": [
+        "jsonData_customMetricsNamespaces",
+        "jsonData_enableSecureSocksProxy"
+      ]
+    },
+    {
+      "id": "cloudwatch-logs",
+      "title": "CloudWatch Logs",
+      "order": 2,
+      "optional": true,
+      "fieldRefs": [
+        "jsonData_logsTimeout",
+        "jsonData_logGroups",
+        "jsonData_defaultLogGroups"
+      ]
+    },
+    {
+      "id": "x-ray",
+      "title": "X-Ray trace links",
+      "order": 3,
+      "optional": true,
+      "fieldRefs": [
+        "jsonData_tracingDatasourceUid"
+      ]
+    },
+    {
+      "id": "backend-only",
+      "title": "Backend-only settings",
+      "order": 4,
+      "optional": true,
+      "fieldRefs": [
+        "jsonData_assumeRoleARN_legacy",
+        "jsonData_region"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "msg": "Authentication is configured with the AWS SDK settings (authType, credentials, assume role, region, endpoint, proxy). CloudWatch adds its own settings: custom metric namespaces, the CloudWatch Logs query timeout, default log groups and the X-Ray data source used for trace links.",
+      "tags": [
+        "llm",
+        "auth"
+      ]
+    },
+    {
+      "msg": "jsonData.logGroups, jsonData.defaultLogGroups and jsonData.tracingDatasourceUid are read and written by the frontend only. Prefer logGroups; defaultLogGroups is the deprecated legacy shape.",
+      "tags": [
+        "llm",
+        "settings"
+      ]
+    }
+  ]
+}

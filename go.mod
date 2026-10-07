@@ -13,6 +13,7 @@ require (
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
+	github.com/grafana/dsconfig/schema v0.0.13
 	github.com/grafana/grafana-aws-sdk v1.5.5
 	github.com/grafana/grafana-plugin-sdk-go v0.296.4
 	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.19
@@ -72,6 +73,7 @@ require (
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
+	github.com/grafana/dsconfig/dsconfig v0.0.13 // indirect
 	github.com/grafana/grafana/apps/scope v0.0.0-20260427171703-d4f46decefcb // indirect
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 // indirect
 	github.com/grafana/otel-profiling-go v0.6.0 // indirect
@@ -155,4 +157,5 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
+	sigs.k8s.io/yaml v1.6.0 // indirect
 )
