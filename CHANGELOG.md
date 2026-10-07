@@ -1,14 +1,5 @@
 # Changelog
 
-## [12.11.1](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.0...v12.11.1) (2026-10-06)
-
-
-### 🐛 Bug Fixes
-
-* **deps:** bump brace-expansion to 1.1.21, 2.1.7 and 5.0.12
-* **deps:** bump qs to 6.16.0
-* **deps:** override basic-ftp to ^6.2.1
-
 ## [12.11.0](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.3...v12.11.0) (2026-09-30)
 
 
