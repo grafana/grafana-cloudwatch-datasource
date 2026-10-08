@@ -11,6 +11,9 @@ services:
       GF_FEATURE_TOGGLES_splashScreen: 'false'
       ACCESS_KEY: ${ACCESS_KEY:-}
       SECRET_KEY: ${SECRET_KEY:-}
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: cloudwatch,grafana-e2edata-panel
+    volumes:
+      - ./node_modules/@grafana/plugin-e2e/e2e-data-panel:/var/lib/grafana/plugins/grafana-e2edata-panel
     configs:
       # Load this repository's plugin instead of Grafana's bundled core plugin.
       - source: grafana_custom_ini
