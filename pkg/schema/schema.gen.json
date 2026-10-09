@@ -125,7 +125,7 @@
               "type": "string"
             },
             "tracingDatasourceUid": {
-              "description": "UID of the Application Signals / X-Ray data source containing traces, used to create trace links from logs. Frontend-only.",
+              "description": "UID of the Application Signals data source containing traces, used to create trace links from logs. Frontend-only.",
               "type": "string"
             },
             "usePerDatasourceExternalId": {

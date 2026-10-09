@@ -111,8 +111,8 @@
     {
       "id": "jsonData_tracingDatasourceUid",
       "key": "tracingDatasourceUid",
-      "label": "X-Ray data source",
-      "description": "UID of the Application Signals / X-Ray data source containing traces, used to create trace links from logs. Frontend-only.",
+      "label": "Application Signals data source",
+      "description": "UID of the Application Signals data source containing traces, used to create trace links from logs. Frontend-only.",
       "valueType": "string",
       "target": "jsonData",
       "tags": [
@@ -167,7 +167,7 @@
     },
     {
       "id": "x-ray",
-      "title": "X-Ray trace links",
+      "title": "Application Signals trace links",
       "order": 3,
       "optional": true,
       "fieldRefs": [
