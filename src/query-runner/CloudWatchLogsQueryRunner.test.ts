@@ -483,6 +483,54 @@ describe('CloudWatchLogsQueryRunner', () => {
       });
     });
 
+    it('allows CWLI query that starts with a SOURCE command and no selected log groups', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithSourceCommand: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        expression: "SOURCE logGroups(namePrefix: ['aws/spans']) | fields @message",
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithSourceCommand],
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+      await expect(runner.handleLogQueries([queryWithSourceCommand], options, queryFn)).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalled();
+      });
+    });
+
+    it('filters out CWLI query with no log groups when the SOURCE keyword is not the first command', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithLateSource: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        expression: 'fields @message | filter @message like /SOURCE/',
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithLateSource],
+      };
+
+      const queryFn = jest.fn().mockReturnValue(of({ data: [] }));
+      const response = runner.handleLogQueries([queryWithLateSource], options, queryFn);
+      await expect(response).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: [],
+          })
+        );
+      });
+    });
+
     it('filters out non-CWLI query when namePrefix scope would otherwise bypass missing log groups', async () => {
       const { runner } = setupMockedLogsQueryRunner();
 
