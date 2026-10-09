@@ -1,3 +1,4 @@
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import webpack, { type Configuration } from 'webpack';
 import { merge } from 'webpack-merge';
 import grafanaConfig from './.config/webpack/webpack.config';
@@ -50,6 +51,14 @@ const config = async (env): Promise<Configuration> => {
       new webpack.IgnorePlugin({
         resourceRegExp: /\.css$/,
         contextRegExp: /monaco-editor/,
+      }),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: '../pkg/schema/dsconfig.json', to: './schema/dsconfig.json' },
+          { from: '../pkg/schema/schema.gen.json', to: './schema/v0alpha1.json' },
+          { from: '../pkg/schema/settings.gen.json', to: './schema/v0alpha1/settings.json' },
+          { from: '../pkg/schema/settings.examples.gen.json', to: './schema/v0alpha1/settings.examples.json' },
+        ],
       }),
     ],
   });
