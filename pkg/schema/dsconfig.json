@@ -166,7 +166,7 @@
       ]
     },
     {
-      "id": "x-ray",
+      "id": "application-signals",
       "title": "Application Signals trace links",
       "order": 3,
       "optional": true,
@@ -187,7 +187,7 @@
   ],
   "instructions": [
     {
-      "msg": "Authentication is configured with the AWS SDK settings (authType, credentials, assume role, region, endpoint, proxy). CloudWatch adds its own settings: custom metric namespaces, the CloudWatch Logs query timeout, default log groups and the X-Ray data source used for trace links.",
+      "msg": "Authentication is configured with the AWS SDK settings (authType, credentials, assume role, region, endpoint, proxy). CloudWatch adds its own settings: custom metric namespaces, the CloudWatch Logs query timeout, default log groups and the Application Signals data source used for trace links.",
       "tags": [
         "llm",
         "auth"
