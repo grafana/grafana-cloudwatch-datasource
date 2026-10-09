@@ -111,6 +111,25 @@ The E2E test suite uses the CloudWatch data source provisioned for the Data Sour
    npm run e2e
    ```
 
+### Test quarantine
+
+Quarantine a test when its failure is a test defect, not a product bug. Examples include a test that assumes local provisioning, relies on a hard-coded data source name, or uses a timeout too short for the shared Cloud instance while the plugin itself is healthy. Infrastructure faults such as the shared instance recycling are resumed or retried in Argo, depending on the gate mode, rather than quarantined.
+
+Add the `@quarantine` tag and a comment with the reason and tracking issue:
+
+```ts
+// Quarantined: flaky Cloud selector — tracked in #619
+test('the flaky test', { tag: '@quarantine' }, async ({ page }) => {
+  // ...
+});
+```
+
+The tag changes only the Cloud runs. Local `npm run e2e` and PR CI still run quarantined tests unfiltered. The nightly `e2e:cloud` run skips them entirely. The in-Argo bench gate runs them in a separate non-gating quarantine suite so failures are visible without blocking the release.
+
+Re-promote a test by removing `{ tag: '@quarantine' }` once the underlying issue is fixed.
+
+See the [test-signal taxonomy](https://github.com/grafana/data-sources/blob/main/docs/testing/test-signal-taxonomy.md) for the full quarantine policy.
+
 ## Release the CloudWatch data source plugin
 
 Releases are automated with [release-please](https://github.com/googleapis/release-please). The version number and the changelog both come from commit messages, so there is nothing to edit by hand.
