@@ -38,6 +38,7 @@ jobs:
       contents: read
       id-token: write
     with:
+      golangci-lint-version: '2.14.0'
       # Ensure PR builds produce unique plugin versions.
       plugin-version-suffix: ${{ github.event.pull_request.head.sha }}
       # Forks cannot read the AWS secrets, so they run the smoke config instead.
@@ -80,8 +81,8 @@ jobs:
     with:
       # Both inputs are required by cd-dev.yml. These values reproduce what ci.yml
       # resolves today: go-version from go.mod, and the shared golangci-lint default.
-      go-version: '1.26.7'
-      golangci-lint-version: '2.12.2'
+      go-version: '1.27.3'
+      golangci-lint-version: '2.14.0'
       # The backend ships to dev0 per merge through the bundled pipeline
       # (bundled-image.yml), so this job publishes the frontend to the dev catalog
       # and does not also trigger the backend rollout.
