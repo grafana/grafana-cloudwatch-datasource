@@ -752,6 +752,34 @@ func Test_executeStartQuery(t *testing.T) {
 			},
 		}, cli.calls.startQuery)
 	})
+
+	t.Run("keeps a user-typed SOURCE command first and does not set log groups when none are selected", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"SOURCE logGroups(namePrefix: ['aws/spans']) | fields @message"
+					}`),
+				},
+			},
+		})
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t,
+			"SOURCE logGroups(namePrefix: ['aws/spans']) | "+logContextFieldsClause+"|fields @message",
+			*cli.calls.startQuery[0].QueryString,
+		)
+		assert.Nil(t, cli.calls.startQuery[0].LogGroupNames)
+		assert.Nil(t, cli.calls.startQuery[0].LogGroupIdentifiers)
+	})
 }
 
 func TestQuery_StopQuery(t *testing.T) {
@@ -1368,6 +1396,36 @@ func TestContainsSourceCommand(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			result := containsSourceCommand(tc.query)
 			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestInjectLogContextFields(t *testing.T) {
+	testCases := map[string]struct {
+		query    string
+		expected string
+	}{
+		"no SOURCE command prepends the context fields": {
+			query:    "fields @message",
+			expected: logContextFieldsClause + "|fields @message",
+		},
+		"SOURCE command keeps SOURCE first and injects context fields after it": {
+			query:    "SOURCE logGroups(namePrefix: ['aws/spans']) | fields @message",
+			expected: "SOURCE logGroups(namePrefix: ['aws/spans']) | " + logContextFieldsClause + "|fields @message",
+		},
+		"lowercase source command is handled": {
+			query:    "source logGroups() | fields @message",
+			expected: "source logGroups() | " + logContextFieldsClause + "|fields @message",
+		},
+		"SOURCE command with no pipe appends the context fields as the next command": {
+			query:    "SOURCE logGroups(namePrefix: ['aws/spans'])",
+			expected: "SOURCE logGroups(namePrefix: ['aws/spans']) | " + logContextFieldsClause,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, injectLogContextFields(tc.query))
 		})
 	}
 }
