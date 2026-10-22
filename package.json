@@ -102,5 +102,5 @@
     "react-router@6": "6.30.6",
     "basic-ftp": "^6.2.1"
   },
-  "packageManager": "npm@11.16.0"
+  "packageManager": "npm@12.2.1"
 }
