@@ -40,6 +40,9 @@ export default defineConfig<PluginOptions>({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+
+    // keep EC2 instance ids out of committed data snapshots
+    dataSnapshot: { redact: [{ pattern: /i-([0-9a-f]{2})[0-9a-f]+/g, replacement: 'i-$1...' }] },
   },
 
   /* Configure projects for major browsers */
