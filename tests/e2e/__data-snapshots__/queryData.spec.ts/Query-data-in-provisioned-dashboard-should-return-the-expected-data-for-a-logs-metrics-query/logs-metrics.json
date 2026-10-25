@@ -1,0 +1,283 @@
+{
+  "errors": [],
+  "schemaVersion": 1,
+  "series": [
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "grafana-logs-<redacted>",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27Namespace%3D%5C%22AWS%2FLogs%5C%22+MetricName%3D%5C%22ForwardedBytes%5C%22+%5C%22FilterName%5C%22%27%2C+%27Maximum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "grafana-logs-<redacted>",
+          "labels": {
+            "FilterName": "grafana-logs-<redacted>",
+            "Series": "grafana-logs-<redacted>"
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1287,
+            1309,
+            1298
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "grafana-logs-<redacted>",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "grafana-logs-<redacted>",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27Namespace%3D%5C%22AWS%2FLogs%5C%22+MetricName%3D%5C%22ForwardedBytes%5C%22+%5C%22FilterName%5C%22%27%2C+%27Maximum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "grafana-logs-<redacted>",
+          "labels": {
+            "FilterName": "grafana-logs-<redacted>",
+            "Series": "grafana-logs-<redacted>"
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            420,
+            420,
+            420
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "grafana-logs-<redacted>",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "grafana-logs-<redacted>",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27Namespace%3D%5C%22AWS%2FLogs%5C%22+MetricName%3D%5C%22ForwardedBytes%5C%22+%5C%22FilterName%5C%22%27%2C+%27Maximum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "grafana-logs-<redacted>",
+          "labels": {
+            "FilterName": "grafana-logs-<redacted>",
+            "Series": "grafana-logs-<redacted>"
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            421,
+            420,
+            420
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "grafana-logs-<redacted>",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "grafana-logs-<redacted>",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27Namespace%3D%5C%22AWS%2FLogs%5C%22+MetricName%3D%5C%22ForwardedBytes%5C%22+%5C%22FilterName%5C%22%27%2C+%27Maximum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "grafana-logs-<redacted>",
+          "labels": {
+            "FilterName": "grafana-logs-<redacted>",
+            "Series": "grafana-logs-<redacted>"
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            483,
+            968,
+            721
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "grafana-logs-<redacted>",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "grafana-logs-<redacted>",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27Namespace%3D%5C%22AWS%2FLogs%5C%22+MetricName%3D%5C%22ForwardedBytes%5C%22+%5C%22FilterName%5C%22%27%2C+%27Maximum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "grafana-logs-<redacted>",
+          "labels": {
+            "FilterName": "grafana-logs-<redacted>",
+            "Series": "grafana-logs-<redacted>"
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            1733,
+            1718,
+            1735
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "grafana-logs-<redacted>",
+      "refId": "A"
+    },
+    {
+      "fields": [
+        {
+          "config": {
+            "interval": null
+          },
+          "displayName": "Time",
+          "name": "Time",
+          "type": "time",
+          "values": [
+            1790300280000,
+            1790312280000,
+            1790324280000
+          ]
+        },
+        {
+          "config": {
+            "displayNameFromDS": "grafana-logs-<redacted>",
+            "links": [
+              {
+                "title": "View in CloudWatch console",
+                "url": "https://us-east-2.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-2#metricsV2:graph=%7B%22view%22%3A%22timeSeries%22%2C%22stacked%22%3Afalse%2C%22title%22%3A%22A%22%2C%22start%22%3A%222026-09-25T01%3A38%3A27Z%22%2C%22end%22%3A%222026-09-25T11%3A03%3A33Z%22%2C%22region%22%3A%22us-east-2%22%2C%22metrics%22%3A%5B%7B%22expression%22%3A%22REMOVE_EMPTY%28SEARCH%28%27Namespace%3D%5C%22AWS%2FLogs%5C%22+MetricName%3D%5C%22ForwardedBytes%5C%22+%5C%22FilterName%5C%22%27%2C+%27Maximum%27%2C+12000%29%29%22%2C%22id%22%3A%22a%22%7D%5D%7D"
+              }
+            ]
+          },
+          "displayName": "grafana-logs-<redacted>",
+          "labels": {
+            "FilterName": "grafana-logs-<redacted>",
+            "Series": "grafana-logs-<redacted>"
+          },
+          "name": "Value",
+          "type": "number",
+          "values": [
+            606,
+            606,
+            606
+          ]
+        }
+      ],
+      "length": 3,
+      "meta": {
+        "type": "timeseries-multi"
+      },
+      "name": "grafana-logs-<redacted>",
+      "refId": "A"
+    }
+  ],
+  "state": "Done"
+}
