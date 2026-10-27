@@ -15,6 +15,10 @@
 # delivers it to Cloud. Manual dispatch keeps the explicit inputs, targets the full
 # rollout, and stays as the fallback.
 #
+# DISABLED: the `bundled-image` job below is switched off, so no push, release or manual dispatch
+# builds or pushes an image, or triggers a rollout, for now. Re-enable it by removing the
+# job-level `if: false` condition.
+#
 # Note on the app grant:
 # The shared workflow reads the Grafana base image from one line of a private infrastructure repo.
 # The token for that read is granted against THIS file's path, because the broker keys on the
@@ -84,6 +88,8 @@ concurrency:
 jobs:
   bundled-image:
     name: Build and push
+    # Switched off for now; see the DISABLED note above.
+    if: false
     uses: grafana/data-sources-ci-workflows/.github/workflows/cd-bundled.yml@main
     permissions:
       contents: read
