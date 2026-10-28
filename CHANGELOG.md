@@ -1,5 +1,29 @@
 # Changelog
 
+## [12.11.2](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.1...v12.11.2) (2026-10-21)
+
+
+### 🐛 Bug Fixes
+
+* **deps:** update backend dependencies ([#659](https://github.com/grafana/grafana-cloudwatch-datasource/issues/659)) ([8797e75](https://github.com/grafana/grafana-cloudwatch-datasource/commit/8797e752141c961527db5cd163be318f3039a0d7))
+
+
+### 🤖 Continuous Integration
+
+* let a bundled-image dispatch opt out of the per-merge frontend ([#661](https://github.com/grafana/grafana-cloudwatch-datasource/issues/661)) ([0cfbd3a](https://github.com/grafana/grafana-cloudwatch-datasource/commit/0cfbd3a8ed7ce1a68b02c852d30e5f09ef34a9e6))
+
+## [12.11.1](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.0...v12.11.1) (2026-10-09)
+
+
+### 🐛 Bug Fixes
+
+* **cloudwatch:** return per-query error for unknown log action subtype instead of panicking ([#652](https://github.com/grafana/grafana-cloudwatch-datasource/issues/652)) ([f86743c](https://github.com/grafana/grafana-cloudwatch-datasource/commit/f86743c1b1c7b79a3c385473ca2fa19fa71d376b))
+
+
+### 📝 Documentation
+
+* **e2e:** document test quarantine convention ([#648](https://github.com/grafana/grafana-cloudwatch-datasource/issues/648)) ([7c38515](https://github.com/grafana/grafana-cloudwatch-datasource/commit/7c385155df59f1d75a8cb134fd535826a6bee694))
+
 ## [12.11.0](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.10.3...v12.11.0) (2026-09-30)
 
 

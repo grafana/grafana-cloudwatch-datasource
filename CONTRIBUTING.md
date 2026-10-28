@@ -82,6 +82,77 @@ the Node.js version specified by the `engines` field.
    mage -v
    ```
 
+2. Run the backend tests
+
+   ```bash
+   mage test
+   ```
+
+## Data Source Configuration Schema
+
+`pkg/schema/dsconfig.json` is the **single source of truth** for the data source's
+configuration surface: every field a user can set, where it is stored (`root`, `jsonData`,
+`secureJsonData`), its type, validation rules and UI hints. It is consumed by provisioning
+tooling, documentation and automation.
+
+The schema format is defined and documented by [`grafana/dsconfig`](https://github.com/grafana/dsconfig/tree/main/dsconfig):
+
+- [README](https://github.com/grafana/dsconfig/tree/main/dsconfig#readme): concepts and a worked example for each field shape (root / jsonData / secret / array / virtual), plus current gaps and limitations.
+- [`schema.md`](https://github.com/grafana/dsconfig/blob/main/dsconfig/schema.md): full property reference.
+- [`schema.json`](https://github.com/grafana/dsconfig/blob/main/dsconfig/schema.json): the JSON Schema `dsconfig.json` validates against. It is pinned via the `$schema` key at the top of our file, so editors autocomplete from it; bump that URL when you bump `github.com/grafana/dsconfig/dsconfig` and `github.com/grafana/dsconfig/schema` in `go.mod`.
+
+The rest of this section covers only what is specific to this repository.
+
+### Layout
+
+| File in `pkg/schema/` | Description                                                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `dsconfig.json`       | Source of truth, **edit this**                                                                                         |
+| `dsconfig_test.go`    | Wires the schema into the shared conformance suite; also holds `SecureKeys` and the test-only `settingsJSONModel`      |
+| `*.gen.json`          | Generated artifacts, **never hand-edit**; `npm run build` copies them into `dist/schema/` via `webpack.config.ts`       |
+
+### AWS SDK fields
+
+The AWS authentication, region, endpoint and proxy fields come from the shared `aws_sdk_settings`
+pack, declared under `baseFields` in `dsconfig.json`. They are defined in
+[`grafana/dsconfig`](https://github.com/grafana/dsconfig/tree/main/dsconfig/packs) and are not
+repeated in this repo; use `exclude` or `patch` on the `baseFields` entry to adjust them. Only
+CloudWatch-specific settings are declared in `fields`.
+
+### Adding a new settings option
+
+1. **Declare the field** in `pkg/schema/dsconfig.json` under `fields`, and add its `id` to
+   the appropriate `groups[].fieldRefs` entry. Field ids follow the `<target>_<key>`
+   convention, e.g. `jsonData_logsTimeout`. Tag fields only the frontend or only the backend
+   reads with `frontend-only` / `backend-only`.
+2. **Add the matching Go field** to `CloudWatchSettings` in
+   `pkg/cloudwatch/models/settings.go` with a json tag equal to the schema `key`, when the
+   backend reads it. This parity is enforced in both directions: a field in the schema but not
+   in the struct (or vice versa) fails the test suite. Frontend-only fields are added to the
+   test-only `settingsJSONModel` in `pkg/schema/dsconfig_test.go` instead. Secrets
+   (`target: secureJsonData`) get no struct field, but their key must be added to
+   `SecureKeys` in `pkg/schema/dsconfig_test.go`.
+3. **Regenerate the artifacts** and commit them with your change:
+
+   ```bash
+   go generate ./pkg/schema/...
+   ```
+
+4. **Verify**:
+
+   ```bash
+   go test ./pkg/schema/...
+   ```
+
+### When the conformance suite fails
+
+Most failures are self-explanatory from the assertion message. The three you are most
+likely to hit:
+
+- `SchemaArtifactInSync`: a `.gen.json` file has drifted. Run `go generate ./pkg/schema/...` and commit the result.
+- `JSONDataMatchesStruct` / `JSONDataTypesMatchStruct`: the schema and `CloudWatchSettings` (plus the shims in `settingsJSONModel`) disagree on keys or types. Update whichever side is behind.
+- `SecureValuesMatchLoadSettings`: the schema's `secureJsonData` fields and `SecureKeys` disagree.
+
 ## E2E Tests
 
 The E2E test suite uses the CloudWatch data source provisioned for the Data Sources team's AWS test environment. Export its credentials before starting Grafana.

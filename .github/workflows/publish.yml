@@ -48,6 +48,7 @@ jobs:
       attestations: write
       pull-requests: read
     with:
+      golangci-lint-version: '2.15.0'
       # On a release event every dispatch input is empty. That is harmless: the
       # shared workflow's docs job reads github.event.release and ignores these,
       # and only its manual job reads them.
