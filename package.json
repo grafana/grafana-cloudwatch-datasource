@@ -100,7 +100,10 @@
   },
   "overrides": {
     "react-router@6": "6.30.6",
-    "basic-ftp": "^6.2.1"
+    "basic-ftp": "^6.2.1",
+    "dompurify": "^3.4.17",
+    "source-map-js": "^1.2.2",
+    "zod": "^4.6.6"
   },
   "packageManager": "npm@11.16.0"
 }
