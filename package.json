@@ -105,5 +105,5 @@
     "source-map-js": "^1.2.2",
     "zod": "^4.6.6"
   },
-  "packageManager": "npm@11.16.0"
+  "packageManager": "npm@12.2.1"
 }
