@@ -66,8 +66,8 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dsconfig/dsconfig v0.0.13 // indirect
-	github.com/grafana/grafana/apps/scope v0.0.0-20261103031559-4e3ac752c670 // indirect
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261103031559-4e3ac752c670 // indirect
+	github.com/grafana/grafana/apps/scope v0.0.0-20261103084932-059202c86ecc // indirect
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261103084932-059202c86ecc // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
@@ -101,7 +101,7 @@ require (
 	github.com/olekukonko/errors v1.3.0 // indirect
 	github.com/olekukonko/ll v0.1.9 // indirect
 	github.com/olekukonko/tablewriter v1.1.5 // indirect
-	github.com/pandatix/go-abnf v0.5.3 // indirect
+	github.com/pandatix/go-abnf v0.5.4 // indirect
 	github.com/pierrec/lz4/v4 v4.1.33 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.73.1 // indirect
@@ -144,7 +144,7 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/apimachinery v0.37.2 // indirect
-	k8s.io/apiserver v0.37.1 // indirect
+	k8s.io/apiserver v0.37.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20261014044854-ca3452a79603 // indirect
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab // indirect
