@@ -38,7 +38,7 @@
     "@types/common-tags": "1.8.4",
     "@types/jest": "30.0.0",
     "@types/jsurl": "0.1.2",
-    "@types/node": "24.12.2",
+    "@types/node": "26.6.6",
     "@types/prismjs": "1.26.6",
     "@types/react": "18.3.20",
     "@types/react-dom": "18.3.6",
