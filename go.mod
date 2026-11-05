@@ -14,7 +14,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/dsconfig/schema v0.0.13
-	github.com/grafana/grafana-aws-sdk v1.5.6
+	github.com/grafana/grafana-aws-sdk v1.5.7
 	github.com/grafana/grafana-plugin-sdk-go v0.298.0
 	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.25
 	github.com/magefile/mage v1.17.2
