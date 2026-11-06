@@ -90,7 +90,7 @@
     "@grafana/plugin-ui": "0.17.3",
     "@grafana/prometheus": "13.1.11",
     "@grafana/runtime": "13.1.9",
-    "@grafana/scenes": "8.13.3",
+    "@grafana/scenes": "9.2.2",
     "@grafana/schema": "13.1.9",
     "@grafana/ui": "13.1.9",
     "common-tags": "^1.8.2",
