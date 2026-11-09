@@ -1,24 +1,21 @@
 import { defineConfig, globalIgnores } from 'eslint/config';
 import { fixupConfigRules } from '@eslint/compat';
-import { createRequire } from 'node:module';
 import reactPlugin from 'eslint-plugin-react';
-
-const require = createRequire(import.meta.url);
-const grafanaConfig = require('@grafana/eslint-config/flat.js');
+import baseConfig from './.config/eslint.config.mjs';
 
 export default defineConfig([
   globalIgnores(['**/node_modules', '**/build', '**/dist', '.yarn', '.config']),
-  ...fixupConfigRules([...grafanaConfig, reactPlugin.configs.flat['jsx-runtime']]),
+  ...fixupConfigRules([...baseConfig, reactPlugin.configs.flat['jsx-runtime']]),
   {
     rules: {
-      'react/prop-types': 'off',
       'react-hooks/immutability': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/preserve-manual-memoization': 'off',
     },
   },
   {
-    files: ['src/**/*.{ts,tsx,js,jsx}'],
+    // The scaffolded base config only lints `src/**/*.{ts,tsx}` with type info; also cover js/jsx.
+    files: ['src/**/*.{js,jsx}'],
     languageOptions: {
       parserOptions: {
         project: './tsconfig.json',
@@ -26,12 +23,6 @@ export default defineConfig([
     },
     rules: {
       '@typescript-eslint/no-deprecated': 'warn',
-    },
-  },
-  {
-    files: ['tests/**/*'],
-    rules: {
-      'react-hooks/rules-of-hooks': 'off',
     },
   },
 ]);
