@@ -34,8 +34,7 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 		if !startTime.Before(endTime) {
 			return nil, backend.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"))
 		}
-		requestQueries, err := models.ParseMetricDataQueries(timeBatch, startTime, endTime, ds.Settings.Region, ds.logger.FromContext(ctx),
-			features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
+		requestQueries, err := models.ParseMetricDataQueries(timeBatch, startTime, endTime, ds.Settings.Region, ds.logger.FromContext(ctx))
 		if err != nil {
 			return nil, err
 		}

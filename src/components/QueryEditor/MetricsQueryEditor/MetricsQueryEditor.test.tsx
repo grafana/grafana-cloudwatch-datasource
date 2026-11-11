@@ -31,11 +31,7 @@ jest.mock('./PromQLBuilderEditor', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual<typeof import('@grafana/runtime')>('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      cloudWatchCrossAccountQuerying: true,
-    },
-  },
+  config: {},
 }));
 
 const setup = (customQuery?: Partial<CloudWatchMetricsQuery>, isMonitoringAccount?: boolean) => {

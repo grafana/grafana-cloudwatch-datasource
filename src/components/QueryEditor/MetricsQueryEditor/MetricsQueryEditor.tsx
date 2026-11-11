@@ -5,7 +5,6 @@ import * as React from 'react';
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
 import { buildVisualQueryFromString } from '@grafana/prometheus';
-import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup, Space, Stack, Switch, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
@@ -81,7 +80,7 @@ export const MetricsQueryEditor = (props: Props) => {
   );
 
   const updateAccounIdOnMount = () => {
-    if (config.featureToggles.cloudWatchCrossAccountQuerying && query.accountId) {
+    if (query.accountId) {
       datasource.resources.isMonitoringAccount(query.region).then((isMonitoring) => {
         if (!isMonitoring && query.accountId) {
           onChange({ ...query, accountId: undefined });

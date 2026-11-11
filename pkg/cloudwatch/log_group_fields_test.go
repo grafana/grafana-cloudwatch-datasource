@@ -33,7 +33,7 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 	t.Run("returns 500 if GetLogGroupFields method fails", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroupFields", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{}, fmt.Errorf("error from api"))
-		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider) models.LogGroupsProvider {
 			return &mockLogsService
 		}
 
@@ -65,7 +65,7 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 				},
 			},
 		}, nil)
-		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider) models.LogGroupsProvider {
 			return &mockLogsService
 		}
 

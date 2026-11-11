@@ -14,29 +14,15 @@ import (
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
 )
 
-func TestGetDataSourcesCrossAccountQuerying(t *testing.T) {
-	t.Run("includes linked accounts when cross-account is enabled", func(t *testing.T) {
+func TestGetDataSources(t *testing.T) {
+	t.Run("includes linked accounts", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
 		mockLogsAPI.On("ListAggregateLogGroupSummaries", &cloudwatchlogs.ListAggregateLogGroupSummariesInput{
 			GroupBy:               cloudwatchlogstypes.ListAggregateLogGroupSummariesGroupByDataSourceNameAndType,
 			IncludeLinkedAccounts: aws.Bool(true),
 		}).Return(&cloudwatchlogs.ListAggregateLogGroupSummariesOutput{}, nil)
 
-		service := NewDataSourcesService(mockLogsAPI, true)
-		resp, err := service.GetDataSources(context.Background(), resources.DataSourcesRequest{})
-
-		assert.NoError(t, err)
-		assert.Empty(t, resp)
-		mockLogsAPI.AssertNumberOfCalls(t, "ListAggregateLogGroupSummaries", 1)
-	})
-
-	t.Run("does not include linked accounts when cross-account is disabled", func(t *testing.T) {
-		mockLogsAPI := &mocks.LogsAPI{}
-		mockLogsAPI.On("ListAggregateLogGroupSummaries", &cloudwatchlogs.ListAggregateLogGroupSummariesInput{
-			GroupBy: cloudwatchlogstypes.ListAggregateLogGroupSummariesGroupByDataSourceNameAndType,
-		}).Return(&cloudwatchlogs.ListAggregateLogGroupSummariesOutput{}, nil)
-
-		service := NewDataSourcesService(mockLogsAPI, false)
+		service := NewDataSourcesService(mockLogsAPI)
 		resp, err := service.GetDataSources(context.Background(), resources.DataSourcesRequest{})
 
 		assert.NoError(t, err)
@@ -63,7 +49,7 @@ func TestGetDataSourcesCrossAccountQuerying(t *testing.T) {
 			},
 		}, nil)
 
-		service := NewDataSourcesService(mockLogsAPI, true)
+		service := NewDataSourcesService(mockLogsAPI)
 		resp, err := service.GetDataSources(context.Background(), resources.DataSourcesRequest{
 			Pattern: aws.String("eks"),
 		})

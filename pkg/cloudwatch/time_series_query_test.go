@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/features"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/mocks"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
@@ -625,7 +624,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricData", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
 
-		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
@@ -661,50 +660,10 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 		assert.Nil(t, actualInput.MetricDataQueries[0].AccountId)
 	})
 
-	t.Run("should call GetMetricDataInput with AccountId nil when feature flag is false", func(t *testing.T) {
-		api = mocks.MetricsAPI{}
-		api.On("GetMetricData", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			},
-			Queries: []backend.DataQuery{
-				{
-					RefID:     "A",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
-					JSON: json.RawMessage(`{
-						"type":      "timeSeriesQuery",
-						"subtype":   "metrics",
-						"namespace": "AWS/EC2",
-						"metricName": "NetworkOut",
-						"dimensions": {
-						  "InstanceId": "i-00645d91ed77d87ac"
-						},
-						"region": "us-east-2",
-						"id": "a",
-						"statistic": "Maximum",
-						"period": "300",
-						"hide": false,
-						"matchExact": true,
-						"refId": "A",
-						"accountId":"some account Id"
-					}`),
-				},
-			},
-		})
-		require.NoError(t, err)
-		actualInput, ok := api.Calls[0].Arguments[1].(*cloudwatch.GetMetricDataInput)
-		require.True(t, ok)
-		require.Len(t, actualInput.MetricDataQueries, 1)
-
-		assert.Nil(t, actualInput.MetricDataQueries[0].Expression)
-		assert.Nil(t, actualInput.MetricDataQueries[0].AccountId)
-	})
-
 	t.Run("should call GetMetricDataInput with AccountId in a MetricStat query", func(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricData", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
@@ -744,7 +703,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 	t.Run("should GetMetricDataInput with AccountId in an inferred search expression query", func(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricData", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},

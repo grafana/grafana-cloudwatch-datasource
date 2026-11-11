@@ -1,8 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import lodash from 'lodash';
 
-import { config } from '@grafana/runtime';
-
 import {
   logGroupNamesVariable,
   setupMockedDataSource,
@@ -18,7 +16,6 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const originalDebounce = lodash.debounce;
 
 const defaultProps = {
@@ -38,12 +35,10 @@ describe('LogGroupSelection', () => {
     defaultProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
   });
   afterEach(() => {
-    config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
     lodash.debounce = originalDebounce;
   });
 
   it('should call getLogGroups to get associated log group arns and then update props if rendered with legacy log group names', async () => {
-    config.featureToggles.cloudWatchCrossAccountQuerying = true;
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
       .mockResolvedValue({ results: [{ value: { arn: 'arn', name: 'loggroupname' } }] });
@@ -59,7 +54,6 @@ describe('LogGroupSelection', () => {
   });
 
   it('should not call getLogGroups to get associated log group arns for template variables that were part of the legacy log group names array, only include them in the call to onChange', async () => {
-    config.featureToggles.cloudWatchCrossAccountQuerying = true;
     defaultProps.datasource = setupMockedDataSource({ variables: [logGroupNamesVariable] }).datasource;
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
@@ -80,7 +74,6 @@ describe('LogGroupSelection', () => {
   });
 
   it('should not call getLogGroups and update props if rendered with log groups', async () => {
-    config.featureToggles.cloudWatchCrossAccountQuerying = true;
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
       .mockResolvedValue({ results: [{ value: { arn: 'arn', name: 'loggroupname' } }] });

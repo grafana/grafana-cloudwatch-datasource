@@ -23,7 +23,7 @@ func TestDataSourcesRoute(t *testing.T) {
 	})
 
 	var mockDataSourcesService = mocks.DataSourcesService{}
-	services.NewDataSourcesService = func(models.CloudWatchLogsAPIProvider, bool) models.DataSourcesProvider {
+	services.NewDataSourcesService = func(models.CloudWatchLogsAPIProvider) models.DataSourcesProvider {
 		return &mockDataSourcesService
 	}
 

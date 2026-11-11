@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useAsyncFn, useDeepCompareEffect } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from './datasource';
 import { ResourcesAPI } from './resources/ResourcesAPI';
@@ -132,9 +131,7 @@ export const useIsMonitoringAccount = (resources: ResourcesAPI, region: string) 
     region = resources.templateSrv.replace(region, {});
   }
   useEffect(() => {
-    if (config.featureToggles.cloudWatchCrossAccountQuerying) {
-      resources.isMonitoringAccount(region).then((result) => setIsMonitoringAccount(result));
-    }
+    resources.isMonitoringAccount(region).then((result) => setIsMonitoringAccount(result));
   }, [region, resources]);
 
   return isMonitoringAccount;
@@ -151,9 +148,6 @@ export const useAccountOptions = (
   }
 
   const fetchAccountOptions = async () => {
-    if (!config.featureToggles.cloudWatchCrossAccountQuerying) {
-      return Promise.resolve([]);
-    }
     const accounts = (await resources?.getAccounts({ region })) ?? [];
     if (accounts.length === 0) {
       return [];

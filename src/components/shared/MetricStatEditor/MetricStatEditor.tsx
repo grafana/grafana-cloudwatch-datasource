@@ -3,7 +3,6 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { Select, TextLink } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
@@ -71,7 +70,7 @@ export const MetricStatEditor = ({
   return (
     <EditorRows>
       <EditorRow>
-        {!disableExpressions && config.featureToggles.cloudWatchCrossAccountQuerying && (
+        {!disableExpressions && (
           <Account
             accountId={metricStat.accountId}
             onChange={(accountId?: string) => {

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
@@ -41,12 +40,9 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   const options = useMemo(
     // Exclude options we've already selected
     () => {
-      const isCrossAccountEnabled = config.featureToggles.cloudWatchCrossAccountQuerying;
-
-      const baseOptionsWithAccountId =
-        isCrossAccountEnabled && isMonitoringAccount
-          ? [{ label: 'Account ID', value: 'AWS.AccountId' }, ...baseOptions]
-          : baseOptions;
+      const baseOptionsWithAccountId = isMonitoringAccount
+        ? [{ label: 'Account ID', value: 'AWS.AccountId' }, ...baseOptions]
+        : baseOptions;
       return baseOptionsWithAccountId.filter(
         (option) => !groupBysFromQuery.some((v) => v.property.name === option.value)
       );
