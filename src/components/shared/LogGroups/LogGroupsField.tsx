@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { Box, Stack } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
@@ -11,7 +10,6 @@ import { LogGroup, LogGroupClass, LogsQueryLanguage, LogsQueryScope } from '../.
 import { isTemplateVariable } from '../../../utils/templateVariableUtils';
 
 import { AccountsSelector } from './AccountsSelector';
-import { LegacyLogGroupSelection } from './LegacyLogGroupNamesSelection';
 import { LogGroupClassSelector } from './LogGroupClassSelector';
 import { LogGroupPrefixInput } from './LogGroupPrefixInput';
 import { LogGroupQueryScopeSelector } from './LogGroupQueryScopeSelector';
@@ -183,8 +181,6 @@ type WrapperProps = {
   onBeforeOpen?: () => void;
   showQueryScopeSelector?: boolean;
 
-  legacyOnChange: (logGroups: string[]) => void;
-
   queryLanguage?: LogsQueryLanguage;
   logsQueryScope?: LogsQueryScope;
   onLogsQueryScopeChange?: (scope: LogsQueryScope) => void;
@@ -197,15 +193,5 @@ type WrapperProps = {
 };
 
 export const LogGroupsFieldWrapper = (props: WrapperProps) => {
-  if (!config.featureToggles.cloudWatchCrossAccountQuerying) {
-    return (
-      <LegacyLogGroupSelection
-        {...props}
-        onChange={props.legacyOnChange}
-        legacyLogGroupNames={props.legacyLogGroupNames || []}
-      />
-    );
-  }
-
   return <LogGroupsField {...props} />;
 };

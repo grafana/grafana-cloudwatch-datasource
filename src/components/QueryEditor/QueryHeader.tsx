@@ -1,6 +1,5 @@
 import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -45,15 +44,13 @@ const QueryHeader = ({
     }
   };
   const onRegionChange = async (region: string) => {
-    if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
+    if (isCloudWatchMetricsQuery(query)) {
       const isMonitoringAccount = await datasource.resources.isMonitoringAccount(region);
       onChange({ ...query, logGroups: [], region, accountId: isMonitoringAccount ? query.accountId : undefined });
     } else {
       onChange({ ...query, logGroups: [], region });
     }
   };
-
-  const shouldDisplayMonitoringBadge = config.featureToggles.cloudWatchCrossAccountQuerying && isMonitoringAccount;
 
   return (
     <>
@@ -81,7 +78,7 @@ const QueryHeader = ({
 
         <FlexItem grow={1} />
 
-        {shouldDisplayMonitoringBadge && (
+        {isMonitoringAccount && (
           <>
             <Badge
               text="Monitoring account"
