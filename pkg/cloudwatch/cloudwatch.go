@@ -46,6 +46,13 @@ const (
 	promqlQuery     = "promqlQuery"
 )
 
+var (
+	// monitoringAccountTimeout bounds the OAM ListSinks lookup run before each Logs query.
+	monitoringAccountTimeout = 5 * time.Second
+	// monitoringAccountFailureTTL is how long a failed lookup is reused before OAM is asked again.
+	monitoringAccountFailureTTL = time.Minute
+)
+
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
 	Type     string             `json:"type,omitempty"`
@@ -297,19 +304,44 @@ func (ds *DataSource) getRGTAClient(ctx context.Context, region string) (resourc
 	return NewRGTAClient(cfg), nil
 }
 
+// monitoringAccountFailure is cached for a short time after an OAM lookup fails.
+type monitoringAccountFailure struct {
+	err   error
+	until time.Time
+}
+
 func (ds *DataSource) isMonitoringAccount(ctx context.Context, region string) (bool, error) {
 	if value, ok := ds.monitoringAccountCache.Load(region); ok {
-		cached := value.(bool)
-		return cached, nil
+		switch cached := value.(type) {
+		case bool:
+			return cached, nil
+		case monitoringAccountFailure:
+			if time.Now().Before(cached.until) {
+				return false, cached.err
+			}
+		}
 	}
 
-	client, err := ds.GetAccountsService(ctx, region)
+	// An unreachable OAM endpoint must not stall the Logs query behind it.
+	lookupCtx, cancel := context.WithTimeout(ctx, monitoringAccountTimeout)
+	defer cancel()
+
+	client, err := ds.GetAccountsService(lookupCtx, region)
 	if err != nil {
 		return false, err
 	}
 
-	accounts, err := client.GetAccountsForCurrentUserOrRole(ctx)
+	accounts, err := client.GetAccountsForCurrentUserOrRole(lookupCtx)
 	if err != nil {
+		// Skip caching when the caller cancelled, since OAM was not at fault.
+		if ctx.Err() == nil {
+			ds.logger.FromContext(ctx).Warn("OAM lookup failed, treating account as not a monitoring account",
+				"region", region, "err", err)
+			ds.monitoringAccountCache.Store(region, monitoringAccountFailure{
+				err:   err,
+				until: time.Now().Add(monitoringAccountFailureTTL),
+			})
+		}
 		return false, err
 	}
 
