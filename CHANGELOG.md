@@ -1,5 +1,26 @@
 # Changelog
 
+## [12.11.3](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.2...v12.11.3) (2026-11-12)
+
+
+### 🐛 Bug Fixes
+
+* **deps:** update backend dependencies ([#671](https://github.com/grafana/grafana-cloudwatch-datasource/issues/671)) ([e49e9d6](https://github.com/grafana/grafana-cloudwatch-datasource/commit/e49e9d668fd7e56a33cda75c927f0cd557088a7b))
+* gRPC deadlock that freezes the plugin connection under load ([#673](https://github.com/grafana/grafana-cloudwatch-datasource/issues/673)) ([c7fb5a1](https://github.com/grafana/grafana-cloudwatch-datasource/commit/c7fb5a13a07cc11263e5f028e98c1c0984999016))
+* **security/medium/:** update dependency glob to v14 [security] ([#675](https://github.com/grafana/grafana-cloudwatch-datasource/issues/675)) ([d2c71b0](https://github.com/grafana/grafana-cloudwatch-datasource/commit/d2c71b09999b343de7f66454e0f8909bee3daf97))
+
+
+### 📝 Documentation
+
+* fix query inspector link and label for new query editor ([fd79542](https://github.com/grafana/grafana-cloudwatch-datasource/commit/fd79542dc04f02e5414cd7f503063b621e7f4d85))
+* fix query inspector link and label for the new query editor ([#672](https://github.com/grafana/grafana-cloudwatch-datasource/issues/672)) ([fd79542](https://github.com/grafana/grafana-cloudwatch-datasource/commit/fd79542dc04f02e5414cd7f503063b621e7f4d85))
+
+
+### 🤖 Continuous Integration
+
+* pause the bundled image workflow ([#669](https://github.com/grafana/grafana-cloudwatch-datasource/issues/669)) ([25b92a6](https://github.com/grafana/grafana-cloudwatch-datasource/commit/25b92a61af36dff99c2874f1344da5f53392f90a))
+* pause the bundled image workflow ([#669](https://github.com/grafana/grafana-cloudwatch-datasource/issues/669)) ([36c5feb](https://github.com/grafana/grafana-cloudwatch-datasource/commit/36c5feb2d0460cb877f3c8304f68baebd5e03fe4))
+
 ## [12.11.2](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.1...v12.11.2) (2026-10-21)
 
 
