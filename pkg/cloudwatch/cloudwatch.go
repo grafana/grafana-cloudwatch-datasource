@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+	"github.com/aws/aws-sdk-go-v2/service/oam"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
@@ -323,18 +324,24 @@ func (ds *DataSource) isMonitoringAccount(ctx context.Context, region string) (b
 	}
 
 	// An unreachable OAM endpoint must not stall the Logs query behind it.
-	lookupCtx, cancel := context.WithTimeout(ctx, monitoringAccountTimeout)
+	lookupCtx, cancel := context.WithTimeoutCause(ctx, monitoringAccountTimeout,
+		fmt.Errorf("OAM lookup timed out after %s", monitoringAccountTimeout))
 	defer cancel()
 
-	client, err := ds.GetAccountsService(lookupCtx, region)
+	awsCfg, err := ds.newAWSConfig(lookupCtx, region)
 	if err != nil {
 		return false, err
 	}
 
-	accounts, err := client.GetAccountsForCurrentUserOrRole(lookupCtx)
+	// One page is enough: an account has at most one sink per Region, and only a monitoring account has one.
+	sinks, err := NewOAMAPI(awsCfg).ListSinks(lookupCtx, &oam.ListSinksInput{})
 	if err != nil {
+		err = fmt.Errorf("ListSinks error: %w", err)
 		// Skip caching when the caller cancelled, since OAM was not at fault.
 		if ctx.Err() == nil {
+			if cause := context.Cause(lookupCtx); cause != nil {
+				err = fmt.Errorf("%w: %w", cause, err)
+			}
 			ds.logger.FromContext(ctx).Warn("OAM lookup failed, treating account as not a monitoring account",
 				"region", region, "err", err)
 			ds.monitoringAccountCache.Store(region, monitoringAccountFailure{
@@ -345,15 +352,9 @@ func (ds *DataSource) isMonitoringAccount(ctx context.Context, region string) (b
 		return false, err
 	}
 
-	for _, account := range accounts {
-		if account.Value.IsMonitoringAccount {
-			ds.monitoringAccountCache.Store(region, true)
-			return true, nil
-		}
-	}
-
-	ds.monitoringAccountCache.Store(region, false)
-	return false, nil
+	isMonitoring := len(sinks.Items) > 0
+	ds.monitoringAccountCache.Store(region, isMonitoring)
+	return isMonitoring, nil
 }
 
 var terminatedStates = []cloudwatchlogstypes.QueryStatus{

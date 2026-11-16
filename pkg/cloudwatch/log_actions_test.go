@@ -2403,6 +2403,22 @@ func (c *blockingOAMClient) ListSinks(ctx context.Context, _ *oam.ListSinksInput
 	return nil, ctx.Err()
 }
 
+// sinkOAMClient returns one sink unless the context has already ended.
+type sinkOAMClient struct {
+	models.OAMAPIProvider
+	calls atomic.Int32
+}
+
+func (c *sinkOAMClient) ListSinks(ctx context.Context, _ *oam.ListSinksInput, _ ...func(*oam.Options)) (*oam.ListSinksOutput, error) {
+	c.calls.Add(1)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	return &oam.ListSinksOutput{Items: []oamtypes.ListSinksItem{
+		{Arn: aws.String("arn:aws:oam:us-east-1:123456789012:sink/sink-id"), Name: aws.String("sink")},
+	}}, nil
+}
+
 func TestQuery_StartQuery_MonitoringAccountLookup(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
 	origNewOAMAPI := NewOAMAPI
@@ -2488,7 +2504,6 @@ func TestQuery_StartQuery_MonitoringAccountLookup(t *testing.T) {
 		oamClient.On("ListSinks", mock.Anything).Return(&oam.ListSinksOutput{Items: []oamtypes.ListSinksItem{
 			{Arn: aws.String("arn:aws:oam:us-east-1:123456789012:sink/sink-id"), Name: aws.String("sink")},
 		}}, nil)
-		oamClient.On("ListAttachedLinks", mock.Anything).Return(&oam.ListAttachedLinksOutput{}, nil)
 		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
 		ds := newTestDatasource()
 
@@ -2496,9 +2511,39 @@ func TestQuery_StartQuery_MonitoringAccountLookup(t *testing.T) {
 		startQuery(t, ds)
 
 		oamClient.AssertNumberOfCalls(t, "ListSinks", 1)
+		oamClient.AssertNotCalled(t, "ListAttachedLinks", mock.Anything)
 		require.Len(t, cli.calls.startQuery, 2)
 		for _, input := range cli.calls.startQuery {
 			assert.Equal(t, []string{"fakeARN"}, input.LogGroupIdentifiers)
 		}
+	})
+	t.Run("does not cache a lookup cut short by the caller", func(t *testing.T) {
+		oamClient := &sinkOAMClient{}
+		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
+		ds := newTestDatasource()
+
+		cancelled, cancel := context.WithCancel(context.Background())
+		cancel()
+		_, err := ds.isMonitoringAccount(cancelled, "us-east-1")
+		require.ErrorIs(t, err, context.Canceled)
+
+		isMonitoring, err := ds.isMonitoringAccount(context.Background(), "us-east-1")
+		require.NoError(t, err)
+		assert.True(t, isMonitoring)
+		assert.Equal(t, int32(2), oamClient.calls.Load())
+	})
+
+	t.Run("reports the timeout cause in the returned and cached error", func(t *testing.T) {
+		oamClient := &blockingOAMClient{}
+		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
+		ds := newTestDatasource()
+
+		_, err := ds.isMonitoringAccount(context.Background(), "us-east-1")
+		require.ErrorContains(t, err, "OAM lookup timed out after 50ms")
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+
+		_, err = ds.isMonitoringAccount(context.Background(), "us-east-1")
+		require.ErrorContains(t, err, "OAM lookup timed out after 50ms")
+		assert.Equal(t, int32(1), oamClient.calls.Load())
 	})
 }
