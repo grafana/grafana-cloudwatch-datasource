@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+	"github.com/aws/aws-sdk-go-v2/service/oam"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
@@ -44,6 +45,13 @@ const (
 	logAction       = "logAction"
 	timeSeriesQuery = "timeSeriesQuery"
 	promqlQuery     = "promqlQuery"
+)
+
+var (
+	// monitoringAccountTimeout bounds the OAM ListSinks lookup run before each Logs query.
+	monitoringAccountTimeout = 5 * time.Second
+	// monitoringAccountFailureTTL is how long a failed lookup is reused before OAM is asked again.
+	monitoringAccountFailureTTL = time.Minute
 )
 
 type DataQueryJson struct {
@@ -297,31 +305,56 @@ func (ds *DataSource) getRGTAClient(ctx context.Context, region string) (resourc
 	return NewRGTAClient(cfg), nil
 }
 
+// monitoringAccountFailure is cached for a short time after an OAM lookup fails.
+type monitoringAccountFailure struct {
+	err   error
+	until time.Time
+}
+
 func (ds *DataSource) isMonitoringAccount(ctx context.Context, region string) (bool, error) {
 	if value, ok := ds.monitoringAccountCache.Load(region); ok {
-		cached := value.(bool)
-		return cached, nil
-	}
-
-	client, err := ds.GetAccountsService(ctx, region)
-	if err != nil {
-		return false, err
-	}
-
-	accounts, err := client.GetAccountsForCurrentUserOrRole(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	for _, account := range accounts {
-		if account.Value.IsMonitoringAccount {
-			ds.monitoringAccountCache.Store(region, true)
-			return true, nil
+		switch cached := value.(type) {
+		case bool:
+			return cached, nil
+		case monitoringAccountFailure:
+			if time.Now().Before(cached.until) {
+				return false, cached.err
+			}
 		}
 	}
 
-	ds.monitoringAccountCache.Store(region, false)
-	return false, nil
+	// An unreachable OAM endpoint must not stall the Logs query behind it.
+	lookupCtx, cancel := context.WithTimeoutCause(ctx, monitoringAccountTimeout,
+		fmt.Errorf("OAM lookup timed out after %s", monitoringAccountTimeout))
+	defer cancel()
+
+	awsCfg, err := ds.newAWSConfig(lookupCtx, region)
+	if err != nil {
+		return false, err
+	}
+
+	// One page is enough: an account has at most one sink per Region, and only a monitoring account has one.
+	sinks, err := NewOAMAPI(awsCfg).ListSinks(lookupCtx, &oam.ListSinksInput{})
+	if err != nil {
+		err = fmt.Errorf("ListSinks error: %w", err)
+		// Skip caching when the caller cancelled, since OAM was not at fault.
+		if ctx.Err() == nil {
+			if cause := context.Cause(lookupCtx); cause != nil {
+				err = fmt.Errorf("%w: %w", cause, err)
+			}
+			ds.logger.FromContext(ctx).Warn("OAM lookup failed, treating account as not a monitoring account",
+				"region", region, "err", err)
+			ds.monitoringAccountCache.Store(region, monitoringAccountFailure{
+				err:   err,
+				until: time.Now().Add(monitoringAccountFailureTTL),
+			})
+		}
+		return false, err
+	}
+
+	isMonitoring := len(sinks.Items) > 0
+	ds.monitoringAccountCache.Store(region, isMonitoring)
+	return isMonitoring, nil
 }
 
 var terminatedStates = []cloudwatchlogstypes.QueryStatus{
