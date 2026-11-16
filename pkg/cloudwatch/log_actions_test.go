@@ -3,12 +3,15 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+	"github.com/aws/aws-sdk-go-v2/service/oam"
+	oamtypes "github.com/aws/aws-sdk-go-v2/service/oam/types"
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/mocks"
@@ -2385,4 +2388,161 @@ func TestQuery_LogActionUnknownSubtypeReturnsPerQueryError(t *testing.T) {
 	require.True(t, ok)
 	require.Error(t, respA.Error)
 	require.Contains(t, respA.Error.Error(), `unknown log action subtype "Bogus"`)
+}
+
+// blockingOAMClient blocks ListSinks until the context ends, like a black-holed OAM endpoint.
+type blockingOAMClient struct {
+	models.OAMAPIProvider
+	calls atomic.Int32
+}
+
+func (c *blockingOAMClient) ListSinks(ctx context.Context, _ *oam.ListSinksInput, _ ...func(*oam.Options)) (*oam.ListSinksOutput, error) {
+	c.calls.Add(1)
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+// sinkOAMClient returns one sink unless the context has already ended.
+type sinkOAMClient struct {
+	models.OAMAPIProvider
+	calls atomic.Int32
+}
+
+func (c *sinkOAMClient) ListSinks(ctx context.Context, _ *oam.ListSinksInput, _ ...func(*oam.Options)) (*oam.ListSinksOutput, error) {
+	c.calls.Add(1)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	return &oam.ListSinksOutput{Items: []oamtypes.ListSinksItem{
+		{Arn: aws.String("arn:aws:oam:us-east-1:123456789012:sink/sink-id"), Name: aws.String("sink")},
+	}}, nil
+}
+
+func TestQuery_StartQuery_MonitoringAccountLookup(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	origNewOAMAPI := NewOAMAPI
+	origTimeout := monitoringAccountTimeout
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+		NewOAMAPI = origNewOAMAPI
+		monitoringAccountTimeout = origTimeout
+	})
+	monitoringAccountTimeout = 50 * time.Millisecond
+
+	var cli fakeCWLogsClient
+	NewCWLogsClient = func(cfg aws.Config) models.CWLogsClient {
+		return &cli
+	}
+
+	startQuery := func(t *testing.T, ds *DataSource) {
+		t.Helper()
+		done := make(chan error, 1)
+		go func() {
+			_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+				Queries: []backend.DataQuery{
+					{
+						RefID:     "A",
+						TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+						JSON: json.RawMessage(`{
+							"type": "logAction",
+							"subtype": "StartQuery",
+							"queryString": "fields @message",
+							"logGroups": [{"arn": "fakeARN", "name": "/log-group"}],
+							"region": "us-east-1"
+						}`),
+					},
+				},
+			})
+			done <- err
+		}()
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("StartQuery blocked on the OAM lookup")
+		}
+	}
+
+	t.Run("falls back to a non-monitoring account when OAM hangs, and caches the failure", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		oamClient := &blockingOAMClient{}
+		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
+		ds := newTestDatasource()
+
+		startQuery(t, ds)
+		startQuery(t, ds)
+
+		assert.Equal(t, int32(1), oamClient.calls.Load())
+		require.Len(t, cli.calls.startQuery, 2)
+		for _, input := range cli.calls.startQuery {
+			assert.Equal(t, []string{"/log-group"}, input.LogGroupNames)
+			assert.Nil(t, input.LogGroupIdentifiers)
+		}
+	})
+
+	t.Run("asks OAM again once the failure expires", func(t *testing.T) {
+		origTTL := monitoringAccountFailureTTL
+		t.Cleanup(func() { monitoringAccountFailureTTL = origTTL })
+		monitoringAccountFailureTTL = 0
+
+		cli = fakeCWLogsClient{}
+		oamClient := &blockingOAMClient{}
+		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
+		ds := newTestDatasource()
+
+		startQuery(t, ds)
+		startQuery(t, ds)
+
+		assert.Equal(t, int32(2), oamClient.calls.Load())
+	})
+
+	t.Run("caches a successful lookup", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		oamClient := &mocks.FakeOAMClient{}
+		oamClient.On("ListSinks", mock.Anything).Return(&oam.ListSinksOutput{Items: []oamtypes.ListSinksItem{
+			{Arn: aws.String("arn:aws:oam:us-east-1:123456789012:sink/sink-id"), Name: aws.String("sink")},
+		}}, nil)
+		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
+		ds := newTestDatasource()
+
+		startQuery(t, ds)
+		startQuery(t, ds)
+
+		oamClient.AssertNumberOfCalls(t, "ListSinks", 1)
+		oamClient.AssertNotCalled(t, "ListAttachedLinks", mock.Anything)
+		require.Len(t, cli.calls.startQuery, 2)
+		for _, input := range cli.calls.startQuery {
+			assert.Equal(t, []string{"fakeARN"}, input.LogGroupIdentifiers)
+		}
+	})
+	t.Run("does not cache a lookup cut short by the caller", func(t *testing.T) {
+		oamClient := &sinkOAMClient{}
+		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
+		ds := newTestDatasource()
+
+		cancelled, cancel := context.WithCancel(context.Background())
+		cancel()
+		_, err := ds.isMonitoringAccount(cancelled, "us-east-1")
+		require.ErrorIs(t, err, context.Canceled)
+
+		isMonitoring, err := ds.isMonitoringAccount(context.Background(), "us-east-1")
+		require.NoError(t, err)
+		assert.True(t, isMonitoring)
+		assert.Equal(t, int32(2), oamClient.calls.Load())
+	})
+
+	t.Run("reports the timeout cause in the returned and cached error", func(t *testing.T) {
+		oamClient := &blockingOAMClient{}
+		NewOAMAPI = func(aws.Config) models.OAMAPIProvider { return oamClient }
+		ds := newTestDatasource()
+
+		_, err := ds.isMonitoringAccount(context.Background(), "us-east-1")
+		require.ErrorContains(t, err, "OAM lookup timed out after 50ms")
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+
+		_, err = ds.isMonitoringAccount(context.Background(), "us-east-1")
+		require.ErrorContains(t, err, "OAM lookup timed out after 50ms")
+		assert.Equal(t, int32(1), oamClient.calls.Load())
+	})
 }
