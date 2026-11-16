@@ -111,6 +111,18 @@ test.describe('Query editor', { tag: '@quarantine' }, () => {
     await expect(queryEditor.getByRole('button', { name: 'Select data sources', exact: true })).toBeVisible();
   });
 
+  test('should open the log group selector instead of the legacy log group picker', async ({ panelEditPage, page }) => {
+    const queryEditor = panelEditPage.getQueryEditorRow('A');
+    await selectLogsMode(page, queryEditor);
+
+    await expect(queryEditor.getByText('Choose Log Groups', { exact: true })).toHaveCount(0);
+
+    await queryEditor.getByRole('button', { name: 'Select log groups', exact: true }).click();
+    const modal = page.getByRole('dialog', { name: 'Select log groups' });
+    await expect(modal).toBeVisible();
+    await expect(modal.getByText('Log group name prefix', { exact: true })).toBeVisible();
+  });
+
   test(
     'should filter and select CloudWatch Logs data sources by name or type',
     { tag: '@aws' },
