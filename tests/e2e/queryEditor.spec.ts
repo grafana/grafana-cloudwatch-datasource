@@ -118,9 +118,9 @@ test.describe('Query editor', { tag: '@quarantine' }, () => {
     await expect(queryEditor.getByText('Choose Log Groups', { exact: true })).toHaveCount(0);
 
     await queryEditor.getByRole('button', { name: 'Select log groups', exact: true }).click();
-    const modal = page.getByRole('dialog', { name: 'Select log groups' });
-    await expect(modal).toBeVisible();
-    await expect(modal.getByText('Log group name prefix', { exact: true })).toBeVisible();
+    // Older Grafana versions don't give the modal an accessible name, so check a field that only the
+    // log group selector modal renders.
+    await expect(page.getByText('Log group name prefix', { exact: true })).toBeVisible();
   });
 
   test(
