@@ -2438,7 +2438,7 @@ func TestQuery_StartQuery_MonitoringAccountLookup(t *testing.T) {
 		t.Helper()
 		done := make(chan error, 1)
 		go func() {
-			_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 				Queries: []backend.DataQuery{
 					{
