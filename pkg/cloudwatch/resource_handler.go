@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/clients"
-	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/features"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models/resources"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/services"
@@ -369,7 +368,7 @@ func (ds *DataSource) GetLogGroupsService(ctx context.Context, region string) (m
 	if err != nil {
 		return nil, err
 	}
-	return services.NewLogGroupsService(NewLogsAPI(awsConfig), features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying)), nil
+	return services.NewLogGroupsService(NewLogsAPI(awsConfig)), nil
 }
 
 func (ds *DataSource) GetDataSourcesService(ctx context.Context, region string) (models.DataSourcesProvider, error) {
@@ -377,7 +376,7 @@ func (ds *DataSource) GetDataSourcesService(ctx context.Context, region string) 
 	if err != nil {
 		return nil, err
 	}
-	return services.NewDataSourcesService(NewLogsAPI(awsConfig), features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying)), nil
+	return services.NewDataSourcesService(NewLogsAPI(awsConfig)), nil
 }
 
 func (ds *DataSource) GetListMetricsService(ctx context.Context, region string) (models.ListMetricsProvider, error) {

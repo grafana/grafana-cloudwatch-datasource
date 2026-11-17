@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { TextLink, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -36,9 +35,7 @@ const queryTypes: Array<{ value: string; label: string }> = [
   { value: VariableQueryType.ResourceArns, label: 'Resource ARNs' },
   { value: VariableQueryType.Statistics, label: 'Statistics' },
   { value: VariableQueryType.LogGroups, label: 'Log Groups' },
-  ...(config.featureToggles.cloudWatchCrossAccountQuerying
-    ? [{ value: VariableQueryType.Accounts, label: 'Accounts' }]
-    : []),
+  { value: VariableQueryType.Accounts, label: 'Accounts' },
 ];
 
 const attributeNames: string[] = [
@@ -179,18 +176,15 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           inputId={`variable-query-region-${query.refId}`}
         />
       )}
-      {hasAccountIDField &&
-        accountState.value &&
-        accountState.value?.length > 0 &&
-        config.featureToggles.cloudWatchCrossAccountQuerying && (
-          <VariableQueryField
-            label="Account"
-            value={query.accountId ?? null}
-            onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
-            options={[ALL_ACCOUNTS_OPTION, ...accountState?.value]}
-            allowCustomValue={false}
-          />
-        )}
+      {hasAccountIDField && accountState.value && accountState.value?.length > 0 && (
+        <VariableQueryField
+          label="Account"
+          value={query.accountId ?? null}
+          onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
+          options={[ALL_ACCOUNTS_OPTION, ...accountState?.value]}
+          allowCustomValue={false}
+        />
+      )}
       {hasNamespaceField && (
         <VariableQueryField
           value={namespace}

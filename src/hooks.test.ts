@@ -1,7 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { config } from '@grafana/runtime';
-
 import {
   accountIdVariable,
   dimensionVariable,
@@ -19,15 +17,9 @@ import {
   useEnsureVariableHasSingleSelection,
 } from './hooks';
 
-const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
-
 describe('hooks', () => {
-  afterEach(() => {
-    config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
-  });
   describe('useIsMonitoringAccount', () => {
     it('should interpolate variables before calling api', async () => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const { api } = setupMockedResourcesAPI({
         variables: [regionVariable],
       });
@@ -105,21 +97,7 @@ describe('hooks', () => {
   });
 
   describe('useAccountOptions', () => {
-    it('does not call the api if the feature toggle is off', async () => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = false;
-      const { api } = setupMockedResourcesAPI({
-        variables: [regionVariable],
-      });
-      const getAccountsMock = jest.fn().mockResolvedValue([{ id: '123', label: 'accountLabel' }]);
-      api.getAccounts = getAccountsMock;
-      renderHook(() => useAccountOptions(api, `$${regionVariable.name}`));
-      await waitFor(() => {
-        expect(getAccountsMock).toHaveBeenCalledTimes(0);
-      });
-    });
-
     it('interpolates region variables before calling the api', async () => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const { api } = setupMockedResourcesAPI({
         variables: [regionVariable],
       });
@@ -133,7 +111,6 @@ describe('hooks', () => {
     });
 
     it('returns properly formatted account options, and template variables', async () => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const { api } = setupMockedResourcesAPI({
         variables: [regionVariable],
       });

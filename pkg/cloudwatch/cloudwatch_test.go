@@ -16,7 +16,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/features"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/mocks"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/models"
 	"github.com/grafana/grafana-cloudwatch-datasource/pkg/cloudwatch/utils"
@@ -406,7 +405,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 
 		ds := newTestDatasource()
 
-		err := ds.CallResource(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
+		err := ds.CallResource(context.Background(), req, sender)
 		assert.NoError(t, err)
 
 		assert.JSONEq(t, `[

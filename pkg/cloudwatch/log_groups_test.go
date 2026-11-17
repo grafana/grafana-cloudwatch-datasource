@@ -23,7 +23,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	})
 
 	var mockLogsService = mocks.LogsService{}
-	services.NewLogGroupsService = func(models.CloudWatchLogsAPIProvider, bool) models.LogGroupsProvider {
+	services.NewLogGroupsService = func(models.CloudWatchLogsAPIProvider) models.LogGroupsProvider {
 		return &mockLogsService
 	}
 

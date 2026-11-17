@@ -235,8 +235,7 @@ type metricsDataQuery struct {
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, logger log.Logger,
-	crossAccountQueryingEnabled bool) ([]*CloudWatchQuery, error) {
+func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, logger log.Logger) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, query := range dataQueries {
 		var metricsDataQuery metricsDataQuery
@@ -291,7 +290,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			cwQuery.Label = *mdq.Label
 		}
 
-		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, defaultRegion, crossAccountQueryingEnabled); err != nil {
+		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, defaultRegion); err != nil {
 			return nil, &QueryError{Err: err, RefID: refId}
 		}
 
@@ -317,7 +316,7 @@ func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery) {
 }
 
 func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
-	defaultRegionValue string, crossAccountQueryingEnabled bool) error {
+	defaultRegionValue string) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
 		return backend.DownstreamError(fmt.Errorf("query must have either statistic or statistics field"))
 	}
@@ -336,9 +335,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		}
 	}
 
-	if crossAccountQueryingEnabled {
-		q.AccountId = metricsDataQuery.AccountId
-	}
+	q.AccountId = metricsDataQuery.AccountId
 
 	if metricsDataQuery.Id == "" {
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,

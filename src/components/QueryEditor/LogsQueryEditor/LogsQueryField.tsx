@@ -68,10 +68,6 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
         onSelectedAccountIdsChange={(accountIds: string[]) => {
           onChangeLogs({ ...query, selectedAccountIds: accountIds });
         }}
-        //legacy props
-        legacyOnChange={(logGroupNames) => {
-          onChangeLogs({ ...query, logGroupNames });
-        }}
       />
       <DataSourcesField
         region={query.region}

@@ -36,7 +36,6 @@ func getResourceRequest(parameters url.Values) (*ResourceRequest, error) {
 type LogsRequest struct {
 	Limit                                              int64
 	AccountId, LogGroupNamePrefix, LogGroupNamePattern *string
-	IsCrossAccountQueryingEnabled                      bool
 }
 
 func (r LogsRequest) IsTargetingAllAccounts() bool {

@@ -4,7 +4,6 @@ import { useAsyncFn } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
@@ -113,7 +112,7 @@ const FilterItem = (props: FilterItemProps) => {
     region: query.region,
     namespace,
     metricName,
-    ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
+    accountId: query.accountId,
   });
 
   const loadDimensionValues = async () => {
@@ -127,7 +126,7 @@ const FilterItem = (props: FilterItemProps) => {
         namespace,
         metricName,
         dimensionKey: filter.property.name,
-        ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
+        accountId: query.accountId,
       })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);
