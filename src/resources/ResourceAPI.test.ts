@@ -1,6 +1,8 @@
 import { of } from 'rxjs';
 
+import { CloudWatchSettings, setupMockedTemplateService } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedResourcesAPI } from '../__mocks__/ResourcesAPI';
+import { ResourcesAPI } from './ResourcesAPI';
 
 describe('ResourcesAPI', () => {
   describe('getLogGroups', () => {
@@ -151,5 +153,34 @@ describe('ResourcesAPI', () => {
 
       expect(regions).toEqual(expectedRegions);
     });
+  });
+});
+
+describe('ResourcesAPI routing through the datasource', () => {
+  it('uses datasource.getResource with the resource path and params', async () => {
+    const getMock = jest.fn().mockResolvedValue([]);
+    const { api } = setupMockedResourcesAPI({ getMock });
+    await api.getNamespaces();
+    await api.getMetrics({ namespace: 'AWS/EC2', region: 'us-east-1' });
+    expect(getMock).toHaveBeenNthCalledWith(1, 'namespaces', undefined);
+    expect(getMock).toHaveBeenNthCalledWith(
+      2,
+      'metrics',
+      expect.objectContaining({ namespace: 'AWS/EC2', region: 'us-east-1' })
+    );
+  });
+
+  it('builds the log-groups url via datasource.buildResourcesDatasourceUrl', async () => {
+    const { api, fetchMock } = setupMockedResourcesAPI();
+    await api.getLogGroups({ region: 'us-east-1' });
+    expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/test/resources/log-groups');
+    expect(fetchMock.mock.calls[0][0].showErrorAlert).toBe(false);
+  });
+
+  it('falls back to the legacy log-groups url when buildResourcesDatasourceUrl is not available (older Grafana)', async () => {
+    const { fetchMock } = setupMockedResourcesAPI();
+    const api = new ResourcesAPI({ ...CloudWatchSettings, uid: 'test' }, setupMockedTemplateService(), { getResource: jest.fn() });
+    await api.getLogGroups({ region: 'us-east-1' });
+    expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/test/resources/log-groups');
   });
 });

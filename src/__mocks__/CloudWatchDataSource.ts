@@ -121,6 +121,8 @@ export function setupMockedDataSource({
 
   const datasource = new CloudWatchDatasource(customInstanceSettings, templateService);
   datasource.getVariables = () => ['test'];
+  // resource calls go through DataSourceWithBackend.getResource
+  datasource.getResource = getMock as typeof datasource.getResource;
   datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
   datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
   datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
