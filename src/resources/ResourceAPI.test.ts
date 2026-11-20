@@ -1,6 +1,8 @@
 import { of } from 'rxjs';
 
+import { CloudWatchSettings, setupMockedTemplateService } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedResourcesAPI } from '../__mocks__/ResourcesAPI';
+import { ResourcesAPI } from './ResourcesAPI';
 
 describe('ResourcesAPI', () => {
   describe('getLogGroups', () => {
@@ -173,5 +175,12 @@ describe('ResourcesAPI routing through the datasource', () => {
     await api.getLogGroups({ region: 'us-east-1' });
     expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/test/resources/log-groups');
     expect(fetchMock.mock.calls[0][0].showErrorAlert).toBe(false);
+  });
+
+  it('falls back to the legacy log-groups url when buildResourcesDatasourceUrl is not available (older Grafana)', async () => {
+    const { fetchMock } = setupMockedResourcesAPI();
+    const api = new ResourcesAPI({ ...CloudWatchSettings, uid: 'test' }, setupMockedTemplateService(), { getResource: jest.fn() });
+    await api.getLogGroups({ region: 'us-east-1' });
+    expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/test/resources/log-groups');
   });
 });
