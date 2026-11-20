@@ -56,8 +56,9 @@ var (
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
-	Type     string             `json:"type,omitempty"`
-	LogsMode dataquery.LogsMode `json:"logsMode,omitempty"`
+	Type            string                     `json:"type,omitempty"`
+	LogsMode        dataquery.LogsMode         `json:"logsMode,omitempty"`
+	MetricQueryType *dataquery.MetricQueryType `json:"metricQueryType,omitempty"`
 }
 
 type DataSource struct {
@@ -192,6 +193,12 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 	isLogsAnomaliesQuery := model.QueryMode == dataquery.CloudWatchQueryModeLogs && model.LogsMode == dataquery.LogsModeAnomalies
 	if isLogsAnomaliesQuery {
 		return executeLogAnomaliesQuery(ctx, ds, req)
+	}
+
+	// `model.Type` is set by the frontend query runner; queries executed by the backend (e.g. alert rules) won't have it.
+	if model.Type == "" && model.QueryMode == dataquery.CloudWatchQueryModeMetrics &&
+		model.MetricQueryType != nil && *model.MetricQueryType == dataquery.MetricQueryTypePromQL {
+		model.Type = promqlQuery
 	}
 
 	var result *backend.QueryDataResponse

@@ -427,3 +427,20 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 			})
 	})
 }
+
+func TestQueryData_RoutesPromQLWithoutType(t *testing.T) {
+	// Alert rules run on the backend and the frontend-set `type` isn't saved with the query,
+	// so PromQL queries must be detected from `metricQueryType`.
+	ds := &DataSource{}
+	req := &backend.QueryDataRequest{
+		Queries: []backend.DataQuery{{
+			RefID: "A",
+			JSON:  []byte(`{"queryMode":"Metrics","metricQueryType":2,"promqlExpression":""}`),
+		}},
+	}
+
+	resp, err := ds.QueryData(context.Background(), req)
+	require.NoError(t, err)
+	require.Error(t, resp.Responses["A"].Error)
+	assert.Contains(t, resp.Responses["A"].Error.Error(), "PromQL expression is required")
+}
