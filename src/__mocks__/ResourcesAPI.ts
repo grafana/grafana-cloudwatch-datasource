@@ -21,8 +21,12 @@ export function setupMockedResourcesAPI({
 } = {}) {
   let templateService = setupMockedTemplateService(variables);
 
-  const api = new ResourcesAPI(CloudWatchSettings, templateService);
   const resourceRequestMock = getMock ? getMock : jest.fn().mockReturnValue(response);
+  const datasource = {
+    getResource: resourceRequestMock,
+    buildResourcesDatasourceUrl: (path: string) => `/api/datasources/uid/test/resources/${path}`,
+  };
+  const api = new ResourcesAPI(CloudWatchSettings, templateService, datasource);
   const defaultFetchMock = fetchMock ?? jest.fn().mockReturnValue(of({ data: response, headers: new Headers() }));
   setBackendSrv({
     ...getBackendSrv(),
