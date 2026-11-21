@@ -2,7 +2,7 @@ import { memoize } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
-import { getBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchRequest } from '../query-runner/CloudWatchRequest';
 import { CloudWatchJsonData, LogGroupField, MultiFilters } from '../types';
@@ -36,7 +36,12 @@ export class ResourcesAPI extends CloudWatchRequest {
   private memoizedGetRequest;
   private memoizedFetchLogGroupsRequest;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
+    templateSrv: TemplateSrv,
+    private datasource: Pick<DataSourceWithBackend, 'getResource'> &
+      Partial<Pick<DataSourceWithBackend, 'buildResourcesDatasourceUrl'>>
+  ) {
     super(instanceSettings, templateSrv);
     this.memoizedGetRequest = memoize(this.getRequest.bind(this), (path, parameters) =>
       JSON.stringify({ path, parameters })
@@ -47,13 +52,26 @@ export class ResourcesAPI extends CloudWatchRequest {
   }
 
   private getRequest<T>(subtype: string, parameters?: Record<string, string | string[] | number>): Promise<T> {
-    return getBackendSrv().get(`/api/datasources/uid/${this.instanceSettings.uid}/resources/${subtype}`, parameters);
+    return this.datasource.getResource<T>(subtype, parameters);
+  }
+
+  /**
+   * `buildResourcesDatasourceUrl` only exists in newer Grafana versions. On older versions fall back to the
+   * legacy resource route, which is what `getResource` used there.
+   */
+  private getLogGroupsUrl(): string {
+    if (typeof this.datasource.buildResourcesDatasourceUrl === 'function') {
+      return this.datasource.buildResourcesDatasourceUrl('log-groups');
+    }
+    return `/api/datasources/uid/${this.instanceSettings.uid}/resources/log-groups`;
   }
 
   private async fetchLogGroupsRequest(params: Record<string, string | string[] | number>): Promise<LogGroupsResponse> {
     const response = await lastValueFrom(
       getBackendSrv().fetch<Array<ResourceResponse<LogGroupResponse>>>({
-        url: `/api/datasources/uid/${this.instanceSettings.uid}/resources/log-groups`,
+        // getResource only returns the body, but pagination needs the Link response header, so build the URL via
+        // the datasource (which honours the apiserver feature flag) and fetch it ourselves.
+        url: this.getLogGroupsUrl(),
         params,
         method: 'GET',
         showErrorAlert: false,

@@ -45,9 +45,6 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     awsAssumeRoleEnabled: true,
-    featureToggles: {
-      cloudWatchCrossAccountQuerying: true,
-    },
   },
 }));
 

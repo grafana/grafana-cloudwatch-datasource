@@ -2,15 +2,12 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
-import { config } from '@grafana/runtime';
-
 import { setupMockedDataSource, statisticVariable } from '../../../__mocks__/CloudWatchDataSource';
 import { validMetricSearchBuilderQuery } from '../../../__mocks__/queries';
 import { MetricStat } from '../../../types';
 
 import { MetricStatEditor } from './MetricStatEditor';
 
-const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const ds = setupMockedDataSource({
   variables: [statisticVariable],
 });
@@ -36,9 +33,6 @@ const props = {
 };
 
 describe('MetricStatEditor', () => {
-  afterEach(() => {
-    config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
-  });
   describe('statistics field', () => {
     test.each(['Average', 'p23.23', 'p34', '$statistic'])('should accept valid values', async (statistic) => {
       const onChange = jest.fn();
@@ -241,7 +235,6 @@ describe('MetricStatEditor', () => {
 
   describe('account id', () => {
     it('should set value to "all" when its a monitoring account and no account id is defined in the query', async () => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
       props.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
       props.datasource.resources.getAccounts = jest.fn().mockResolvedValue([
@@ -270,7 +263,6 @@ describe('MetricStatEditor', () => {
     });
 
     it('should unset value when no accounts were found and an account id is defined in the query', async () => {
-      config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
       props.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
       props.datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);

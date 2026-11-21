@@ -78,7 +78,7 @@ export class CloudWatchDatasource
   ) {
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
-    this.resources = new ResourcesAPI(instanceSettings, templateSrv);
+    this.resources = new ResourcesAPI(instanceSettings, templateSrv, this);
     this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);

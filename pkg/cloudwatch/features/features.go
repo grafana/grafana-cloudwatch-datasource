@@ -7,10 +7,9 @@ import (
 )
 
 const (
-	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
-	FlagCloudWatchBatchQueries         = "cloudWatchBatchQueries"
-	FlagCloudWatchNewLabelParsing      = "cloudWatchNewLabelParsing"
-	FlagCloudWatchRoundUpEndTime       = "cloudWatchRoundUpEndTime"
+	FlagCloudWatchBatchQueries    = "cloudWatchBatchQueries"
+	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
+	FlagCloudWatchRoundUpEndTime  = "cloudWatchRoundUpEndTime"
 )
 
 func IsEnabled(ctx context.Context, feature string) bool {

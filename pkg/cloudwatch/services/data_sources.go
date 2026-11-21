@@ -14,21 +14,17 @@ import (
 )
 
 type DataSourcesService struct {
-	logsAPI               models.CloudWatchLogsAPIProvider
-	isCrossAccountEnabled bool
+	logsAPI models.CloudWatchLogsAPIProvider
 }
 
-var NewDataSourcesService = func(logsClient models.CloudWatchLogsAPIProvider, isCrossAccountEnabled bool) models.DataSourcesProvider {
-	return &DataSourcesService{logsAPI: logsClient, isCrossAccountEnabled: isCrossAccountEnabled}
+var NewDataSourcesService = func(logsClient models.CloudWatchLogsAPIProvider) models.DataSourcesProvider {
+	return &DataSourcesService{logsAPI: logsClient}
 }
 
 func (s *DataSourcesService) GetDataSources(ctx context.Context, req resources.DataSourcesRequest) ([]resources.ResourceResponse[resources.LogDataSource], error) {
 	input := &cloudwatchlogs.ListAggregateLogGroupSummariesInput{
-		GroupBy: cloudwatchlogstypes.ListAggregateLogGroupSummariesGroupByDataSourceNameAndType,
-	}
-
-	if s.isCrossAccountEnabled {
-		input.IncludeLinkedAccounts = aws.Bool(true)
+		GroupBy:               cloudwatchlogstypes.ListAggregateLogGroupSummariesGroupByDataSourceNameAndType,
+		IncludeLinkedAccounts: aws.Bool(true),
 	}
 
 	paginator := cloudwatchlogs.NewListAggregateLogGroupSummariesPaginator(s.logsAPI, input)
