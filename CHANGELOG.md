@@ -1,5 +1,23 @@
 # Changelog
 
+## [12.11.4](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.3...v12.11.4) (2026-11-21)
+
+
+### 🐛 Bug Fixes
+
+* **deps:** bump @grafana/aws-sdk to 0.13.1 ([#721](https://github.com/grafana/grafana-cloudwatch-datasource/issues/721)) ([2a5f647](https://github.com/grafana/grafana-cloudwatch-datasource/commit/2a5f647b8edfd9b5c17b89a86942258a30647975))
+* route resource calls through DataSourceWithBackend.getResource ([#723](https://github.com/grafana/grafana-cloudwatch-datasource/issues/723)) ([c298324](https://github.com/grafana/grafana-cloudwatch-datasource/commit/c29832433bc516e216134b3ec275771411106157))
+
+
+### 📝 Documentation
+
+* say Assume Role ARN is required for Grafana Assume Role ([bd09778](https://github.com/grafana/grafana-cloudwatch-datasource/commit/bd097787fe1a06da755a92079488b3930ad44fc7)), closes [#557](https://github.com/grafana/grafana-cloudwatch-datasource/issues/557)
+
+
+### ✅ Tests
+
+* **e2e:** run a metric math query through the backend ([#656](https://github.com/grafana/grafana-cloudwatch-datasource/issues/656)) ([3217b31](https://github.com/grafana/grafana-cloudwatch-datasource/commit/3217b31a6fabe55c562203220b638a37acffb33c))
+
 ## [12.11.3](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.2...v12.11.3) (2026-11-16)
 
 
