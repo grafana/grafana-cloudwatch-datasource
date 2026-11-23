@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.11.5](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.4...v12.11.5) (2026-11-23)
+
+
+### 🐛 Bug Fixes
+
+* route PromQL alert queries to the correct executor ([#724](https://github.com/grafana/grafana-cloudwatch-datasource/issues/724)) ([323fc4a](https://github.com/grafana/grafana-cloudwatch-datasource/commit/323fc4ae1316c02ad63ed7519fdfa8bf40737efe))
+
 ## [12.11.4](https://github.com/grafana/grafana-cloudwatch-datasource/compare/v12.11.3...v12.11.4) (2026-11-21)
 
 
