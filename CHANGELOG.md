@@ -12,7 +12,6 @@
 ### 📝 Documentation
 
 * say Assume Role ARN is required for Grafana Assume Role ([bd09778](https://github.com/grafana/grafana-cloudwatch-datasource/commit/bd097787fe1a06da755a92079488b3930ad44fc7)), closes [#557](https://github.com/grafana/grafana-cloudwatch-datasource/issues/557)
-* say the Assume Role ARN is required for the Grafana Assume Role provider ([#701](https://github.com/grafana/grafana-cloudwatch-datasource/issues/701)) ([bd09778](https://github.com/grafana/grafana-cloudwatch-datasource/commit/bd097787fe1a06da755a92079488b3930ad44fc7))
 
 
 ### ✅ Tests
