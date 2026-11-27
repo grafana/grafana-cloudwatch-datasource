@@ -10,7 +10,7 @@ import {
   LogRowModel,
 } from '@grafana/data';
 
-import { logGroupNamesVariable, regionVariable } from '../__mocks__/CloudWatchDataSource';
+import { CloudWatchSettings, logGroupNamesVariable, regionVariable } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { LogsRequestMock } from '../__mocks__/Request';
 import { validLogsQuery } from '../__mocks__/queries';
@@ -30,6 +30,47 @@ describe('CloudWatchLogsQueryRunner', () => {
   });
 
   describe('interpolateLogsQueryVariables', () => {
+    describe('with data source default log groups', () => {
+      const settings = {
+        ...CloudWatchSettings,
+        jsonData: {
+          ...CloudWatchSettings.jsonData,
+          logGroups: [{ arn: 'arn:aws:logs:us-east-1:123456789012:log-group:default', name: 'default' }],
+          defaultLogGroups: ['legacy-default'],
+        },
+      };
+
+      it('does not apply the defaults to a query that starts with a SOURCE command', () => {
+        const { runner } = setupMockedLogsQueryRunner({ settings });
+        const query: CloudWatchLogsQuery = {
+          ...validLogsQuery,
+          logGroups: undefined,
+          logGroupNames: undefined,
+          expression: "SOURCE logGroups(namePrefix: ['aws/spans']) | fields @message",
+        };
+
+        const { logGroups, logGroupNames } = runner.interpolateLogsQueryVariables(query, {});
+
+        expect(logGroups).toEqual([]);
+        expect(logGroupNames).toEqual([]);
+      });
+
+      it('applies the defaults to a query that does not start with a SOURCE command', () => {
+        const { runner } = setupMockedLogsQueryRunner({ settings });
+        const query: CloudWatchLogsQuery = {
+          ...validLogsQuery,
+          logGroups: undefined,
+          logGroupNames: undefined,
+          expression: 'fields @message',
+        };
+
+        const { logGroups, logGroupNames } = runner.interpolateLogsQueryVariables(query, {});
+
+        expect(logGroups).toEqual([{ arn: 'arn:aws:logs:us-east-1:123456789012:log-group:default', name: 'default' }]);
+        expect(logGroupNames).toEqual(['legacy-default']);
+      });
+    });
+
     it('returns logGroups with arn and name values sourced from the log group template variable', () => {
       const { runner } = setupMockedLogsQueryRunner({ variables: [logGroupNamesVariable] });
 
@@ -478,6 +519,64 @@ describe('CloudWatchLogsQueryRunner', () => {
                 logDataSources: [{ name: 'amazon_vpc', type: 'flow' }],
               }),
             ]),
+          })
+        );
+      });
+    });
+
+    it('allows CWLI query that starts with a SOURCE command and no selected log groups', async () => {
+      const sourceExpression = "SOURCE logGroups(namePrefix: ['aws/spans']) | fields @message";
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithSourceCommand: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        expression: sourceExpression,
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithSourceCommand],
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+      await expect(runner.handleLogQueries([queryWithSourceCommand], options, queryFn)).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: expect.arrayContaining([
+              expect.objectContaining({
+                subtype: 'StartQuery',
+                queryString: sourceExpression,
+              }),
+            ]),
+          })
+        );
+      });
+    });
+
+    it('filters out CWLI query with no log groups when the SOURCE keyword is not the first command', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithLateSource: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        expression: 'fields @message | filter @message like /SOURCE/',
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithLateSource],
+      };
+
+      const queryFn = jest.fn().mockReturnValue(of({ data: [] }));
+      const response = runner.handleLogQueries([queryWithLateSource], options, queryFn);
+      await expect(response).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: [],
           })
         );
       });

@@ -390,9 +390,17 @@ func buildCWLIStartQuery(
 	useStartQueryInputLogGroups := usesDirectLogGroupScope && (len(dataSourceIdentifiers) == 0 || usesExactLogGroupSelection)
 
 	if usesDirectLogGroupScope && len(dataSourceIdentifiers) == 0 {
+		usesSource := containsSourceCommand(logsQuery.QueryString)
+		// A user-typed SOURCE command selects its own log groups, so it cannot be combined with log
+		// groups selected in the picker or saved on the query (StartQueryInput would reject it).
+		// Without selected log groups it is valid and StartQueryInput must not carry any.
+		// See https://github.com/grafana/grafana-cloudwatch-datasource/issues/307
+		if usesSource && (len(logGroupIdentifiers) > 0 || len(logsQuery.LogGroupNames) > 0) {
+			return startQueryPlan{}, backend.DownstreamError(fmt.Errorf("query cannot contain SOURCE command when log groups are selected; remove the selected log groups or the SOURCE command"))
+		}
 		return startQueryPlan{
-			queryString:                 logContextFieldsClause + "|" + logsQuery.QueryString,
-			useStartQueryInputLogGroups: useStartQueryInputLogGroups,
+			queryString:                 injectLogContextFields(logsQuery.QueryString),
+			useStartQueryInputLogGroups: useStartQueryInputLogGroups && !usesSource,
 		}, nil
 	}
 
@@ -499,6 +507,31 @@ func applyStartQueryLogGroupSelection(
 // containsSourceCommand checks if the query string contains a SOURCE command
 func containsSourceCommand(queryString string) bool {
 	return sourceCommandRegex.MatchString(queryString)
+}
+
+// injectLogContextFields prepends the internal log-context fields clause to a CWLI query.
+//
+// The clause is normally prepended to the whole query, but a SOURCE command must remain the
+// first command in a CWLI query. When the user typed a SOURCE command, the clause is instead
+// injected right after the leading SOURCE clause so the query stays valid, producing:
+//
+//	SOURCE logGroups(...) | fields @timestamp,... | <rest of user query>
+//
+// See https://github.com/grafana/grafana-cloudwatch-datasource/issues/307
+func injectLogContextFields(queryString string) string {
+	if !containsSourceCommand(queryString) {
+		return logContextFieldsClause + "|" + queryString
+	}
+
+	// The SOURCE clause is everything up to the first pipe. If there is no pipe, the whole
+	// query is the SOURCE clause and the context fields become the next command.
+	if pipeIndex := strings.Index(queryString, "|"); pipeIndex != -1 {
+		sourceClause := strings.TrimRight(queryString[:pipeIndex], " ")
+		rest := strings.TrimLeft(queryString[pipeIndex+1:], " ")
+		return sourceClause + " | " + logContextFieldsClause + "|" + rest
+	}
+
+	return strings.TrimRight(queryString, " ") + " | " + logContextFieldsClause
 }
 
 // containsPPLSourceCommand checks if the query string contains a PPL source= clause
