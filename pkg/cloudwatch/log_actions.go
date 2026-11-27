@@ -391,12 +391,17 @@ func buildCWLIStartQuery(
 	useStartQueryInputLogGroups := usesDirectLogGroupScope && (len(dataSourceIdentifiers) == 0 || usesExactLogGroupSelection)
 
 	if usesDirectLogGroupScope && len(dataSourceIdentifiers) == 0 {
+		usesSource := containsSourceCommand(logsQuery.QueryString)
+		// A user-typed SOURCE command selects its own log groups, so it cannot be combined with log
+		// groups selected in the picker or saved on the query (StartQueryInput would reject it).
+		// Without selected log groups it is valid and StartQueryInput must not carry any.
+		// See https://github.com/grafana/grafana-cloudwatch-datasource/issues/307
+		if usesSource && (len(logGroupIdentifiers) > 0 || len(logsQuery.LogGroupNames) > 0) {
+			return startQueryPlan{}, backend.DownstreamError(fmt.Errorf("query cannot contain SOURCE command when log groups are selected; remove the selected log groups or the SOURCE command"))
+		}
 		return startQueryPlan{
-			queryString: injectLogContextFields(logsQuery.QueryString),
-			// A user-typed SOURCE command selects its own log groups, so no log groups need to be
-			// selected in the UI and StartQueryInput must not carry any.
-			// See https://github.com/grafana/grafana-cloudwatch-datasource/issues/307
-			useStartQueryInputLogGroups: useStartQueryInputLogGroups && !containsSourceCommand(logsQuery.QueryString),
+			queryString:                 injectLogContextFields(logsQuery.QueryString),
+			useStartQueryInputLogGroups: useStartQueryInputLogGroups && !usesSource,
 		}, nil
 	}
 

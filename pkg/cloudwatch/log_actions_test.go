@@ -780,6 +780,37 @@ func Test_executeStartQuery(t *testing.T) {
 		assert.Nil(t, cli.calls.startQuery[0].LogGroupNames)
 		assert.Nil(t, cli.calls.startQuery[0].LogGroupIdentifiers)
 	})
+
+	for name, selection := range map[string]string{
+		"log groups":             `"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:/log-group:*", "name": "/log-group"}]`,
+		"legacy log group names": `"logGroupNames":["/log-group"]`,
+	} {
+		t.Run("returns an error when a user-typed SOURCE command is combined with selected "+name, func(t *testing.T) {
+			cli = fakeCWLogsClient{}
+			ds := newTestDatasource()
+			resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+				Queries: []backend.DataQuery{
+					{
+						RefID:     "A",
+						TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+						JSON: json.RawMessage(`{
+							"type":    "logAction",
+							"subtype": "StartQuery",
+							"queryLanguage": "CWLI",
+							"queryString":"SOURCE logGroups(namePrefix: ['aws/spans']) | fields @message",
+							` + selection + `
+						}`),
+					},
+				},
+			})
+			require.NoError(t, err)
+			require.Contains(t, resp.Responses, "A")
+			require.Error(t, resp.Responses["A"].Error)
+			assert.Contains(t, resp.Responses["A"].Error.Error(), "query cannot contain SOURCE command when log groups are selected")
+			assert.Empty(t, cli.calls.startQuery)
+		})
+	}
 }
 
 func TestQuery_StopQuery(t *testing.T) {

@@ -67,6 +67,12 @@ export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 // pkg/cloudwatch/log_actions.go (sourceCommandRegex).
 const SOURCE_COMMAND_REGEX = /^\s*source\s+/i;
 
+// A CWLI query (an undefined query language means CWLI) whose expression starts with a SOURCE command.
+function startsWithSourceCommand(query: Pick<CloudWatchLogsQuery, 'queryLanguage' | 'expression'>): boolean {
+  const isCWLIQuery = query.queryLanguage === 'CWLI' || query.queryLanguage === undefined;
+  return isCWLIQuery && SOURCE_COMMAND_REGEX.test(query.expression ?? '');
+}
+
 // This class handles execution of CloudWatch logs query data queries
 export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   logsTimeout: string;
@@ -263,14 +269,23 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     CloudWatchLogsQuery,
     'expression' | 'logGroups' | 'logGroupNames' | 'logGroupPrefixes' | 'selectedAccountIds' | 'logDataSources'
   > {
+    // A query with a SOURCE command selects its own log groups, so the data source defaults must not be applied.
+    // Otherwise the backend would reject it for combining SOURCE with selected log groups.
+    const applyDefaultLogGroups = !startsWithSourceCommand(query);
+    const defaultLogGroups = applyDefaultLogGroups ? this.instanceSettings.jsonData.logGroups : undefined;
+    const defaultLegacyLogGroupNames = applyDefaultLogGroups
+      ? // eslint-disable-next-line @typescript-eslint/no-deprecated
+        this.instanceSettings.jsonData.defaultLogGroups
+      : undefined;
+
     const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       this.templateSrv,
-      (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
+      (query.logGroups || defaultLogGroups || []).map((lg) => lg.arn),
       scopedVars
     );
     const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       this.templateSrv,
-      (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.name),
+      (query.logGroups || defaultLogGroups || []).map((lg) => lg.name),
       scopedVars,
       'text'
     );
@@ -283,7 +298,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const interpolatedLegacyLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       this.templateSrv,
       // eslint-disable-next-line @typescript-eslint/no-deprecated
-      query.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+      query.logGroupNames || defaultLegacyLogGroupNames || [],
       scopedVars,
       'text'
     );
@@ -586,7 +601,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     // A CWLI query can select its own log groups via a SOURCE command (e.g. `SOURCE logGroups(namePrefix: [...])`),
     // which lets it target more than the 50 log groups the StartQuery API accepts. Such a query is valid without
     // any log groups selected in the UI. See https://github.com/grafana/grafana-cloudwatch-datasource/issues/307
-    const usesSourceCommand = isCWLIQuery && SOURCE_COMMAND_REGEX.test(query.expression ?? '');
+    const usesSourceCommand = startsWithSourceCommand(query);
 
     const hasValidLogGroupSelection =
       !hasMissingLogGroups ||
